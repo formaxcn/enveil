@@ -1,9 +1,9 @@
-let currentSettings = {};
+let currentSites = [];
 
 // 接收来自popup或background的消息
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if (request.action === 'updateSettings') {
-    currentSettings = request.settings;
+    currentSites = request.sites || [];
     applyStyles();
   }
 });
@@ -11,9 +11,18 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 // 页面加载完成后应用样式
 document.addEventListener('DOMContentLoaded', function() {
   // 获取存储的设置
-  chrome.storage.sync.get(['enveilSettings'], function(result) {
-    currentSettings = result.enveilSettings || {};
-    applyStyles();
+  chrome.storage.sync.get(['enveilSites'], function(result) {
+    // 首先尝试从同步存储获取
+    if (result.enveilSites !== undefined) {
+      currentSites = result.enveilSites || [];
+      applyStyles();
+    } else {
+      // 如果同步存储中没有，则尝试从本地存储获取
+      chrome.storage.local.get(['enveilSites'], function(localResult) {
+        currentSites = localResult.enveilSites || [];
+        applyStyles();
+      });
+    }
   });
 });
 
@@ -28,70 +37,72 @@ if (document.readyState === 'loading') {
 function applyStyles() {
   removeExistingElements();
   
-  if (!currentSettings.pattern && !currentSettings.keyword) {
+  if (!currentSites || currentSites.length === 0) {
     return;
   }
   
-  // 检查当前域名是否匹配设置
-  if (!isDomainMatch()) {
-    return;
-  }
-  
-  // 添加横幅
-  if (currentSettings.bannerEnabled && currentSettings.bannerText) {
-    addBanner();
-  }
-  
-  // 添加蒙版
-  if (currentSettings.overlayEnabled) {
-    addOverlay();
+  // 检查当前域名是否匹配任何设置
+  const matchedSite = findMatchingSite();
+  if (matchedSite) {
+    // 添加横幅
+    if (matchedSite.bannerEnabled && matchedSite.bannerText) {
+      addBanner(matchedSite);
+    }
+    
+    // 添加蒙版
+    if (matchedSite.overlayEnabled) {
+      addOverlay(matchedSite);
+    }
   }
 }
 
-// 检查域名是否匹配
-function isDomainMatch() {
+// 查找匹配的站点配置
+function findMatchingSite() {
   const domain = window.location.hostname;
   
-  // 检查关键词匹配
-  if (currentSettings.keyword) {
-    const keywords = currentSettings.keyword.split(',').map(k => k.trim()).filter(k => k);
-    if (keywords.some(keyword => domain.includes(keyword))) {
-      return true;
+  for (const site of currentSites) {
+    // 检查关键词匹配
+    if (site.keyword) {
+      const keywords = site.keyword.split(',').map(k => k.trim()).filter(k => k);
+      if (keywords.some(keyword => domain.includes(keyword))) {
+        return site;
+      }
     }
-  }
-  
-  // 检查模式匹配
-  if (currentSettings.pattern) {
-    const patterns = currentSettings.pattern.split(',').map(p => p.trim()).filter(p => p);
-    for (const pattern of patterns) {
-      // 将简单的通配符模式转换为正则表达式
-      const regexPattern = pattern.replace(/\./g, '\\.').replace(/\*/g, '.*');
-      const regex = new RegExp(`^${regexPattern}$`);
-      if (regex.test(domain)) {
-        return true;
+    
+    // 检查模式匹配
+    if (site.pattern) {
+      const patterns = site.pattern.split(',').map(p => p.trim()).filter(p => p);
+      for (const pattern of patterns) {
+        // 将简单的通配符模式转换为正则表达式
+        const regexPattern = pattern.replace(/\./g, '\\.').replace(/\*/g, '.*');
+        const regex = new RegExp(`^${regexPattern}$`);
+        if (regex.test(domain)) {
+          return site;
+        }
       }
     }
   }
   
-  return false;
+  return null;
 }
 
 // 添加横幅
-function addBanner() {
+function addBanner(site) {
   const banner = document.createElement('div');
   banner.id = 'enveil-banner';
-  banner.textContent = currentSettings.bannerText;
+  banner.textContent = site.bannerText;
   banner.style.position = 'fixed';
   banner.style.zIndex = '2147483647'; // 最大z-index值
-  banner.style.backgroundColor = currentSettings.bannerColor || '#FF0000';
+  banner.style.backgroundColor = site.bannerColor || '#FF0000';
   banner.style.color = 'white';
   banner.style.padding = '5px 10px';
   banner.style.fontSize = '12px';
   banner.style.fontWeight = 'bold';
   banner.style.pointerEvents = 'none'; // 不拦截鼠标事件
+  banner.style.transition = 'opacity 0.3s ease';
   
   // 根据设置的位置放置横幅
-  switch (currentSettings.bannerPosition) {
+  switch (site.bannerPosition) {
     case 'top-left':
       banner.style.top = '0';
       banner.style.left = '0';
@@ -117,7 +128,7 @@ function addBanner() {
 }
 
 // 添加蒙版
-function addOverlay() {
+function addOverlay(site) {
   const overlay = document.createElement('div');
   overlay.id = 'enveil-overlay';
   overlay.style.position = 'fixed';
@@ -126,10 +137,11 @@ function addOverlay() {
   overlay.style.left = '0';
   overlay.style.width = '100%';
   overlay.style.height = '100%';
-  overlay.style.backgroundColor = currentSettings.overlayColor || '#000000';
-  overlay.style.opacity = currentSettings.overlayOpacity || '0.3';
+  overlay.style.backgroundColor = site.overlayColor || '#000000';
+  overlay.style.opacity = site.overlayOpacity || '0.3';
   overlay.style.pointerEvents = 'none'; // 不拦截鼠标事件
   overlay.style.display = 'block';
+  overlay.style.transition = 'opacity 0.3s ease';
   
   document.body.appendChild(overlay);
 }

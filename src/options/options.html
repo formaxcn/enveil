@@ -25,6 +25,35 @@
       padding-bottom: 10px;
     }
     
+    .site-config {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 15px;
+      margin-bottom: 20px;
+      background-color: #fafafa;
+    }
+    
+    .site-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .site-header h3 {
+      margin: 0;
+      color: #333;
+    }
+    
+    .remove-site {
+      background-color: #ff4444;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    
     .form-group {
       margin-bottom: 15px;
     }
@@ -85,6 +114,15 @@
       background-color: #e0e0e0;
     }
     
+    .btn-danger {
+      background-color: #ff4444;
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      background-color: #cc0000;
+    }
+    
     .config-section {
       margin-top: 30px;
       padding-top: 20px;
@@ -116,63 +154,35 @@
       margin-bottom: 15px;
       color: #333;
     }
+    
+    #addSite {
+      margin-bottom: 20px;
+    }
+    
+    .sync-setting {
+      background-color: #e9f7ef;
+      border: 1px solid #d4edda;
+      border-radius: 4px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Enveil 配置</h1>
     
-    <div class="form-group">
-      <label for="pattern">域名匹配模式</label>
-      <input type="text" id="pattern" placeholder="例如: dev.*, staging.*, localhost:*">
-      <small>支持通配符(*)和正则表达式</small>
+    <div class="sync-setting">
+      <div class="form-group checkbox-group">
+        <input type="checkbox" id="syncSettings">
+        <label for="syncSettings">同步设置到Chrome云端（在不同设备间共享配置）</label>
+      </div>
     </div>
     
-    <div class="form-group">
-      <label for="keyword">域名关键词</label>
-      <input type="text" id="keyword" placeholder="例如: dev,staging,test">
-      <small>多个关键词用逗号分隔</small>
-    </div>
+    <button id="addSite" class="btn-primary">添加网站配置</button>
     
-    <div class="form-group">
-      <label for="bannerColor">条幅颜色</label>
-      <input type="color" id="bannerColor" value="#FF0000">
-    </div>
-    
-    <div class="form-group">
-      <label for="overlayColor">蒙版颜色</label>
-      <input type="color" id="overlayColor" value="#000000">
-    </div>
-    
-    <div class="form-group">
-      <label for="overlayOpacity">蒙版透明度</label>
-      <input type="range" id="overlayOpacity" min="0" max="1" step="0.1" value="0.3">
-      <span id="opacityValue">0.3</span>
-    </div>
-    
-    <div class="form-group checkbox-group">
-      <input type="checkbox" id="bannerEnabled">
-      <label for="bannerEnabled">启用条幅</label>
-    </div>
-    
-    <div class="form-group checkbox-group">
-      <input type="checkbox" id="overlayEnabled">
-      <label for="overlayEnabled">启用蒙版</label>
-    </div>
-    
-    <div class="form-group">
-      <label for="bannerText">条幅文字内容</label>
-      <input type="text" id="bannerText" placeholder="例如: DEVELOPMENT ENVIRONMENT">
-    </div>
-    
-    <div class="form-group">
-      <label for="bannerPosition">条幅位置</label>
-      <select id="bannerPosition">
-        <option value="top-left">左上角</option>
-        <option value="top-right">右上角</option>
-        <option value="bottom-left">左下角</option>
-        <option value="bottom-right">右下角</option>
-      </select>
+    <div id="sitesContainer">
+      <!-- 网站配置项将在这里动态生成 -->
     </div>
     
     <div class="button-group">
@@ -191,6 +201,70 @@
     </div>
   </div>
   
+  <!-- 网站配置模板 -->
+  <template id="siteTemplate">
+    <div class="site-config">
+      <div class="site-header">
+        <h3>网站配置</h3>
+        <button class="remove-site">删除</button>
+      </div>
+      
+      <div class="form-group">
+        <label>域名匹配模式</label>
+        <input type="text" class="pattern" placeholder="例如: dev.*, staging.*, localhost:*">
+        <small>支持通配符(*)和正则表达式，多个模式用逗号分隔</small>
+      </div>
+      
+      <div class="form-group">
+        <label>域名关键词</label>
+        <input type="text" class="keyword" placeholder="例如: dev,staging,test">
+        <small>多个关键词用逗号分隔</small>
+      </div>
+      
+      <div class="form-group">
+        <label>条幅颜色</label>
+        <input type="color" class="bannerColor" value="#FF0000">
+      </div>
+      
+      <div class="form-group">
+        <label>蒙版颜色</label>
+        <input type="color" class="overlayColor" value="#000000">
+      </div>
+      
+      <div class="form-group">
+        <label>蒙版透明度</label>
+        <input type="range" class="overlayOpacity" min="0" max="1" step="0.1" value="0.3">
+        <span class="opacityValue">0.3</span>
+      </div>
+      
+      <div class="form-group checkbox-group">
+        <input type="checkbox" class="bannerEnabled">
+        <label>启用条幅</label>
+      </div>
+      
+      <div class="form-group checkbox-group">
+        <input type="checkbox" class="overlayEnabled">
+        <label>启用蒙版</label>
+      </div>
+      
+      <div class="form-group">
+        <label>条幅文字内容</label>
+        <input type="text" class="bannerText" placeholder="例如: DEVELOPMENT ENVIRONMENT">
+      </div>
+      
+      <div class="form-group">
+        <label>条幅位置</label>
+        <select class="bannerPosition">
+          <option value="top-left">左上角</option>
+          <option value="top-right">右上角</option>
+          <option value="bottom-left">左下角</option>
+          <option value="bottom-right">右下角</option>
+        </select>
+      </div>
+    </div>
+  </template>
+  
+  <script src="../storage/storage.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

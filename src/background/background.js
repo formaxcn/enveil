@@ -7,10 +7,20 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === 'loading') {
     // 获取存储的设置
-    chrome.storage.sync.get(['enveilSettings'], function(result) {
-      const settings = result.enveilSettings || {};
-      // 发送消息到内容脚本
-      chrome.tabs.sendMessage(tabId, { action: 'updateSettings', settings: settings });
+    chrome.storage.sync.get(['enveilSites', 'enveilSync'], function(syncResult) {
+      // 首先尝试从同步存储获取
+      if (syncResult.enveilSites !== undefined || syncResult.enveilSync !== undefined) {
+        const sites = syncResult.enveilSites || [];
+        // 发送消息到内容脚本
+        chrome.tabs.sendMessage(tabId, { action: 'updateSettings', sites: sites });
+      } else {
+        // 如果同步存储中没有，则尝试从本地存储获取
+        chrome.storage.local.get(['enveilSites', 'enveilSync'], function(localResult) {
+          const sites = localResult.enveilSites || [];
+          // 发送消息到内容脚本
+          chrome.tabs.sendMessage(tabId, { action: 'updateSettings', sites: sites });
+        });
+      }
     });
   }
 });
