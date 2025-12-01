@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Enveil 设置</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    
+    .container {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      color: #333;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    
+    input, select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+    }
+    
+    .checkbox-group input {
+      width: auto;
+      margin-right: 10px;
+    }
+    
+    .button-group {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    .btn-primary {
+      background-color: #4CAF50;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background-color: #45a049;
+    }
+    
+    .btn-secondary {
+      background-color: #f0f0f0;
+      color: #333;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #e0e0e0;
+    }
+    
+    .config-section {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+    }
+    
+    .import-export-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .import-export-buttons button {
+      flex: 1;
+    }
+    
+    textarea {
+      width: 100%;
+      height: 150px;
+      font-family: monospace;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      resize: vertical;
+    }
+    
+    .section-title {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Enveil 配置</h1>
+    
+    <div class="form-group">
+      <label for="pattern">域名匹配模式</label>
+      <input type="text" id="pattern" placeholder="例如: dev.*, staging.*, localhost:*">
+      <small>支持通配符(*)和正则表达式</small>
+    </div>
+    
+    <div class="form-group">
+      <label for="keyword">域名关键词</label>
+      <input type="text" id="keyword" placeholder="例如: dev,staging,test">
+      <small>多个关键词用逗号分隔</small>
+    </div>
+    
+    <div class="form-group">
+      <label for="bannerColor">条幅颜色</label>
+      <input type="color" id="bannerColor" value="#FF0000">
+    </div>
+    
+    <div class="form-group">
+      <label for="overlayColor">蒙版颜色</label>
+      <input type="color" id="overlayColor" value="#000000">
+    </div>
+    
+    <div class="form-group">
+      <label for="overlayOpacity">蒙版透明度</label>
+      <input type="range" id="overlayOpacity" min="0" max="1" step="0.1" value="0.3">
+      <span id="opacityValue">0.3</span>
+    </div>
+    
+    <div class="form-group checkbox-group">
+      <input type="checkbox" id="bannerEnabled">
+      <label for="bannerEnabled">启用条幅</label>
+    </div>
+    
+    <div class="form-group checkbox-group">
+      <input type="checkbox" id="overlayEnabled">
+      <label for="overlayEnabled">启用蒙版</label>
+    </div>
+    
+    <div class="form-group">
+      <label for="bannerText">条幅文字内容</label>
+      <input type="text" id="bannerText" placeholder="例如: DEVELOPMENT ENVIRONMENT">
+    </div>
+    
+    <div class="form-group">
+      <label for="bannerPosition">条幅位置</label>
+      <select id="bannerPosition">
+        <option value="top-left">左上角</option>
+        <option value="top-right">右上角</option>
+        <option value="bottom-left">左下角</option>
+        <option value="bottom-right">右下角</option>
+      </select>
+    </div>
+    
+    <div class="button-group">
+      <button id="save" class="btn-primary">保存设置</button>
+      <button id="reset" class="btn-secondary">重置</button>
+    </div>
+    
+    <div class="config-section">
+      <h2 class="section-title">导入/导出配置</h2>
+      <div class="import-export-buttons">
+        <button id="exportBtn" class="btn-secondary">导出配置</button>
+        <button id="importBtn" class="btn-secondary">导入配置</button>
+      </div>
+      <input type="file" id="fileInput" accept=".json" style="display: none;">
+      <textarea id="configOutput" readonly placeholder="配置将在此处显示..."></textarea>
+    </div>
+  </div>
+  
+  <script src="options.js"></script>
+</body>
+</html>
