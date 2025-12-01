@@ -3,16 +3,20 @@ export class SwitchComponent {
   private input: HTMLInputElement;
   private storageKey: string;
   private storageType: 'local' | 'sync';
+  private persist: boolean;
   private onChangeCallback?: (isChecked: boolean) => void;
 
   constructor(
-    container: HTMLElement, 
-    label: string, 
-    storageKey: string, 
-    storageType: 'local' | 'sync' = 'local'
+    container: HTMLElement,
+    label: string,
+    storageKey: string,
+    storageType: 'local' | 'sync' = 'local',
+    initialValue: boolean = true,
+    persist: boolean = true
   ) {
     this.storageKey = storageKey;
     this.storageType = storageType;
+    this.persist = persist;
 
     // 创建开关组件HTML结构
     container.innerHTML = `
@@ -28,11 +32,16 @@ export class SwitchComponent {
     this.element = container;
     this.input = container.querySelector(`#${storageKey}-toggle`) as HTMLInputElement;
 
+    // Set initial value immediately
+    this.input.checked = initialValue;
+
     // 绑定事件
     this.input.addEventListener('change', this.handleChange.bind(this));
 
-    // 初始化状态
-    this.init();
+    // 初始化状态 (only if persisting)
+    if (this.persist) {
+      this.init();
+    }
   }
 
   private getStorage() {
@@ -80,25 +89,28 @@ export class SwitchComponent {
         });
       });
 
-      const isChecked = result[this.storageKey] !== undefined ? result[this.storageKey] : true;
+      const isChecked = result[this.storageKey] !== undefined ? result[this.storageKey] : this.input.checked;
       this.input.checked = isChecked;
     } catch (error) {
       console.error('Error initializing switch component:', error);
-      // 默认设为开启状态
-      this.input.checked = true;
     }
   }
 
   private handleChange() {
     const isChecked = this.input.checked;
-    
-    const storage = this.getStorage();
 
-    storage.set({ [this.storageKey]: isChecked }, () => {
+    if (this.persist) {
+      const storage = this.getStorage();
+      storage.set({ [this.storageKey]: isChecked }, () => {
+        if (this.onChangeCallback) {
+          this.onChangeCallback(isChecked);
+        }
+      });
+    } else {
       if (this.onChangeCallback) {
         this.onChangeCallback(isChecked);
       }
-    });
+    }
   }
 
   public onChange(callback: (isChecked: boolean) => void) {
@@ -112,8 +124,10 @@ export class SwitchComponent {
   public setChecked(checked: boolean) {
     this.input.checked = checked;
   }
-  
+
   public async waitForInitialization(): Promise<void> {
+    if (!this.persist) return Promise.resolve();
+
     return new Promise(resolve => {
       const checkInitialized = () => {
         if (this.input) {

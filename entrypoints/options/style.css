@@ -19,6 +19,7 @@ a {
   color: #646cff;
   text-decoration: inherit;
 }
+
 a:hover {
   color: #535bf2;
 }
@@ -27,13 +28,15 @@ body {
   margin: 0;
   display: flex;
   flex-direction: column;
-  min-width: 1400px;
-  min-height: 100vh;
+  min-height: 800px;
+  min-width: 1600px;
+  background-color: #242424;
+  color: rgba(255, 255, 255, 0.87);
 }
 
 #app {
-  width: calc(100% - 4rem);
-  max-width: 1200px;
+  width: 100%;
+  box-sizing: border-box;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
@@ -59,6 +62,7 @@ main {
 
 #right-panel {
   width: 70%;
+  flex: 1;
 }
 
 .switch-container {
@@ -68,7 +72,7 @@ main {
   width: 100%;
   justify-content: space-between;
   max-width: 200px;
-  margin: 0 auto 2rem auto;
+  margin: 0 auto 1rem auto;
 }
 
 .switch {
@@ -108,11 +112,11 @@ main {
   border-radius: 50%;
 }
 
-input:checked + .slider {
+input:checked+.slider {
   background-color: #646cff;
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
   transform: translateX(20px);
 }
 
@@ -131,42 +135,14 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
 button:hover {
   border-color: #646cff;
 }
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
-}
-
-#import-export-buttons {
-  margin: 20px 0;
-}
-
-.button-group {
-  display: flex;
-  gap: 10px;
-}
-
-#import-export-buttons button {
-  background-color: #4CAF50; /* Green */
-  border: none;
-  color: white;
-  padding: 10px 20px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  margin: 4px 2px;
-  cursor: pointer;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-#import-export-buttons button:nth-child(2) {
-  background-color: #008CBA; /* Blue */
 }
 
 /* 配置组列表样式 */
@@ -195,21 +171,23 @@ button:focus-visible {
 }
 
 #groups-list-container {
-  border: 1px solid #ddd;
+  border: 1px solid #444;
   border-radius: 4px;
   min-height: 200px;
   padding: 10px;
   text-align: left;
+  background-color: #2a2a2a;
 }
 
 .group-item {
   padding: 8px;
   margin: 5px 0;
-  background-color: #f5f5f5;
+  background-color: #333;
   border-radius: 4px;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
+  align-items: center;
 }
 
 .group-item.active {
@@ -218,7 +196,7 @@ button:focus-visible {
 }
 
 .group-item:hover {
-  background-color: #e0e0e0;
+  background-color: #444;
 }
 
 .group-item.active:hover {
@@ -227,9 +205,10 @@ button:focus-visible {
 
 /* 配置编辑器样式 */
 #config-editor-container {
-  border: 1px solid #ddd;
+  border: 1px solid #444;
   border-radius: 4px;
   padding: 15px;
+  background-color: #2a2a2a;
 }
 
 #config-editor-container .header-row {
@@ -243,21 +222,12 @@ button:focus-visible {
   margin: 0;
 }
 
-#save-config-btn {
-  padding: 8px 16px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
 /* 配置组容器样式 */
 .config-group-container {
-  border: 1px solid #ddd;
+  border: 1px solid #444;
   border-radius: 4px;
   margin-bottom: 20px;
-  background-color: #f9f9f9;
+  background-color: #2a2a2a;
 }
 
 .config-group-header {
@@ -265,8 +235,8 @@ button:focus-visible {
   justify-content: space-between;
   align-items: center;
   padding: 10px;
-  background-color: #eaeaea;
-  border-bottom: 1px solid #ddd;
+  background-color: #333;
+  border-bottom: 1px solid #444;
 }
 
 .config-group-title {
@@ -288,42 +258,92 @@ button:focus-visible {
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9em;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .config-group-table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 10px;
+  table-layout: fixed;
 }
 
 .config-group-table th,
 .config-group-table td {
-  border: 1px solid #ddd;
-  padding: 8px;
+  border: 1px solid #444;
+  padding: 6px 4px;
   text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9em;
+}
+
+/* Column widths */
+.config-group-table th:nth-child(1),
+.config-group-table td:nth-child(1) {
+  width: 70px;
+}
+
+.config-group-table th:nth-child(2),
+.config-group-table td:nth-child(2) {
+  width: 105px;
+}
+
+.config-group-table th:nth-child(3),
+.config-group-table td:nth-child(3) {
+  width: 140px;
+}
+
+.config-group-table th:nth-child(4),
+.config-group-table td:nth-child(4) {
+  width: 85px;
+}
+
+.config-group-table th:nth-child(5),
+.config-group-table td:nth-child(5) {
+  width: 75px;
+}
+
+.config-group-table th:nth-child(6),
+.config-group-table td:nth-child(6) {
+  width: 85px;
+}
+
+.config-group-table th:nth-child(7),
+.config-group-table td:nth-child(7) {
+  width: 80px;
+}
+
+.config-group-table th:nth-child(8),
+.config-group-table td:nth-child(8) {
+  width: 60px;
+}
+
+.config-group-table th:nth-child(9),
+.config-group-table td:nth-child(9) {
+  width: 70px;
 }
 
 .config-group-table th {
-  background-color: #f0f0f0;
+  background-color: #333;
 }
 
 .config-group-table tr:nth-child(even) {
-  background-color: #f5f5f5;
+  background-color: #2f2f2f;
 }
 
 .config-group-table tr:hover {
-  background-color: #eaeaea;
+  background-color: #3a3a3a;
 }
 
 .empty-group-message {
   text-align: center;
   padding: 20px;
-  color: #666;
+  color: #aaa;
   font-style: italic;
-}
-
-#import-file-input {
-  display: none;
 }
 
 /* 模态框样式 */
@@ -358,16 +378,16 @@ button:focus-visible {
 
 .modal-content {
   position: relative;
-  background-color: #fff;
+  background-color: #2a2a2a;
   border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   width: 90%;
   max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
   transform: translateY(-50px);
   transition: transform 0.3s ease;
-  color: #213547;
+  color: rgba(255, 255, 255, 0.87);
 }
 
 .modal.show .modal-content {
@@ -379,7 +399,7 @@ button:focus-visible {
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #444;
 }
 
 .modal-header h3 {
@@ -402,7 +422,7 @@ button:focus-visible {
 }
 
 .modal-close:hover {
-  color: #333;
+  color: #fff;
 }
 
 .modal-body {
@@ -423,10 +443,12 @@ button:focus-visible {
 .form-group select {
   width: 100%;
   padding: 0.5rem;
-  border: 1px solid #ddd;
+  border: 1px solid #444;
   border-radius: 4px;
   font-size: 1rem;
   box-sizing: border-box;
+  background-color: #333;
+  color: white;
 }
 
 .form-group input[type="color"] {
@@ -462,8 +484,8 @@ button:focus-visible {
 }
 
 .cancel-btn {
-  background-color: #f5f5f5;
-  color: #333;
+  background-color: #444;
+  color: white;
 }
 
 .save-btn {
@@ -472,34 +494,10 @@ button:focus-visible {
 }
 
 .cancel-btn:hover {
-  background-color: #e0e0e0;
+  background-color: #555;
 }
 
 .save-btn:hover {
-  background-color: #45a049;
-}
-
-.floating-add-button {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  font-size: 2rem;
-  cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 100;
-  transition: background-color 0.3s;
-}
-
-.floating-add-button:hover {
   background-color: #45a049;
 }
 
@@ -508,59 +506,112 @@ button:focus-visible {
     color: #213547;
     background-color: #ffffff;
   }
+
+  body {
+    background-color: #ffffff;
+    color: #213547;
+  }
+
   a:hover {
     color: #747bff;
   }
+
   button {
     background-color: #f9f9f9;
   }
-  
-  #import-export-buttons button {
-    background-color: #4CAF50;
-    color: white;
-  }
-  
-  #import-export-buttons button:nth-child(2) {
-    background-color: #008CBA;
-  }
-  
+
   .group-item {
     background-color: #f5f5f5;
+    color: #213547;
   }
-  
+
   .group-item:hover {
     background-color: #e0e0e0;
   }
-  
+
   .group-item.active {
     background-color: #646cff;
     color: white;
   }
-  
+
   .group-item.active:hover {
     background-color: #535bf2;
   }
-  
+
   .config-group-container {
     background-color: #f9f9f9;
+    border-color: #ddd;
   }
-  
+
   .config-group-header {
     background-color: #eaeaea;
+    border-bottom-color: #ddd;
+  }
+
+  #groups-list-container {
+    background-color: white;
+    border-color: #ddd;
+  }
+
+  .config-group-table th,
+  .config-group-table td {
+    border-color: #ddd;
+  }
+
+  .config-group-table th {
+    background-color: #f0f0f0;
+  }
+
+  .config-group-table tr:nth-child(even) {
+    background-color: #f5f5f5;
+  }
+
+  .config-group-table tr:hover {
+    background-color: #eaeaea;
+  }
+
+  #config-editor-container {
+    background-color: white;
+    border-color: #ddd;
+  }
+
+  .modal-content {
+    background-color: #fff;
+    color: #213547;
+  }
+
+  .modal-header {
+    border-bottom-color: #eee;
+  }
+
+  .form-group input,
+  .form-group select {
+    background-color: white;
+    border-color: #ddd;
+    color: #213547;
+  }
+
+  .cancel-btn {
+    background-color: #f5f5f5;
+    color: #333;
+  }
+
+  .cancel-btn:hover {
+    background-color: #e0e0e0;
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 500px) {
   #options-container {
     flex-direction: column;
   }
-  
+
   #left-panel,
   #right-panel {
     width: 100%;
     padding-right: 0;
   }
-  
+
   #left-panel {
     margin-bottom: 20px;
   }
