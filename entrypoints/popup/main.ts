@@ -39,16 +39,23 @@ configureBtn.addEventListener('click', () => {
   if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.openOptionsPage) {
     chrome.runtime.openOptionsPage();
   } else {
-    console.warn('Cannot open options page: chrome.runtime.openOptionsPage is not available');
+    // Fallback method to open options page
+    window.open(chrome.runtime.getURL('options.html'));
   }
 });
 
 // 添加配置按钮点击事件
 addConfigBtn.addEventListener('click', () => {
-  // 打开选项页面
-  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.openOptionsPage) {
-    chrome.runtime.openOptionsPage();
+  // 发送消息到 content script 要求添加当前站点
+  if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.query) {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs: any) => {
+      if (tabs.length > 0 && tabs[0].id) {
+        chrome.tabs.sendMessage(tabs[0].id, { 
+          action: 'addCurrentSite' 
+        });
+      }
+    });
   } else {
-    console.warn('Cannot open options page: chrome.runtime.openOptionsPage is not available');
+    console.warn('Cannot send message to content script: chrome.tabs is not available');
   }
 });
