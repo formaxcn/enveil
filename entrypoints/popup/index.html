@@ -5,9 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Enveil</title>
     <meta name="manifest.type" content="browser_action" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@5.15.4/css/all.min.css" />
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <div class="container">
+        <div class="header">
+          <div id="enable-switch"></div>
+        </div>
+        
+        <div class="content">
+          <div class="options-container">
+            <button id="configure-btn" class="configure-button">Options</button>
+            <a href="https://github.com/formaxcn/enveil" target="_blank" id="github-link" class="icon-link">
+              <i class="fab fa-github"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="./main.ts"></script>
   </body>
 </html>
