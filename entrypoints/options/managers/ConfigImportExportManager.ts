@@ -7,18 +7,21 @@ export class ConfigImportExportManager {
   private appConfig: AppConfig;
   private notificationCallback: (message: string, type: 'success' | 'error' | 'warning' | 'info') => void;
   private selectedGroups: number[];
-  private updateConfigDisplayCallback: () => void;
+  private saveConfigCallback: () => void;
+  private updateConfigCallback: (newConfig: AppConfig) => void;
 
   constructor(
     appConfig: AppConfig,
-    notificationCallback: (message: string, type: 'success' | 'error' | 'warning' | 'info') => void,
     selectedGroups: number[],
-    updateConfigDisplayCallback: () => void
+    notificationCallback: (message: string, type: 'success' | 'error' | 'warning' | 'info') => void,
+    saveConfigCallback: () => void,
+    updateConfigCallback: (newConfig: AppConfig) => void
   ) {
     this.appConfig = appConfig;
-    this.notificationCallback = notificationCallback;
     this.selectedGroups = selectedGroups;
-    this.updateConfigDisplayCallback = updateConfigDisplayCallback;
+    this.notificationCallback = notificationCallback;
+    this.saveConfigCallback = saveConfigCallback;
+    this.updateConfigCallback = updateConfigCallback;
   }
 
   // 更新配置引用
@@ -32,7 +35,7 @@ export class ConfigImportExportManager {
   }
 
   // 初始化导入导出功能
-  public initImportExport(): void {
+  public initImportExportUI(): void {
     // 导出配置（根据选择状态决定导出全部或选定）
     const exportBtn = document.getElementById('export-btn') as HTMLButtonElement;
     if (exportBtn) {
@@ -377,8 +380,8 @@ export class ConfigImportExportManager {
           }
         }
         
-        // 更新UI
-        this.updateConfigDisplayCallback();
+        // 更新配置
+          this.updateConfigCallback(this.appConfig);
         
         // 显示成功通知
         this.notificationCallback('Configuration imported successfully!', 'success');
@@ -523,8 +526,8 @@ export class ConfigImportExportManager {
           this.appConfig.gitConfig = backupData.gitConfig;
         }
         
-        // 更新UI
-        this.updateConfigDisplayCallback();
+        // 更新配置
+        this.updateConfigCallback(this.appConfig);
         
         this.notificationCallback('配置恢复成功', 'success');
       } catch (error) {

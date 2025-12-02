@@ -86,77 +86,7 @@ export class SiteEditorManager {
 
   // 更新配置显示
   public updateConfigDisplay(): void {
-    this.renderGroupsList();
     this.renderConfigGroups();
-  }
-
-  // 渲染配置组列表
-  private renderGroupsList(): void {
-    const groupsListContainer = document.getElementById('groups-list-container') as HTMLDivElement;
-    if (!groupsListContainer) return;
-
-    groupsListContainer.innerHTML = '';
-
-    // 创建配置组选择器
-    const groupsList = document.createElement('ul');
-    groupsList.className = 'groups-list';
-
-    this.appConfig.settings.forEach((setting, index) => {
-      const listItem = document.createElement('li');
-      listItem.className = `group-item ${this.selectedGroups.includes(index) ? 'selected' : ''}`;
-      listItem.dataset.index = index.toString();
-
-      // 配置组名称
-      const groupName = document.createElement('span');
-      groupName.className = 'group-name';
-      groupName.textContent = setting.name;
-      groupName.title = setting.name;
-
-      // 启用/禁用开关
-      const toggleSwitch = document.createElement('input');
-      toggleSwitch.type = 'checkbox';
-      toggleSwitch.className = 'group-toggle';
-      toggleSwitch.checked = setting.enable;
-      toggleSwitch.addEventListener('change', (e) => {
-        e.stopPropagation();
-        setting.enable = toggleSwitch.checked;
-        this.saveConfigCallback();
-      });
-
-      // 编辑配置组名称按钮
-      const editBtn = document.createElement('button');
-      editBtn.className = 'group-edit-btn';
-      editBtn.textContent = '✏️';
-      editBtn.title = 'Edit group name';
-      editBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.editConfigGroupName(index);
-      });
-
-      // 删除配置组按钮
-      const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'group-delete-btn';
-      deleteBtn.textContent = '🗑️';
-      deleteBtn.title = 'Delete group';
-      deleteBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.deleteConfigGroup(index);
-      });
-
-      listItem.appendChild(toggleSwitch);
-      listItem.appendChild(groupName);
-      listItem.appendChild(editBtn);
-      listItem.appendChild(deleteBtn);
-
-      // 添加点击事件
-      listItem.addEventListener('click', () => {
-        this.toggleGroupSelection(index);
-      });
-
-      groupsList.appendChild(listItem);
-    });
-
-    groupsListContainer.appendChild(groupsList);
   }
 
   // 渲染配置组内容
@@ -198,10 +128,57 @@ export class SiteEditorManager {
     groupElement.className = 'config-group';
     groupElement.dataset.groupIndex = groupIndex.toString();
 
-    // 配置组标题
+    // 配置组标题和操作栏
     const groupHeader = document.createElement('div');
     groupHeader.className = 'group-header';
-    groupHeader.innerHTML = `<h3>${setting.name} <span class="site-count">(${setting.sites.length} sites)</span></h3>`;
+    
+    // 组名称和开关
+    const headerLeft = document.createElement('div');
+    headerLeft.className = 'group-header-left';
+    
+    // 启用/禁用开关
+    const toggleSwitch = document.createElement('input');
+    toggleSwitch.type = 'checkbox';
+    toggleSwitch.className = 'group-toggle';
+    toggleSwitch.checked = setting.enable;
+    toggleSwitch.addEventListener('change', () => {
+      setting.enable = toggleSwitch.checked;
+      this.saveConfigCallback();
+    });
+    
+    const groupTitle = document.createElement('h3');
+    groupTitle.innerHTML = `${setting.name} <span class="site-count">(${setting.sites.length} sites)</span>`;
+    
+    headerLeft.appendChild(toggleSwitch);
+    headerLeft.appendChild(groupTitle);
+    
+    // 组操作按钮
+    const headerActions = document.createElement('div');
+    headerActions.className = 'group-header-actions';
+    
+    // 编辑配置组名称按钮
+    const editBtn = document.createElement('button');
+    editBtn.className = 'group-edit-btn';
+    editBtn.textContent = '✏️';
+    editBtn.title = 'Edit group name';
+    editBtn.addEventListener('click', () => {
+      this.editConfigGroupName(groupIndex);
+    });
+    
+    // 删除配置组按钮
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'group-delete-btn';
+    deleteBtn.textContent = '🗑️';
+    deleteBtn.title = 'Delete group';
+    deleteBtn.addEventListener('click', () => {
+      this.deleteConfigGroup(groupIndex);
+    });
+    
+    headerActions.appendChild(editBtn);
+    headerActions.appendChild(deleteBtn);
+    
+    groupHeader.appendChild(headerLeft);
+    groupHeader.appendChild(headerActions);
 
     // 网站列表容器
     const sitesList = document.createElement('div');
