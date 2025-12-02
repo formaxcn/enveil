@@ -23,13 +23,26 @@
               </div>
               <input type="file" id="import-file-input" accept=".json" />
             </div>
+            
+            <!-- Config Groups List -->
+            <div id="config-groups-list">
+              <div class="header-row">
+                <h3>Configuration Groups</h3>
+                <button id="add-config-group">+</button>
+              </div>
+              <div id="groups-list-container">
+                <!-- Groups list will be rendered here -->
+              </div>
+            </div>
+            
+            <button id="save-config-btn">Save Configuration</button>
           </div>
           
           <!-- Right Panel (70%) -->
           <div id="right-panel">
             <div id="config-editor-container">
               <div class="header-row">
-                <h3 id="editor-title">Configuration Editor</h3>
+                <h3 id="editor-title">Default</h3>
               </div>
               
               <!-- Configuration Groups Tables Container -->
@@ -41,6 +54,10 @@
         </div>
       </main>
     </div>
+    
+    <!-- Floating Add Button -->
+    <button class="floating-add-button">+</button>
+    
     <script type="module" src="./main.ts"></script>
   </body>
 </html>

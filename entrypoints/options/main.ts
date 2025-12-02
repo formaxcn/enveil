@@ -1,5 +1,6 @@
 import './style.css';
 import { SwitchComponent } from '../../components/SwitchComponent';
+import { AddSiteModal } from '../../components/AddSiteModal';
 
 // 添加类型声明
 declare const chrome: any;
@@ -11,7 +12,7 @@ interface SiteConfig {
   matchValue: string;
   envName: string;
   color: string;
-  backgroudEnable: boolean;
+  backgroundEnable: boolean;
   Position: string;
   flagEnable: boolean;
 }
@@ -41,7 +42,7 @@ let appConfig: AppConfig = {
           matchValue: "baidu.com",
           envName: "dev",
           color: "#FF0000",
-          backgroudEnable: false,
+          backgroundEnable: false,
           Position: "leftTop",
           flagEnable: false
         }
@@ -65,19 +66,41 @@ document.addEventListener('DOMContentLoaded', () => {
   const importBtn = document.getElementById('import-btn') as HTMLButtonElement;
   const importFileInput = document.getElementById('import-file-input') as HTMLInputElement;
   
-  // 获取配置显示区域
-  const configJsonElement = document.getElementById('config-json') as HTMLPreElement;
-  
   // 获取配置表格容器
   const groupsListContainer = document.getElementById('groups-list-container') as HTMLDivElement;
   const addConfigGroupBtn = document.getElementById('add-config-group') as HTMLButtonElement;
   const configGroupsContainer = document.getElementById('config-groups-container') as HTMLDivElement;
   const saveConfigBtn = document.getElementById('save-config-btn') as HTMLButtonElement;
-  const editorTitle = document.getElementById('editor-title') as HTMLHeadingElement;
+  
+  // 获取浮动添加按钮
+  const floatingAddButton = document.querySelector('.floating-add-button') as HTMLButtonElement;
+  
+  // 创建添加网站模态框
+  const addSiteModal = new AddSiteModal();
+  addSiteModal.onSave((site: SiteConfig) => {
+    // 添加到默认组（索引为0）
+    if (!appConfig.settings[0]) {
+      // 如果默认组不存在，创建它
+      appConfig.settings.push({
+        name: "default",
+        enable: true,
+        sites: []
+      });
+    }
+    
+    appConfig.settings[0].sites.push(site);
+    updateConfigDisplay();
+  });
+  
+  // 绑定浮动按钮点击事件
+  if (floatingAddButton) {
+    floatingAddButton.addEventListener('click', () => {
+      addSiteModal.open();
+    });
+  }
   
   // 更新配置显示
   function updateConfigDisplay() {
-    configJsonElement.textContent = JSON.stringify(appConfig, null, 2);
     renderGroupsList();
     renderConfigGroups();
   }
@@ -151,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
           matchValue: "",
           envName: "dev",
           color: "#FF0000",
-          backgroudEnable: false,
+          backgroundEnable: false,
           Position: "leftTop",
           flagEnable: false
         };
@@ -232,7 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const bgCell = document.createElement('td');
           const bgEnableContainer = document.createElement('div');
           const bgSwitch = new SwitchComponent(bgEnableContainer, '', `site-${groupIndex}-${siteIndex}-bg`, 'local');
-          bgSwitch.setChecked(site.backgroudEnable);
+          bgSwitch.setChecked(site.backgroundEnable);
           bgCell.appendChild(bgEnableContainer);
           row.appendChild(bgCell);
           
@@ -290,47 +313,57 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   // 添加新的配置组
-  addConfigGroupBtn.addEventListener('click', () => {
-    const newSetting: Setting = {
-      name: `Group ${appConfig.settings.length + 1}`,
-      enable: true,
-      sites: []
-    };
-    
-    appConfig.settings.push(newSetting);
-    updateConfigDisplay();
-  });
+  if (addConfigGroupBtn) {
+    addConfigGroupBtn.addEventListener('click', () => {
+      const newSetting: Setting = {
+        name: `Group ${appConfig.settings.length + 1}`,
+        enable: true,
+        sites: []
+      };
+      
+      appConfig.settings.push(newSetting);
+      updateConfigDisplay();
+    });
+  }
   
   // 保存配置按钮事件
-  saveConfigBtn.addEventListener('click', () => {
-    alert('Configuration saved successfully!');
-    // 在实际应用中，这里应该保存到存储中
-  });
+  if (saveConfigBtn) {
+    saveConfigBtn.addEventListener('click', () => {
+      alert('Configuration saved successfully!');
+      // 在实际应用中，这里应该保存到存储中
+    });
+  }
   
   // 初始化配置显示
   updateConfigDisplay();
   
   // 导出按钮点击事件
-  exportBtn.addEventListener('click', () => {
-    alert('Export functionality will be implemented here');
-    // TODO: 实现导出功能
-  });
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      alert('Export functionality will be implemented here');
+      // TODO: 实现导出功能
+    });
+  }
   
   // 导入按钮点击事件
-  importBtn.addEventListener('click', () => {
-    importFileInput.click();
-  });
+  if (importBtn) {
+    importBtn.addEventListener('click', () => {
+      importFileInput.click();
+    });
+  }
   
   // 文件选择事件
-  importFileInput.addEventListener('change', (event) => {
-    const files = (event.target as HTMLInputElement).files;
-    if (files && files.length > 0) {
-      alert('Import functionality will be implemented here');
-      // TODO: 实现导入功能
-      // 清空文件输入框
-      importFileInput.value = '';
-    }
-  });
+  if (importFileInput) {
+    importFileInput.addEventListener('change', (event) => {
+      const files = (event.target as HTMLInputElement).files;
+      if (files && files.length > 0) {
+        alert('Import functionality will be implemented here');
+        // TODO: 实现导入功能
+        // 清空文件输入框
+        importFileInput.value = '';
+      }
+    });
+  }
   
   // 浏览器同步开关变化事件
   syncSwitch.onChange((isChecked: boolean) => {
