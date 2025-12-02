@@ -13,7 +13,25 @@
       </header>
       <main>
         <div id="options-container">
+          <!-- 整体开关 -->
           <div id="enable-switch-option"></div>
+          
+          <!-- Browser Sync Switch -->
+          <div id="browser-sync-option"></div>
+          
+          <!-- Import/Export Buttons -->
+          <div id="import-export-buttons" style="margin: 20px 0; display: flex; justify-content: center; gap: 10px;">
+            <button id="export-btn">Export Config</button>
+            <button id="import-btn">Import Config</button>
+            <input type="file" id="import-file-input" accept=".json" style="display: none;" />
+          </div>
+          
+          <!-- Configuration Display Area -->
+          <div id="config-display" style="margin-top: 20px; padding: 15px; background-color: #eee; border-radius: 5px; text-align: left;">
+            <h3>Current Configuration:</h3>
+            <pre id="config-json" style="white-space: pre-wrap; word-break: break-all;"></pre>
+          </div>
+          
           <div style="margin-top: 20px; padding: 15px; background-color: #eee; border-radius: 5px;">
             <h3>How to use Enveil:</h3>
             <ul style="text-align: left; max-width: 500px; margin: 0 auto;">

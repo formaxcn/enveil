@@ -125,6 +125,24 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+#import-export-buttons button {
+  background-color: #4CAF50; /* Green */
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+#import-export-buttons button:nth-child(2) {
+  background-color: #008CBA; /* Blue */
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
@@ -135,5 +153,14 @@ button:focus-visible {
   }
   button {
     background-color: #f9f9f9;
+  }
+  
+  #import-export-buttons button {
+    background-color: #4CAF50;
+    color: white;
+  }
+  
+  #import-export-buttons button:nth-child(2) {
+    background-color: #008CBA;
   }
 }
