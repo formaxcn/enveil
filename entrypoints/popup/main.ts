@@ -1,6 +1,9 @@
 import './style.css';
 import { SwitchComponent } from '../../components/SwitchComponent';
 
+// 添加类型声明
+declare const chrome: any;
+
 // 获取元素
 const configureBtn = document.getElementById('configure-btn') as HTMLButtonElement;
 
@@ -32,5 +35,9 @@ globalSwitch.waitForInitialization().then(() => {
 
 // 配置按钮点击事件
 configureBtn.addEventListener('click', () => {
-  (globalThis as any).chrome.runtime.openOptionsPage();
+  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.openOptionsPage) {
+    chrome.runtime.openOptionsPage();
+  } else {
+    console.warn('Cannot open options page: chrome.runtime.openOptionsPage is not available');
+  }
 });

@@ -1,6 +1,9 @@
 import './style.css';
 import { SwitchComponent } from '../../components/SwitchComponent';
 
+// 添加类型声明
+declare const chrome: any;
+
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Options page loaded');
   

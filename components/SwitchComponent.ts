@@ -35,10 +35,43 @@ export class SwitchComponent {
     this.init();
   }
 
+  private getStorage() {
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+      return this.storageType === 'local' ? chrome.storage.local : chrome.storage.sync;
+    } else if (typeof browser !== 'undefined' && browser.storage) {
+      // Firefox uses browser namespace
+      return this.storageType === 'local' ? browser.storage.local : browser.storage.sync;
+    } else {
+      // Fallback storage using localStorage
+      return {
+        get: (keys: string[], callback: (result: { [key: string]: any }) => void) => {
+          const result: { [key: string]: any } = {};
+          keys.forEach(key => {
+            try {
+              const item = localStorage.getItem(key);
+              result[key] = item ? JSON.parse(item) : undefined;
+            } catch (e) {
+              result[key] = undefined;
+            }
+          });
+          callback(result);
+        },
+        set: (items: { [key: string]: any }, callback?: () => void) => {
+          Object.keys(items).forEach(key => {
+            try {
+              localStorage.setItem(key, JSON.stringify(items[key]));
+            } catch (e) {
+              console.error('Error saving to localStorage:', e);
+            }
+          });
+          if (callback) callback();
+        }
+      };
+    }
+  }
+
   private async init() {
-    const storage = this.storageType === 'local' 
-      ? (globalThis as any).chrome.storage.local 
-      : (globalThis as any).chrome.storage.sync;
+    const storage = this.getStorage();
 
     try {
       const result = await new Promise<{ [key: string]: any }>(resolve => {
@@ -59,9 +92,7 @@ export class SwitchComponent {
   private handleChange() {
     const isChecked = this.input.checked;
     
-    const storage = this.storageType === 'local' 
-      ? (globalThis as any).chrome.storage.local 
-      : (globalThis as any).chrome.storage.sync;
+    const storage = this.getStorage();
 
     storage.set({ [this.storageKey]: isChecked }, () => {
       if (this.onChangeCallback) {
