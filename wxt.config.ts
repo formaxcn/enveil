@@ -11,7 +11,7 @@ export default defineConfig({
       "32": "icon/32.png",
       "48": "icon/48.png",
       "96": "icon/96.png",
-      "128": "icon/128_compressed.png"
+      "128": "icon/128.png"
     }
   }
 });
