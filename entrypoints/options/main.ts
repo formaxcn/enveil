@@ -50,6 +50,9 @@ let appConfig: AppConfig = {
   ]
 };
 
+// 当前选中的组索引
+let selectedGroupIndex: number | null = null;
+
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Options page loaded');
   
@@ -66,226 +69,223 @@ document.addEventListener('DOMContentLoaded', () => {
   const configJsonElement = document.getElementById('config-json') as HTMLPreElement;
   
   // 获取配置表格容器
-  const configTableContainer = document.getElementById('config-table') as HTMLDivElement;
+  const groupsListContainer = document.getElementById('groups-list-container') as HTMLDivElement;
   const addConfigGroupBtn = document.getElementById('add-config-group') as HTMLButtonElement;
+  const configGroupsContainer = document.getElementById('config-groups-container') as HTMLDivElement;
+  const saveConfigBtn = document.getElementById('save-config-btn') as HTMLButtonElement;
+  const editorTitle = document.getElementById('editor-title') as HTMLHeadingElement;
   
   // 更新配置显示
   function updateConfigDisplay() {
     configJsonElement.textContent = JSON.stringify(appConfig, null, 2);
-    renderConfigTable();
+    renderGroupsList();
+    renderConfigGroups();
   }
   
-  // 渲染配置表格
-  function renderConfigTable() {
-    if (!configTableContainer) return;
+  // 渲染配置组列表
+  function renderGroupsList() {
+    if (!groupsListContainer) return;
     
-    configTableContainer.innerHTML = '';
+    groupsListContainer.innerHTML = '';
+    
+    appConfig.settings.forEach((setting, index) => {
+      const groupItem = document.createElement('div');
+      groupItem.className = 'group-item';
+      if (index === selectedGroupIndex) {
+        groupItem.classList.add('active');
+      }
+      groupItem.innerHTML = `
+        <span>${setting.name}</span>
+        <span>
+          <i class="fas fa-${setting.enable ? 'check-circle' : 'times-circle'}"></i>
+        </span>
+      `;
+      
+      groupItem.addEventListener('click', () => {
+        selectedGroupIndex = index;
+        updateConfigDisplay();
+      });
+      
+      groupsListContainer.appendChild(groupItem);
+    });
+  }
+  
+  // 渲染所有配置组表格
+  function renderConfigGroups() {
+    if (!configGroupsContainer) return;
+    
+    configGroupsContainer.innerHTML = '';
     
     appConfig.settings.forEach((setting, groupIndex) => {
-      // 创建组容器
+      // 创建配置组容器
       const groupContainer = document.createElement('div');
-      groupContainer.className = 'config-group';
-      groupContainer.style.border = '1px solid #ddd';
-      groupContainer.style.borderRadius = '4px';
-      groupContainer.style.marginBottom = '10px';
+      groupContainer.className = 'config-group-container';
       
-      // 创建组标题栏
+      // 创建组头部
       const groupHeader = document.createElement('div');
-      groupHeader.className = 'group-header';
-      groupHeader.style.display = 'flex';
-      groupHeader.style.justifyContent = 'space-between';
-      groupHeader.style.padding = '10px';
-      groupHeader.style.backgroundColor = '#f5f5f5';
-      groupHeader.style.cursor = 'pointer';
+      groupHeader.className = 'config-group-header';
       
-      const groupName = document.createElement('span');
-      groupName.textContent = setting.name;
-      groupName.style.fontWeight = 'bold';
+      // 组标题
+      const groupTitle = document.createElement('div');
+      groupTitle.className = 'config-group-title';
+      groupTitle.textContent = setting.name;
       
+      // 组操作区
       const groupActions = document.createElement('div');
+      groupActions.className = 'config-group-actions';
       
-      const toggleButton = document.createElement('button');
-      toggleButton.innerHTML = '<i class="fas fa-chevron-down"></i>';
-      toggleButton.style.marginRight = '5px';
-      toggleButton.style.background = 'none';
-      toggleButton.style.border = 'none';
-      toggleButton.style.cursor = 'pointer';
-      
+      // 启用开关
       const enableSwitchContainer = document.createElement('div');
-      enableSwitchContainer.style.display = 'inline-block';
-      const groupSwitch = new SwitchComponent(enableSwitchContainer, '', `${setting.name}-enable`, 'local');
+      const groupSwitch = new SwitchComponent(enableSwitchContainer, '', `group-${groupIndex}-enable`, 'local');
       groupSwitch.setChecked(setting.enable);
       
-      groupActions.appendChild(toggleButton);
-      groupActions.appendChild(enableSwitchContainer);
+      // 添加站点按钮
+      const addSiteBtn = document.createElement('button');
+      addSiteBtn.className = 'add-site-btn';
+      addSiteBtn.innerHTML = '<i class="fas fa-plus"></i> Add Site';
+      addSiteBtn.addEventListener('click', () => {
+        // 添加一个新的站点配置
+        const newSite: SiteConfig = {
+          enable: true,
+          matchPattern: "domain",
+          matchValue: "",
+          envName: "dev",
+          color: "#FF0000",
+          backgroudEnable: false,
+          Position: "leftTop",
+          flagEnable: false
+        };
+        
+        appConfig.settings[groupIndex].sites.push(newSite);
+        updateConfigDisplay();
+      });
       
-      groupHeader.appendChild(groupName);
+      groupActions.appendChild(enableSwitchContainer);
+      groupActions.appendChild(addSiteBtn);
+      
+      groupHeader.appendChild(groupTitle);
       groupHeader.appendChild(groupActions);
       
-      // 创建详细配置区域
-      const detailContainer = document.createElement('div');
-      detailContainer.className = 'group-details';
-      detailContainer.style.display = 'none';
-      detailContainer.style.padding = '10px';
+      // 创建组表格
+      const groupTable = document.createElement('table');
+      groupTable.className = 'config-group-table';
       
-      // 创建站点配置表格
-      const sitesTable = document.createElement('table');
-      sitesTable.style.width = '100%';
-      sitesTable.style.borderCollapse = 'collapse';
+      // 如果没有站点，则显示提示信息
+      if (setting.sites.length === 0) {
+        const emptyMessageRow = document.createElement('tr');
+        const emptyMessageCell = document.createElement('td');
+        emptyMessageCell.colSpan = 9;
+        emptyMessageCell.className = 'empty-group-message';
+        emptyMessageCell.textContent = 'No sites configured. Click "Add Site" to get started.';
+        emptyMessageRow.appendChild(emptyMessageCell);
+        groupTable.appendChild(emptyMessageRow);
+      } else {
+        // 表头
+        const tableHeader = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        
+        const headers = ['Enable', 'Match Pattern', 'Match Value', 'Env Name', 'Color', 'Background', 'Position', 'Flag', 'Actions'];
+        headers.forEach(headerText => {
+          const th = document.createElement('th');
+          th.textContent = headerText;
+          headerRow.appendChild(th);
+        });
+        
+        tableHeader.appendChild(headerRow);
+        groupTable.appendChild(tableHeader);
+        
+        // 表体
+        const tableBody = document.createElement('tbody');
+        
+        setting.sites.forEach((site, siteIndex) => {
+          const row = document.createElement('tr');
+          
+          // Enable
+          const enableCell = document.createElement('td');
+          const siteEnableContainer = document.createElement('div');
+          const siteSwitch = new SwitchComponent(siteEnableContainer, '', `site-${groupIndex}-${siteIndex}-enable`, 'local');
+          siteSwitch.setChecked(site.enable);
+          enableCell.appendChild(siteEnableContainer);
+          row.appendChild(enableCell);
+          
+          // Match Pattern
+          const patternCell = document.createElement('td');
+          patternCell.textContent = site.matchPattern;
+          row.appendChild(patternCell);
+          
+          // Match Value
+          const valueCell = document.createElement('td');
+          valueCell.textContent = site.matchValue;
+          row.appendChild(valueCell);
+          
+          // Env Name
+          const envCell = document.createElement('td');
+          envCell.textContent = site.envName;
+          row.appendChild(envCell);
+          
+          // Color
+          const colorCell = document.createElement('td');
+          colorCell.textContent = site.color;
+          row.appendChild(colorCell);
+          
+          // Background
+          const bgCell = document.createElement('td');
+          const bgEnableContainer = document.createElement('div');
+          const bgSwitch = new SwitchComponent(bgEnableContainer, '', `site-${groupIndex}-${siteIndex}-bg`, 'local');
+          bgSwitch.setChecked(site.backgroudEnable);
+          bgCell.appendChild(bgEnableContainer);
+          row.appendChild(bgCell);
+          
+          // Position
+          const posCell = document.createElement('td');
+          posCell.textContent = site.Position;
+          row.appendChild(posCell);
+          
+          // Flag
+          const flagCell = document.createElement('td');
+          const flagEnableContainer = document.createElement('div');
+          const flagSwitch = new SwitchComponent(flagEnableContainer, '', `site-${groupIndex}-${siteIndex}-flag`, 'local');
+          flagSwitch.setChecked(site.flagEnable);
+          flagCell.appendChild(flagEnableContainer);
+          row.appendChild(flagCell);
+          
+          // Actions
+          const actionsCell = document.createElement('td');
+          const editBtn = document.createElement('button');
+          editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+          editBtn.style.background = 'none';
+          editBtn.style.border = 'none';
+          editBtn.style.cursor = 'pointer';
+          editBtn.style.marginRight = '5px';
+          
+          const deleteBtn = document.createElement('button');
+          deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+          deleteBtn.style.background = 'none';
+          deleteBtn.style.border = 'none';
+          deleteBtn.style.cursor = 'pointer';
+          
+          // 删除按钮事件
+          deleteBtn.addEventListener('click', () => {
+            if (confirm(`Are you sure you want to delete this site configuration?`)) {
+              appConfig.settings[groupIndex].sites.splice(siteIndex, 1);
+              updateConfigDisplay();
+            }
+          });
+          
+          actionsCell.appendChild(editBtn);
+          actionsCell.appendChild(deleteBtn);
+          row.appendChild(actionsCell);
+          
+          tableBody.appendChild(row);
+        });
+        
+        groupTable.appendChild(tableBody);
+      }
       
-      // 表头
-      const tableHeader = document.createElement('thead');
-      const headerRow = document.createElement('tr');
-      
-      const headers = ['Enable', 'Match Pattern', 'Match Value', 'Env Name', 'Color', 'Background', 'Position', 'Flag', 'Actions'];
-      headers.forEach(headerText => {
-        const th = document.createElement('th');
-        th.textContent = headerText;
-        th.style.border = '1px solid #ddd';
-        th.style.padding = '8px';
-        th.style.textAlign = 'left';
-        th.style.backgroundColor = '#f9f9f9';
-        headerRow.appendChild(th);
-      });
-      
-      tableHeader.appendChild(headerRow);
-      sitesTable.appendChild(tableHeader);
-      
-      // 表体
-      const tableBody = document.createElement('tbody');
-      
-      setting.sites.forEach((site, siteIndex) => {
-        const row = document.createElement('tr');
-        
-        // Enable
-        const enableCell = document.createElement('td');
-        const siteEnableContainer = document.createElement('div');
-        const siteSwitch = new SwitchComponent(siteEnableContainer, '', `site-${groupIndex}-${siteIndex}-enable`, 'local');
-        siteSwitch.setChecked(site.enable);
-        enableCell.appendChild(siteEnableContainer);
-        enableCell.style.border = '1px solid #ddd';
-        enableCell.style.padding = '8px';
-        row.appendChild(enableCell);
-        
-        // Match Pattern
-        const patternCell = document.createElement('td');
-        patternCell.textContent = site.matchPattern;
-        patternCell.style.border = '1px solid #ddd';
-        patternCell.style.padding = '8px';
-        row.appendChild(patternCell);
-        
-        // Match Value
-        const valueCell = document.createElement('td');
-        valueCell.textContent = site.matchValue;
-        valueCell.style.border = '1px solid #ddd';
-        valueCell.style.padding = '8px';
-        row.appendChild(valueCell);
-        
-        // Env Name
-        const envCell = document.createElement('td');
-        envCell.textContent = site.envName;
-        envCell.style.border = '1px solid #ddd';
-        envCell.style.padding = '8px';
-        row.appendChild(envCell);
-        
-        // Color
-        const colorCell = document.createElement('td');
-        colorCell.textContent = site.color;
-        colorCell.style.border = '1px solid #ddd';
-        colorCell.style.padding = '8px';
-        row.appendChild(colorCell);
-        
-        // Background
-        const bgCell = document.createElement('td');
-        const bgEnableContainer = document.createElement('div');
-        const bgSwitch = new SwitchComponent(bgEnableContainer, '', `site-${groupIndex}-${siteIndex}-bg`, 'local');
-        bgSwitch.setChecked(site.backgroudEnable);
-        bgCell.appendChild(bgEnableContainer);
-        bgCell.style.border = '1px solid #ddd';
-        bgCell.style.padding = '8px';
-        row.appendChild(bgCell);
-        
-        // Position
-        const posCell = document.createElement('td');
-        posCell.textContent = site.Position;
-        posCell.style.border = '1px solid #ddd';
-        posCell.style.padding = '8px';
-        row.appendChild(posCell);
-        
-        // Flag
-        const flagCell = document.createElement('td');
-        const flagEnableContainer = document.createElement('div');
-        const flagSwitch = new SwitchComponent(flagEnableContainer, '', `site-${groupIndex}-${siteIndex}-flag`, 'local');
-        flagSwitch.setChecked(site.flagEnable);
-        flagCell.appendChild(flagEnableContainer);
-        flagCell.style.border = '1px solid #ddd';
-        flagCell.style.padding = '8px';
-        row.appendChild(flagCell);
-        
-        // Actions
-        const actionsCell = document.createElement('td');
-        actionsCell.style.border = '1px solid #ddd';
-        actionsCell.style.padding = '8px';
-        
-        const editBtn = document.createElement('button');
-        editBtn.innerHTML = '<i class="fas fa-edit"></i>';
-        editBtn.style.background = 'none';
-        editBtn.style.border = 'none';
-        editBtn.style.cursor = 'pointer';
-        editBtn.style.marginRight = '5px';
-        
-        const deleteBtn = document.createElement('button');
-        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-        deleteBtn.style.background = 'none';
-        deleteBtn.style.border = 'none';
-        deleteBtn.style.cursor = 'pointer';
-        
-        actionsCell.appendChild(editBtn);
-        actionsCell.appendChild(deleteBtn);
-        row.appendChild(actionsCell);
-        
-        tableBody.appendChild(row);
-      });
-      
-      sitesTable.appendChild(tableBody);
-      
-      // 添加站点按钮
-      const addSiteRow = document.createElement('tr');
-      const addSiteCell = document.createElement('td');
-      addSiteCell.colSpan = 9;
-      addSiteCell.style.border = '1px solid #ddd';
-      addSiteCell.style.padding = '8px';
-      addSiteCell.style.textAlign = 'center';
-      
-      const addSiteButton = document.createElement('button');
-      addSiteButton.innerHTML = '<i class="fas fa-plus"></i> Add Site';
-      addSiteButton.style.background = '#4CAF50';
-      addSiteButton.style.color = 'white';
-      addSiteButton.style.border = 'none';
-      addSiteButton.style.padding = '5px 10px';
-      addSiteButton.style.borderRadius = '3px';
-      addSiteButton.style.cursor = 'pointer';
-      
-      addSiteCell.appendChild(addSiteButton);
-      addSiteRow.appendChild(addSiteCell);
-      tableBody.appendChild(addSiteRow);
-      
-      detailContainer.appendChild(sitesTable);
-      
-      // 折叠/展开功能
-      groupHeader.addEventListener('click', () => {
-        if (detailContainer.style.display === 'none') {
-          detailContainer.style.display = 'block';
-          toggleButton.innerHTML = '<i class="fas fa-chevron-up"></i>';
-        } else {
-          detailContainer.style.display = 'none';
-          toggleButton.innerHTML = '<i class="fas fa-chevron-down"></i>';
-        }
-      });
-      
+      // 组装元素
       groupContainer.appendChild(groupHeader);
-      groupContainer.appendChild(detailContainer);
-      configTableContainer.appendChild(groupContainer);
+      groupContainer.appendChild(groupTable);
+      configGroupsContainer.appendChild(groupContainer);
     });
   }
   
@@ -299,6 +299,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     appConfig.settings.push(newSetting);
     updateConfigDisplay();
+  });
+  
+  // 保存配置按钮事件
+  saveConfigBtn.addEventListener('click', () => {
+    alert('Configuration saved successfully!');
+    // 在实际应用中，这里应该保存到存储中
   });
   
   // 初始化配置显示

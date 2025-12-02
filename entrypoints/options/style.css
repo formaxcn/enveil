@@ -27,12 +27,13 @@ body {
   margin: 0;
   display: flex;
   flex-direction: column;
-  min-width: 320px;
+  min-width: 800px;
   min-height: 100vh;
 }
 
 #app {
-  max-width: 1000px;
+  width: calc(100% - 4rem);
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
@@ -45,6 +46,19 @@ header h1 {
 
 main {
   flex: 1;
+}
+
+#options-container {
+  display: flex;
+}
+
+#left-panel {
+  width: 30%;
+  padding-right: 20px;
+}
+
+#right-panel {
+  width: 70%;
 }
 
 .switch-container {
@@ -125,6 +139,13 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+#import-export-buttons {
+  margin: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 #import-export-buttons button {
   background-color: #4CAF50; /* Green */
   border: none;
@@ -143,40 +164,161 @@ button:focus-visible {
   background-color: #008CBA; /* Blue */
 }
 
-/* 配置表格样式 */
-.config-group {
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  margin-bottom: 10px;
+/* 配置组列表样式 */
+#config-groups-list {
+  margin: 20px 0;
 }
 
-.group-header {
+#config-groups-list .header-row {
   display: flex;
   justify-content: space-between;
-  padding: 10px;
-  background-color: #f5f5f5;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+#config-groups-list .header-row h3 {
+  margin: 0;
+}
+
+#add-config-group {
+  padding: 4px 8px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
   cursor: pointer;
 }
 
-.group-details {
+#groups-list-container {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  min-height: 200px;
   padding: 10px;
+  text-align: left;
 }
 
-.group-details table {
+.group-item {
+  padding: 8px;
+  margin: 5px 0;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+}
+
+.group-item.active {
+  background-color: #646cff;
+  color: white;
+}
+
+.group-item:hover {
+  background-color: #e0e0e0;
+}
+
+.group-item.active:hover {
+  background-color: #535bf2;
+}
+
+/* 配置编辑器样式 */
+#config-editor-container {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 15px;
+}
+
+#config-editor-container .header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+#config-editor-container .header-row h3 {
+  margin: 0;
+}
+
+#save-config-btn {
+  padding: 8px 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* 配置组容器样式 */
+.config-group-container {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  background-color: #f9f9f9;
+}
+
+.config-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: #eaeaea;
+  border-bottom: 1px solid #ddd;
+}
+
+.config-group-title {
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.config-group-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.add-site-btn {
+  padding: 5px 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.config-group-table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 10px;
 }
 
-.group-details th,
-.group-details td {
+.config-group-table th,
+.config-group-table td {
   border: 1px solid #ddd;
   padding: 8px;
   text-align: left;
 }
 
-.group-details th {
-  background-color: #f9f9f9;
+.config-group-table th {
+  background-color: #f0f0f0;
+}
+
+.config-group-table tr:nth-child(even) {
+  background-color: #f5f5f5;
+}
+
+.config-group-table tr:hover {
+  background-color: #eaeaea;
+}
+
+.empty-group-message {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-style: italic;
+}
+
+#import-file-input {
+  display: none;
 }
 
 @media (prefers-color-scheme: light) {
@@ -198,5 +340,46 @@ button:focus-visible {
   
   #import-export-buttons button:nth-child(2) {
     background-color: #008CBA;
+  }
+  
+  .group-item {
+    background-color: #f5f5f5;
+  }
+  
+  .group-item:hover {
+    background-color: #e0e0e0;
+  }
+  
+  .group-item.active {
+    background-color: #646cff;
+    color: white;
+  }
+  
+  .group-item.active:hover {
+    background-color: #535bf2;
+  }
+  
+  .config-group-container {
+    background-color: #f9f9f9;
+  }
+  
+  .config-group-header {
+    background-color: #eaeaea;
+  }
+}
+
+@media (max-width: 768px) {
+  #options-container {
+    flex-direction: column;
+  }
+  
+  #left-panel,
+  #right-panel {
+    width: 100%;
+    padding-right: 0;
+  }
+  
+  #left-panel {
+    margin-bottom: 20px;
   }
 }
