@@ -27,7 +27,7 @@ body {
   margin: 0;
   display: flex;
   flex-direction: column;
-  min-width: 800px;
+  min-width: 1400px;
   min-height: 100vh;
 }
 
@@ -53,7 +53,7 @@ main {
 }
 
 #left-panel {
-  width: 30%;
+  width: 20%;
   padding-right: 20px;
 }
 
@@ -141,8 +141,10 @@ button:focus-visible {
 
 #import-export-buttons {
   margin: 20px 0;
+}
+
+.button-group {
   display: flex;
-  flex-direction: column;
   gap: 10px;
 }
 
@@ -158,6 +160,9 @@ button:focus-visible {
   margin: 4px 2px;
   cursor: pointer;
   border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 #import-export-buttons button:nth-child(2) {
