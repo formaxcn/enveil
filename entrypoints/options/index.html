@@ -17,18 +17,20 @@
           <!-- Browser Sync Switch -->
           <div id="browser-sync-option"></div>
           
-          <!-- Import/Export Buttons -->
-          <div class="import-export-container">
-            <button id="export-btn" class="export-btn">Export</button>
-            <label for="import-btn" class="import-label">Import</label>
-            <input type="file" id="import-btn" class="import-btn" accept=".json" style="display: none;">
-          </div>
-
           <!-- Config Groups List -->
           <div id="config-groups-list">
             <div class="header-row">
               <h3>Configuration Groups</h3>
-              <button id="add-config-group">+</button>
+              <div class="header-actions">
+                <label for="import-btn" class="icon-btn import-btn" title="Import">
+                  <i class="fas fa-file-import"></i>
+                </label>
+                <button id="export-btn" class="icon-btn export-btn" title="Export">
+                  <i class="fas fa-file-export"></i>
+                </button>
+                <button id="add-config-group" class="icon-btn add-btn" title="Add Group">+</button>
+                <input type="file" id="import-btn" class="import-input" accept=".json" style="display: none;">
+              </div>
             </div>
             <div id="groups-list-container">
               <!-- Groups list will be rendered here -->
