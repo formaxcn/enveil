@@ -16,6 +16,13 @@
         <div id="left-panel">
           <!-- Browser Sync Switch -->
           <div id="browser-sync-option"></div>
+          
+          <!-- Import/Export Buttons -->
+          <div class="import-export-container">
+            <button id="export-btn" class="export-btn">Export</button>
+            <label for="import-btn" class="import-label">Import</label>
+            <input type="file" id="import-btn" class="import-btn" accept=".json" style="display: none;">
+          </div>
 
           <!-- Config Groups List -->
           <div id="config-groups-list">
@@ -47,8 +54,7 @@
     </main>
   </div>
 
-  <!-- Floating Add Button -->
-  <button class="floating-add-button">+</button>
+
 
   <script type="module" src="./main.ts"></script>
 </body>
