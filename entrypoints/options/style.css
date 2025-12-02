@@ -1,97 +1,17 @@
 body {
-  margin: 0;
+  /* 移除 margin 和 padding，确保从角落开始铺满 */
+  margin: 5%; 
   padding: 0;
+
+  /* 宽度和高度都设置为视口（浏览器窗口）的 100% */
+  /* 使用 100vw/100vh 最稳定地覆盖整个标签页 */
   width: 100vw;
-  height: 100vh;
-  overflow: hidden;
+  
+  /* 允许在内容溢出时垂直滚动，隐藏水平滚动条 */
+  overflow-y: auto;
+  overflow-x: hidden;
+  
+  /* 其他设置保持 */
+  min-width: 800px; /* 保持最小宽度以防窗口太窄 */
   font-family: Arial, sans-serif;
-}
-
-header {
-  text-align: center;
-  padding: 20px 0;
-  border-bottom: 1px solid #ddd;
-}
-
-header h1 {
-  color: #333;
-  margin: 0;
-}
-
-main {
-  /* 根据屏幕大小自适应宽度 */
-  width: calc(100% - 40px);
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 20px 0;
-}
-
-#options-container {
-  padding: 40px 20px;
-  border-radius: 8px;
-  background-color: #f9f9f9;
-  text-align: center;
-  /* 调整最小高度，使容器在各种屏幕尺寸下都能有合适的表现 */
-  min-height: 300px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-#options-container p {
-  font-size: 18px;
-  color: #666;
-  margin: 10px 0;
-}
-
-/* 响应式设计：小屏幕适配 */
-@media screen and (max-width: 768px) {
-  body {
-    width: 100%;
-  }
-  
-  #app {
-    padding: 10px;
-    min-height: 400px;
-  }
-  
-  main {
-    width: 100%;
-    padding: 10px 0;
-  }
-  
-  #options-container {
-    padding: 20px 10px;
-    min-height: 250px;
-  }
-  
-  #options-container p {
-    font-size: 16px;
-  }
-}
-
-@media screen and (max-width: 480px) {
-  body {
-    min-height: 400px;
-  }
-  
-  header {
-    padding: 15px 0;
-  }
-  
-  header h1 {
-    font-size: 1.5em;
-  }
-  
-  #app {
-    min-height: 350px;
-    padding: 5px;
-  }
-  
-  #options-container {
-    padding: 15px 5px;
-    min-height: 200px;
-  }
-  
-  main {
-    padding: 5px 0;
-  }
 }
