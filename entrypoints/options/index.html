@@ -13,9 +13,6 @@
       </header>
       <main>
         <div id="options-container">
-          <!-- 整体开关 -->
-          <div id="enable-switch-option"></div>
-          
           <!-- Browser Sync Switch -->
           <div id="browser-sync-option"></div>
           
@@ -26,8 +23,20 @@
             <input type="file" id="import-file-input" accept=".json" style="display: none;" />
           </div>
           
+          <!-- Configuration Table -->
+          <div id="config-table-container" style="margin: 20px 0;">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+              <button id="add-config-group" style="padding: 8px 16px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                <i class="fas fa-plus"></i> Add Group
+              </button>
+            </div>
+            <div id="config-table">
+              <!-- Configuration groups will be rendered here -->
+            </div>
+          </div>
+          
           <!-- Configuration Display Area -->
-          <div id="config-display" style="margin-top: 20px; padding: 15px; background-color: #eee; border-radius: 5px; text-align: left;">
+          <!-- <div id="config-display" style="margin-top: 20px; padding: 15px; background-color: #eee; border-radius: 5px; text-align: left;">
             <h3>Current Configuration:</h3>
             <pre id="config-json" style="white-space: pre-wrap; word-break: break-all;"></pre>
           </div>
@@ -43,7 +52,7 @@
           </div>
           <div style="margin-top: 20px;">
             <p>More configuration options will be added here in the future.</p>
-          </div>
+          </div> -->
         </div>
       </main>
     </div>

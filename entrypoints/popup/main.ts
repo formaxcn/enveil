@@ -6,6 +6,7 @@ declare const chrome: any;
 
 // 获取元素
 const configureBtn = document.getElementById('configure-btn') as HTMLButtonElement;
+const addConfigBtn = document.getElementById('add-config-btn') as HTMLButtonElement;
 
 // 创建开关组件
 const switchContainer = document.getElementById('enable-switch') as HTMLDivElement;
@@ -35,6 +36,16 @@ globalSwitch.waitForInitialization().then(() => {
 
 // 配置按钮点击事件
 configureBtn.addEventListener('click', () => {
+  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.openOptionsPage) {
+    chrome.runtime.openOptionsPage();
+  } else {
+    console.warn('Cannot open options page: chrome.runtime.openOptionsPage is not available');
+  }
+});
+
+// 添加配置按钮点击事件
+addConfigBtn.addEventListener('click', () => {
+  // 打开选项页面
   if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.openOptionsPage) {
     chrome.runtime.openOptionsPage();
   } else {
