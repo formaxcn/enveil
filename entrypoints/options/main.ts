@@ -127,16 +127,14 @@ function initUI() {
       
       // 导入配置
       const importBtn = document.getElementById('import-btn') as HTMLInputElement;
-      const importLabel = document.getElementById('import-btn')?.nextElementSibling as HTMLLabelElement;
+      const importLabel = document.querySelector('label[for="import-btn"]') as HTMLLabelElement;
       
       if (importBtn) {
         importBtn.addEventListener('change', importConfig);
       }
       
       if (importLabel) {
-        importLabel.addEventListener('click', () => {
-          importBtn?.click();
-        });
+        // 不需要再为标签添加点击事件，因为标签的for属性已经会触发输入框点击
       }
     }
     
