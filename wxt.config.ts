@@ -5,6 +5,13 @@ export default defineConfig({
   manifest: {
     name: "My Extension",
     version: "1.0.0",
-    description: "A basic extension with popup and options pages"
+    description: "A basic extension with popup and options pages",
+    icons: {
+      "16": "icon/16.png",
+      "32": "icon/32.png",
+      "48": "icon/48.png",
+      "96": "icon/96.png",
+      "128": "icon/128_compressed.png"
+    }
   }
 });
