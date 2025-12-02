@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Enveil Configuration</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="./style.css" />
 </head>
 
 <body>
@@ -16,6 +17,104 @@
         <div id="left-panel">
           <!-- Browser Sync Switch -->
           <div id="browser-sync-option"></div>
+          
+          <!-- Git Configuration -->
+          <div id="git-config-section">
+            <div class="header-row">
+              <h3>Git Configuration</h3>
+            </div>
+            <div class="git-config-form">
+              <div class="form-group">
+                <label for="repo-url">Repository URL:</label>
+                <input type="text" id="repo-url" class="form-control" placeholder="https://github.com/username/repo.git">
+              </div>
+              <div class="form-row">
+                <div class="form-group half">
+                  <label for="branch">Branch (Optional):</label>
+                  <input type="text" id="branch" class="form-control" placeholder="main">
+                </div>
+                <div class="form-group half">
+                  <label for="file-path">File Path (Optional):</label>
+                  <input type="text" id="file-path" class="form-control" placeholder="extensions.json">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group half">
+                  <label for="username">User Name (Optional):</label>
+                  <input type="text" id="username" class="form-control">
+                </div>
+                <div class="form-group half">
+                  <label for="password">Password (Optional):</label>
+                  <input type="password" id="password" class="form-control">
+                </div>
+              </div>
+              <div class="form-actions">
+                <button id="save-git-config" class="btn btn-primary">Save</button>
+                <button id="test-connection" class="btn btn-secondary">Test Connection</button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Sync Section -->
+          <div id="sync-section">
+            <div class="header-row">
+              <h3>Sync</h3>
+            </div>
+            <div class="sync-actions">
+              <button id="push-btn" class="btn btn-success">
+                <i class="fas fa-upload"></i> Push
+              </button>
+              <button id="pull-btn" class="btn btn-success">
+                <i class="fas fa-download"></i> Pull
+              </button>
+              <button id="sync-btn" class="btn btn-success">
+                <i class="fas fa-sync-alt"></i> Sync
+              </button>
+            </div>
+            <div class="sync-info">
+              <div class="info-item">
+                <span>sync time:</span>
+                <span id="sync-time">Never</span>
+              </div>
+              <div class="info-item">
+          <span>local commit:</span>
+          <span id="local-commit">+0</span>
+        </div>
+            </div>
+          </div>
+          
+          <!-- Settings Section -->
+          <div id="settings-section">
+            <div class="header-row">
+              <h3>Settings</h3>
+            </div>
+            <div class="settings-content">
+              <div class="setting-item">
+                <label>
+                  <input type="checkbox" id="browser-sync-checkbox">
+                  <span>Browser Sync</span>
+                </label>
+              </div>
+              <div class="settings-actions">
+              <button id="backup-btn" class="btn btn-secondary">Backup</button>
+              <button id="restore-btn" class="btn btn-secondary">Restore</button>
+            </div>
+              
+              <!-- Local Extensions -->
+              <div class="local-extensions">
+                <h4>Local Extensions</h4>
+                <div class="extensions-actions">
+                  <button id="export-ext-btn" class="btn btn-info">
+                    <i class="fas fa-file-export"></i> Export
+                  </button>
+                  <button id="import-ext-btn" class="btn btn-info">
+                    <i class="fas fa-file-import"></i> Import
+                  </button>
+                  <input type="file" id="import-ext-input" class="import-input" accept=".json" style="display: none;">
+                </div>
+              </div>
+            </div>
+          </div>
           
           <!-- Config Groups List -->
           <div id="config-groups-list">
