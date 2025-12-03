@@ -443,23 +443,7 @@ button:focus-visible {
 }
 
 .local-extensions {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #444;
-}
-
-.dark-theme .local-extensions {
-  border-top: 1px solid #444;
-}
-
-.light-theme .local-extensions {
-  border-top: 1px solid #ddd;
-}
-
-.local-extensions h4 {
-  margin: 0 0 10px 0;
-  font-size: 1em;
-  text-align: left;
+  display: none;
 }
 
 .extensions-actions {
