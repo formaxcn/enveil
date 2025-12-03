@@ -36,7 +36,7 @@ export class PositionSelector {
   private renderReadOnly(): void {
     const positionClass = this.position.replace(/([A-Z])/g, '-$1').toLowerCase();
     this.container.innerHTML = `
-      <div class="position-cell" style="--triangle-color: ${this.color};">
+      <div class="position-cell" style="--rectangle-color: ${this.color};">
         <div class="position-triangle ${positionClass}"></div>
       </div>
     `;
@@ -66,7 +66,7 @@ export class PositionSelector {
     // 应用颜色样式
     const positionCells = this.container.querySelectorAll('.position-quadrant');
     positionCells.forEach(cell => {
-      cell.style.setProperty('--triangle-color', this.color);
+      cell.style.setProperty('--rectangle-color', this.color);
     });
   }
 

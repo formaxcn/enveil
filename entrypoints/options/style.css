@@ -703,8 +703,8 @@ button:focus-visible {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   grid-template-rows: repeat(2, 1fr);
-  width: 80px;
-  height: 80px;
+  width: 120px;  /* 3:2比例 */
+  height: 80px;  /* 3:2比例 */
   border: 2px solid #ccc;
   border-radius: 4px;
   overflow: hidden;
@@ -731,7 +731,11 @@ button:focus-visible {
 .position-quadrant .position-triangle {
   width: 70%;
   height: 70%;
-  background: var(--triangle-color, #8ac64d);
+  background: transparent; /* 默认透明，不高亮 */
+}
+
+.position-quadrant.active .position-triangle {
+  background: var(--rectangle-color, #8ac64d); /* 只有选中的位置才显示颜色 */
 }
 
 .position-quadrant.left-top .position-triangle {
@@ -758,25 +762,21 @@ button:focus-visible {
 .position-triangle.left-top {
   top: 0; left: 0;
   clip-path: polygon(0 0, 100% 0, 0 100%);        /* 左上直角三角 */
-  background: var(--triangle-color);
 }
 
 .position-triangle.right-top {
   top: 0; right: 0;
   clip-path: polygon(100% 0, 0 0, 100% 100%);  /* 右上 */
-  background: var(--triangle-color);
 }
 
 .position-triangle.left-bottom {
   bottom: 0; left: 0;
   clip-path: polygon(0 100%, 100% 100%, 0 0);     /* 左下 */
-  background: var(--triangle-color);
 }
 
 .position-triangle.right-bottom {
   bottom: 0; right: 0;
   clip-path: polygon(100% 100%, 100% 0, 0 100%); /* 右下 */
-  background: var(--triangle-color);
 }
 
 .dark-theme .config-group-container {

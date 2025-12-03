@@ -145,6 +145,12 @@ export class AddSiteModal {
       }
     });
 
+    // 监听颜色变化，联动更新位置选择器的颜色
+    this.colorPicker.on('change', (color) => {
+      const hexColor = color.toHEXA().toString();
+      this.positionSelector.setColor(hexColor);
+    });
+
     // 初始化位置选择器
     const positionSelectorContainer = this.modal.querySelector('#position-selector') as HTMLElement;
     this.positionSelector = new PositionSelector(positionSelectorContainer, {
