@@ -14,6 +14,16 @@
   -webkit-text-size-adjust: 100%;
 }
 
+body.dark-theme {
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+}
+
+body.light-theme {
+  color: #213547;
+  background-color: #ffffff;
+}
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -30,8 +40,6 @@ body {
   flex-direction: column;
   min-height: 800px;
   min-width: 1600px;
-  background-color: #242424;
-  color: rgba(255, 255, 255, 0.87);
 }
 
 #app {
@@ -255,7 +263,24 @@ button:focus-visible {
   font-size: 0.8em;
 }
 
-/* 图标按钮样式已移至header-actions部分 */
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.2s;
+  color: white;
+  background-color: #1a1a1a;
+}
+
+.icon-btn:hover {
+  background-color: #333;
+}
 
 /* Git配置部分样式 */
 #git-config-section,
@@ -266,6 +291,20 @@ button:focus-visible {
   border-radius: 4px;
   padding: 15px;
   background-color: #2a2a2a;
+}
+
+.dark-theme #git-config-section,
+.dark-theme #sync-section,
+.dark-theme #settings-section {
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+}
+
+.light-theme #git-config-section,
+.light-theme #sync-section,
+.light-theme #settings-section {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
 }
 
 #git-config-section .header-row,
@@ -306,6 +345,18 @@ button:focus-visible {
   color: white;
   font-size: 0.9em;
   box-sizing: border-box;
+}
+
+.dark-theme .form-control {
+  background-color: #333;
+  border: 1px solid #444;
+  color: white;
+}
+
+.light-theme .form-control {
+  background-color: white;
+  border: 1px solid #ddd;
+  color: #213547;
 }
 
 .form-control:focus {
@@ -354,6 +405,14 @@ button:focus-visible {
   color: #aaa;
 }
 
+.dark-theme .info-item span:first-child {
+  color: #aaa;
+}
+
+.light-theme .info-item span:first-child {
+  color: #666;
+}
+
 #local-commit {
   color: #4CAF50;
   margin-right: 10px;
@@ -389,6 +448,14 @@ button:focus-visible {
   border-top: 1px solid #444;
 }
 
+.dark-theme .local-extensions {
+  border-top: 1px solid #444;
+}
+
+.light-theme .local-extensions {
+  border-top: 1px solid #ddd;
+}
+
 .local-extensions h4 {
   margin: 0 0 10px 0;
   font-size: 1em;
@@ -420,20 +487,6 @@ button:focus-visible {
   display: flex;
   gap: 8px;
   align-items: center;
-}
-
-.icon-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background-color 0.2s;
-  color: white;
 }
 
 .group-edit-btn, .group-delete-btn {
@@ -500,6 +553,16 @@ button:focus-visible {
   background-color: #2a2a2a;
 }
 
+.dark-theme #groups-list-container {
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+}
+
+.light-theme #groups-list-container {
+  background-color: white;
+  border: 1px solid #ddd;
+}
+
 .group-item {
   padding: 8px;
   margin: 5px 0;
@@ -511,6 +574,16 @@ button:focus-visible {
   align-items: center;
 }
 
+.dark-theme .group-item {
+  background-color: #333;
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.light-theme .group-item {
+  background-color: #f5f5f5;
+  color: #213547;
+}
+
 .group-item.active {
   background-color: #646cff;
   color: white;
@@ -518,6 +591,14 @@ button:focus-visible {
 
 .group-item:hover {
   background-color: #444;
+}
+
+.dark-theme .group-item:hover {
+  background-color: #444;
+}
+
+.light-theme .group-item:hover {
+  background-color: #e0e0e0;
 }
 
 .group-item.active:hover {
@@ -530,6 +611,16 @@ button:focus-visible {
   border-radius: 4px;
   padding: 15px;
   background-color: #2a2a2a;
+}
+
+.dark-theme #config-editor-container {
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+}
+
+.light-theme #config-editor-container {
+  background-color: white;
+  border: 1px solid #ddd;
 }
 
 #config-editor-container .header-row {
@@ -551,6 +642,16 @@ button:focus-visible {
   background-color: #2a2a2a;
 }
 
+.dark-theme .config-group-container {
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+}
+
+.light-theme .config-group-container {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+}
+
 .config-group-header .group-header {
   display: flex;
   justify-content: space-between;
@@ -558,6 +659,16 @@ button:focus-visible {
   padding: 10px;
   background-color: #333;
   border-bottom: 1px solid #444;
+}
+
+.dark-theme .config-group-header .group-header {
+  background-color: #333;
+  border-bottom: 1px solid #444;
+}
+
+.light-theme .config-group-header .group-header {
+  background-color: #eaeaea;
+  border-bottom: 1px solid #ddd;
 }
 
 .group-header-left {
@@ -619,6 +730,16 @@ button:focus-visible {
   vertical-align: middle;
 }
 
+.dark-theme .config-group-table th,
+.dark-theme .config-group-table td {
+  border: 1px solid #444;
+}
+
+.light-theme .config-group-table th,
+.light-theme .config-group-table td {
+  border: 1px solid #ddd;
+}
+
 /* Column widths */
 .config-group-table th:nth-child(1),
 .config-group-table td:nth-child(1) {
@@ -671,12 +792,36 @@ button:focus-visible {
   text-align: center;
 }
 
+.dark-theme .config-group-table th {
+  background-color: #333;
+}
+
+.light-theme .config-group-table th {
+  background-color: #f0f0f0;
+}
+
 .config-group-table tr:nth-child(even) {
   background-color: #2f2f2f;
 }
 
+.dark-theme .config-group-table tr:nth-child(even) {
+  background-color: #2f2f2f;
+}
+
+.light-theme .config-group-table tr:nth-child(even) {
+  background-color: #f5f5f5;
+}
+
 .config-group-table tr:hover {
   background-color: #3a3a3a;
+}
+
+.dark-theme .config-group-table tr:hover {
+  background-color: #3a3a3a;
+}
+
+.light-theme .config-group-table tr:hover {
+  background-color: #eaeaea;
 }
 
 .empty-group-message {
@@ -684,6 +829,14 @@ button:focus-visible {
   padding: 20px;
   color: #aaa;
   font-style: italic;
+}
+
+.dark-theme .empty-group-message {
+  color: #aaa;
+}
+
+.light-theme .empty-group-message {
+  color: #888;
 }
 
 /* 模态框样式 */
@@ -730,6 +883,16 @@ button:focus-visible {
   color: rgba(255, 255, 255, 0.87);
 }
 
+.dark-theme .modal-content {
+  background-color: #2a2a2a;
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.light-theme .modal-content {
+  background-color: #fff;
+  color: #213547;
+}
+
 .modal.show .modal-content {
   transform: translateY(0);
 }
@@ -740,6 +903,14 @@ button:focus-visible {
   align-items: center;
   padding: 1rem;
   border-bottom: 1px solid #444;
+}
+
+.dark-theme .modal-header {
+  border-bottom: 1px solid #444;
+}
+
+.light-theme .modal-header {
+  border-bottom: 1px solid #eee;
 }
 
 .modal-header h3 {
@@ -763,6 +934,14 @@ button:focus-visible {
 
 .modal-close:hover {
   color: #fff;
+}
+
+.dark-theme .modal-close:hover {
+  color: #fff;
+}
+
+.light-theme .modal-close:hover {
+  color: #333;
 }
 
 .modal-body {
@@ -789,6 +968,20 @@ button:focus-visible {
   box-sizing: border-box;
   background-color: #333;
   color: white;
+}
+
+.dark-theme .form-group input,
+.dark-theme .form-group select {
+  background-color: #333;
+  border: 1px solid #444;
+  color: white;
+}
+
+.light-theme .form-group input,
+.light-theme .form-group select {
+  background-color: white;
+  border: 1px solid #ddd;
+  color: #213547;
 }
 
 .form-group input[type="color"] {
@@ -828,6 +1021,16 @@ button:focus-visible {
   color: white;
 }
 
+.dark-theme .cancel-btn {
+  background-color: #444;
+  color: white;
+}
+
+.light-theme .cancel-btn {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
 .save-btn {
   background-color: #4CAF50;
   color: white;
@@ -837,108 +1040,16 @@ button:focus-visible {
   background-color: #555;
 }
 
-.save-btn:hover {
-  background-color: #45a049;
+.dark-theme .cancel-btn:hover {
+  background-color: #555;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
+.light-theme .cancel-btn:hover {
+  background-color: #e0e0e0;
+}
 
-  body {
-    background-color: #ffffff;
-    color: #213547;
-  }
-
-  a:hover {
-    color: #747bff;
-  }
-
-  button {
-    background-color: #f9f9f9;
-  }
-
-  .group-item {
-    background-color: #f5f5f5;
-    color: #213547;
-  }
-
-  .group-item:hover {
-    background-color: #e0e0e0;
-  }
-
-  .group-item.active {
-    background-color: #646cff;
-    color: white;
-  }
-
-  .group-item.active:hover {
-    background-color: #535bf2;
-  }
-
-  .config-group-container {
-    background-color: #f9f9f9;
-    border-color: #ddd;
-  }
-
-  .config-group-header {
-    background-color: #eaeaea;
-    border-bottom-color: #ddd;
-  }
-
-  #groups-list-container {
-    background-color: white;
-    border-color: #ddd;
-  }
-
-  .config-group-table th,
-  .config-group-table td {
-    border-color: #ddd;
-  }
-
-  .config-group-table th {
-    background-color: #f0f0f0;
-  }
-
-  .config-group-table tr:nth-child(even) {
-    background-color: #f5f5f5;
-  }
-
-  .config-group-table tr:hover {
-    background-color: #eaeaea;
-  }
-
-  #config-editor-container {
-    background-color: white;
-    border-color: #ddd;
-  }
-
-  .modal-content {
-    background-color: #fff;
-    color: #213547;
-  }
-
-  .modal-header {
-    border-bottom-color: #eee;
-  }
-
-  .form-group input,
-  .form-group select {
-    background-color: white;
-    border-color: #ddd;
-    color: #213547;
-  }
-
-  .cancel-btn {
-    background-color: #f5f5f5;
-    color: #333;
-  }
-
-  .cancel-btn:hover {
-    background-color: #e0e0e0;
-  }
+.save-btn:hover {
+  background-color: #45a049;
 }
 
 @media (max-width: 500px) {
