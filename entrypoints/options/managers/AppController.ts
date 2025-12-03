@@ -52,7 +52,7 @@ export class AppController {
       gitConfig: {
         repoUrl: '',
         branch: 'main',
-        filePath: 'config.json',
+        filePath: 'enveil-config.json',
         username: '',
         password: '',
         lastSyncTime: '',
