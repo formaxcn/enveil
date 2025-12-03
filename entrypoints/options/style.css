@@ -694,6 +694,11 @@ button:focus-visible {
   content: "";
 }
 
+/* 只读模式下的三角形样式 */
+.position-cell .position-triangle {
+  background: var(--rectangle-color, #8ac64d);
+}
+
 /* Position Selector Styles */
 .position-selector {
   display: inline-block;
