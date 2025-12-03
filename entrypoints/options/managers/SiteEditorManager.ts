@@ -1,6 +1,7 @@
-import { AppConfig, SiteConfig, Setting } from '../types';
+import { AppConfig, SiteConfig } from '../types';
 import { AddSiteModal } from '../../../components/AddSiteModal';
 import { StorageManager } from '../../../components/StorageManager';
+import { ConfigGroupComponent } from '../../../components/ConfigGroupComponent';
 
 export class SiteEditorManager {
   private appConfig: AppConfig;
@@ -28,63 +29,79 @@ export class SiteEditorManager {
   // 更新配置引用
   public updateConfig(config: AppConfig): void {
     this.appConfig = config;
+    this.updateConfigDisplay();
   }
 
   // 更新选中的配置组
   public updateSelectedGroups(groups: number[]): void {
     this.selectedGroups = groups;
+    this.updateConfigDisplay();
   }
 
   // 初始化添加网站模态框
   private initAddSiteModal(): void {
     this.addSiteModal.onSave((site: SiteConfig) => {
-      if (this.isAddingToDefaultGroup()) {
-        // 添加到默认组（索引为0）
-        if (!this.appConfig.settings[0]) {
-          // 如果默认组不存在，创建它
-          this.appConfig.settings.push({
-            name: "default",
-            enable: true,
-            sites: []
-          });
-        }
-        this.appConfig.settings[0].sites.push(site);
+      // Logic for adding site from modal (usually triggered by "Add Site" button on a specific group)
+      // However, the modal might be global. 
+      // If triggered globally (floating button), we need to decide where to add.
+      // If triggered by a group specific button, the component handles it via callback.
+
+      // We'll keep the logic for the global floating button if it exists, 
+      // but primarily we rely on the group-specific callbacks now.
+
+      // If we are in "Edit Mode" for a specific site, the modal callback handles it.
+      // If we are adding a new site...
+
+      // Since we refactored to components, the "Add Site" button on the group 
+      // should probably open the modal and we need to know which group triggered it.
+      // The component callback `onAddSite` handles this.
+
+      // This global onSave is mainly for the Floating Button if it still exists.
+      // If the floating button is removed (as per previous conversation summary, but let's be safe),
+      // we default to the first group or a new group.
+
+      if (this.addSiteModal.isEditMode()) {
+        // Edit mode is handled by the specific edit callback usually, 
+        // but if the modal is shared, we need to know context.
+        // The current AddSiteModal implementation might need a way to pass context.
+        // For now, let's assume the component callback handles the specific add/edit logic
+        // and this global callback is a fallback or for the floating button.
+
+        // Actually, to keep it clean, let's rely on the callbacks passed to ConfigGroupComponent.
+        // But `AddSiteModal` is a single instance.
+        // We need to store the "current editing group index" when opening the modal.
       } else {
-        // Use first selected group if available
-        const targetGroupIndex = this.selectedGroups.length > 0 ? this.selectedGroups[0] : 0;
+        // Default add to first group if global add is used
+        if (this.appConfig.settings.length === 0) {
+          this.addConfigGroup(); // Create default group if none
+        }
+        const targetGroupIndex = 0; // Default to first
         if (this.appConfig.settings[targetGroupIndex]) {
           this.appConfig.settings[targetGroupIndex].sites.push(site);
-        } else {
-          // Fallback to first group
-          this.appConfig.settings[0].sites.push(site);
+          this.saveConfigCallback();
+          this.updateConfigDisplay();
         }
       }
-
-      this.updateConfigDisplay();
-      this.saveConfigCallback();
     });
-  }
-  
-  // 检查是否应该添加到默认组
-  private isAddingToDefaultGroup(): boolean {
-    // 如果没有选中的组，则添加到默认组
-    return this.selectedGroups.length === 0;
   }
 
   // 初始化网站编辑相关UI
   public initSiteEditorUI(): void {
-    // 绑定浮动添加按钮点击事件
+    // 绑定浮动添加按钮点击事件 (如果有)
     const floatingAddButton = document.querySelector('.floating-add-button') as HTMLButtonElement;
     if (floatingAddButton) {
       floatingAddButton.addEventListener('click', () => {
-        this.openAddSiteModal();
+        this.openAddSiteModal(0); // Default to first group
       });
     }
 
     // 绑定添加配置组按钮事件
     const addConfigGroupBtn = document.getElementById('add-config-group') as HTMLButtonElement;
     if (addConfigGroupBtn) {
-      addConfigGroupBtn.addEventListener('click', () => {
+      // Remove old listeners to prevent duplicates if init is called multiple times
+      const newBtn = addConfigGroupBtn.cloneNode(true) as HTMLButtonElement;
+      addConfigGroupBtn.parentNode?.replaceChild(newBtn, addConfigGroupBtn);
+      newBtn.addEventListener('click', () => {
         this.addConfigGroup();
       });
     }
@@ -105,22 +122,7 @@ export class SiteEditorManager {
 
     configGroupsContainer.innerHTML = '';
 
-    // 渲染选中的配置组
-    if (this.selectedGroups.length > 0) {
-      this.selectedGroups.forEach(groupIndex => {
-        const setting = this.appConfig.settings[groupIndex];
-        if (!setting) return;
-
-        const groupElement = this.createConfigGroupElement(setting, groupIndex);
-        configGroupsContainer.appendChild(groupElement);
-      });
-    } else if (this.appConfig.settings.length > 0) {
-      // 如果没有选中的配置组，默认显示第一个
-      const defaultSetting = this.appConfig.settings[0];
-      const groupElement = this.createConfigGroupElement(defaultSetting, 0);
-      configGroupsContainer.appendChild(groupElement);
-    } else {
-      // 如果没有配置组，显示空状态
+    if (this.appConfig.settings.length === 0) {
       const emptyState = document.createElement('div');
       emptyState.className = 'empty-state';
       emptyState.innerHTML = `
@@ -128,321 +130,43 @@ export class SiteEditorManager {
         <p>Click the "+" button to add your first configuration group.</p>
       `;
       configGroupsContainer.appendChild(emptyState);
+      return;
     }
-  }
 
-  // 创建单个配置组元素
-  private createConfigGroupElement(setting: Setting, groupIndex: number): HTMLDivElement {
-    const groupElement = document.createElement('div');
-    groupElement.className = 'config-group-container';
-    groupElement.dataset.groupIndex = groupIndex.toString();
-
-    // 配置组标题和操作栏
-    const groupHeader = document.createElement('div');
-    groupHeader.className = 'config-group-header';
-    
-    const groupHeaderInner = document.createElement('div');
-    groupHeaderInner.className = 'group-header';
-    
-    // 组名称和开关
-    const headerLeft = document.createElement('div');
-    headerLeft.className = 'group-header-left';
-    
-    // 保留原来的复选框
-    const toggleSwitch = document.createElement('input');
-    toggleSwitch.type = 'checkbox';
-    toggleSwitch.className = 'group-toggle';
-    toggleSwitch.checked = setting.enable;
-    toggleSwitch.addEventListener('change', () => {
-      setting.enable = toggleSwitch.checked;
-      this.saveConfigCallback();
-    });
-    
-    // 修改这里：使组名可编辑
-    const groupTitleContainer = document.createElement('div');
-    groupTitleContainer.className = 'config-group-title-container';
-    
-    const groupTitle = document.createElement('h3');
-    groupTitle.className = 'config-group-title';
-    groupTitle.innerHTML = `${setting.name} <span class="site-count">(${setting.sites.length} sites)</span>`;
-    
-    const groupNameInput = document.createElement('input');
-    groupNameInput.type = 'text';
-    groupNameInput.className = 'config-group-name-input';
-    groupNameInput.value = setting.name;
-    groupNameInput.style.display = 'none'; // 默认隐藏输入框
-    
-    // 添加保存名称编辑的函数
-    const saveGroupName = () => {
-      const newName = groupNameInput.value.trim();
-      if (newName && newName !== setting.name) {
-        // 检查名称是否已存在
-        if (!this.appConfig.settings.some((s, index) => s.name === newName && index !== groupIndex)) {
-          setting.name = newName;
-          groupTitle.innerHTML = `${setting.name} <span class="site-count">(${setting.sites.length} sites)</span>`;
-          this.saveConfigCallback();
-          this.notificationCallback('Configuration group name updated successfully', 'success');
-        } else {
-          groupNameInput.value = setting.name; // 恢复原名称
-          this.notificationCallback('Configuration group with this name already exists', 'error');
-        }
-      }
-      groupNameInput.style.display = 'none';
-      groupTitle.style.display = 'block';
-    };
-    
-    // 输入框失去焦点时保存
-    groupNameInput.addEventListener('blur', saveGroupName);
-    
-    // 按回车键时保存
-    groupNameInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        saveGroupName();
-      }
-    });
-    
-    groupTitleContainer.appendChild(groupTitle);
-    groupTitleContainer.appendChild(groupNameInput);
-    
-    // 双击标题进入编辑模式
-    groupTitle.addEventListener('dblclick', () => {
-      groupTitle.style.display = 'none';
-      groupNameInput.style.display = 'inline-block';
-      groupNameInput.focus();
-    });
-    
-    // 添加 Enable 开关到标题旁边
-    const enableSwitch = document.createElement('div');
-    enableSwitch.className = 'group-enable-switch';
-    const enableLabel = document.createElement('span');
-    enableLabel.className = 'switch-label';
-    enableLabel.textContent = 'Enable';
-    
-    const switchContainer = document.createElement('div');
-    switchContainer.className = 'switch-container';
-    
-    const switchLabel = document.createElement('label');
-    switchLabel.className = 'switch';
-    
-    const switchInput = document.createElement('input');
-    switchInput.type = 'checkbox';
-    switchInput.className = 'group-enable-toggle';
-    switchInput.checked = setting.enable;
-    
-    const sliderSpan = document.createElement('span');
-    sliderSpan.className = 'slider';
-    
-    switchLabel.appendChild(switchInput);
-    switchLabel.appendChild(sliderSpan);
-    switchContainer.appendChild(switchLabel);
-    
-    enableSwitch.appendChild(enableLabel);
-    enableSwitch.appendChild(switchContainer);
-    
-    // 主开关控制所有子行开关的逻辑
-    switchInput.addEventListener('change', () => {
-      setting.enable = switchInput.checked;
-      
-      // 如果启用了配置组，同时更新所有子行的状态
-      if (setting.sites) {
-        setting.sites.forEach(site => {
-          site.enable = switchInput.checked;
-        });
-      }
-      
-      this.saveConfigCallback();
-      this.updateConfigDisplay(); // 重新渲染以更新子行状态
-    });
-    
-    headerLeft.appendChild(toggleSwitch);
-    headerLeft.appendChild(groupTitleContainer);
-    headerLeft.appendChild(enableSwitch);
-    
-    // 组操作按钮
-    const headerActions = document.createElement('div');
-    headerActions.className = 'group-header-actions';
-    
-    // 添加网站按钮
-    const addSiteBtn = document.createElement('button');
-    addSiteBtn.className = 'add-site-btn';
-    addSiteBtn.innerHTML = '<i class="fas fa-plus"></i> Add Site';
-    addSiteBtn.addEventListener('click', () => {
-      this.openAddSiteModal();
-    });
-    
-    // 编辑配置组名称按钮
-    const editBtn = document.createElement('button');
-    editBtn.className = 'group-edit-btn';
-    editBtn.innerHTML = '<i class="fas fa-edit"></i>';
-    editBtn.title = 'Edit group name';
-    editBtn.addEventListener('click', () => {
-      // 修改这里：点击编辑按钮时显示输入框
-      groupTitle.style.display = 'none';
-      groupNameInput.style.display = 'inline-block';
-      groupNameInput.value = setting.name; // 确保显示当前名称
-      groupNameInput.focus();
-    });
-    
-    // 删除配置组按钮
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'group-delete-btn';
-    deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-    deleteBtn.title = 'Delete group';
-    deleteBtn.addEventListener('click', () => {
-      this.deleteConfigGroup(groupIndex);
-    });
-    
-    headerActions.appendChild(addSiteBtn);
-    headerActions.appendChild(editBtn);
-    headerActions.appendChild(deleteBtn);
-    
-    groupHeaderInner.appendChild(headerLeft);
-    groupHeaderInner.appendChild(headerActions);
-    groupHeader.appendChild(groupHeaderInner);
-
-    // 网站列表容器
-    const sitesContainer = document.createElement('div');
-    sitesContainer.className = 'config-group-content';
-
-    // 创建网站表格
-    const sitesTable = document.createElement('table');
-    sitesTable.className = 'config-group-table';
-    
-    // 表头
-    const tableHeader = document.createElement('thead');
-    tableHeader.innerHTML = `
-      <tr>
-        <th>Enable</th>
-        <th>Pattern</th>
-        <th>Value</th>
-        <th>Name</th>
-        <th>Color</th>
-        <th>Background</th>
-        <th>Flag</th>
-        <th>Position</th>
-        <th colspan="2">Actions</th>
-      </tr>
-    `;
-    sitesTable.appendChild(tableHeader);
-    
-    // 表格主体
-    const tableBody = document.createElement('tbody');
-    
-    // 如果没有网站，显示空状态但仍保留表头
-    if (setting.sites.length === 0) {
-      const emptyRow = document.createElement('tr');
-      emptyRow.innerHTML = `
-        <td colspan="9" class="empty-group-message">No sites configured in this group. Click "Add Site" to add your first site.</td>
-      `;
-      tableBody.appendChild(emptyRow);
-    } else {
-      // 渲染每个网站配置
-      setting.sites.forEach((site, siteIndex) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>
-            <div class="switch-container">
-              <label class="switch">
-                <input type="checkbox" class="site-enable-toggle" ${site.enable ? 'checked' : ''}>
-                <span class="slider"></span>
-              </label>
-            </div>
-          </td>
-          <td>${site.matchPattern}</td>
-          <td>${site.matchValue}</td>
-          <td>
-            <span class="site-env-name" style="background-color: ${site.color}; padding: 2px 6px; border-radius: 4px;">${site.envName}</span>
-          </td>
-          <td>
-            <div style="width: 20px; height: 20px; background-color: ${site.color}; border-radius: 50%; margin: auto;"></div>
-          </td>
-          <td>
-            <div class="switch-container">
-              <label class="switch">
-                <input type="checkbox" class="site-background-toggle" ${site.backgroudEnable ? 'checked' : ''}>
-                <span class="slider"></span>
-              </label>
-            </div>
-          </td>
-          <td>
-            <div class="switch-container">
-              <label class="switch">
-                <input type="checkbox" class="site-flag-toggle" ${site.flagEnable ? 'checked' : ''}>
-                <span class="slider"></span>
-              </label>
-            </div>
-          </td>
-          <td>${site.Position}</td>
-          <td>
-            <button class="site-edit-btn" title="Edit site"><i class="fas fa-edit"></i></button>
-          </td>
-          <td>
-            <button class="site-delete-btn" title="Delete site"><i class="fas fa-trash"></i></button>
-          </td>
-        `;
-        
-        // 添加事件监听器
-        const enableToggle = row.querySelector('.site-enable-toggle') as HTMLInputElement;
-        enableToggle.addEventListener('change', () => {
-          site.enable = enableToggle.checked;
-          this.saveConfigCallback();
-          
-          // 检查是否至少有一个子行启用，如果是，则确保主开关也启用
-          if (site.enable && !switchInput.checked) {
-            switchInput.checked = true;
-            setting.enable = true;
+    // Render ALL groups
+    this.appConfig.settings.forEach((setting, index) => {
+      const isSelected = this.selectedGroups.includes(index);
+      const component = new ConfigGroupComponent(
+        setting,
+        index,
+        isSelected,
+        {
+          onSave: () => {
             this.saveConfigCallback();
-          }
-          
-          // 如果所有子行都被禁用，并且主开关是启用的，则禁用主开关
-          if (!site.enable && switchInput.checked) {
-            const anySiteEnabled = setting.sites.some(s => s.enable);
-            if (!anySiteEnabled) {
-              switchInput.checked = false;
-              setting.enable = false;
-              this.saveConfigCallback();
-            }
-          }
-          
-          this.updateConfigDisplay();
-        });
-        
-        const backgroundToggle = row.querySelector('.site-background-toggle') as HTMLInputElement;
-        backgroundToggle.addEventListener('change', () => {
-          site.backgroudEnable = backgroundToggle.checked;
-          this.saveConfigCallback();
-          this.updateConfigDisplay();
-        });
-        
-        const flagToggle = row.querySelector('.site-flag-toggle') as HTMLInputElement;
-        flagToggle.addEventListener('change', () => {
-          site.flagEnable = flagToggle.checked;
-          this.saveConfigCallback();
-          this.updateConfigDisplay();
-        });
-        
-        const editBtn = row.querySelector('.site-edit-btn') as HTMLButtonElement;
-        editBtn.addEventListener('click', () => {
-          this.editSite(groupIndex, siteIndex);
-        });
-        
-        const deleteBtn = row.querySelector('.site-delete-btn') as HTMLButtonElement;
-        deleteBtn.addEventListener('click', (e) => {
-          e.stopPropagation(); // 防止事件冒泡
-          this.deleteSite(groupIndex, siteIndex);
-        });
-        
-        tableBody.appendChild(row);
-      });
-    }
-    
-    sitesTable.appendChild(tableBody);
-    sitesContainer.appendChild(sitesTable);
-
-    groupElement.appendChild(groupHeader);
-    groupElement.appendChild(sitesContainer);
-
-    return groupElement;
+          },
+          onUpdate: () => {
+            this.updateConfigDisplay();
+          },
+          onSelect: (idx) => {
+            this.toggleGroupSelection(idx);
+          },
+          onDelete: (idx) => {
+            this.deleteConfigGroup(idx);
+          },
+          onAddSite: (idx) => {
+            this.openAddSiteModal(idx);
+          },
+          onEditSite: (idx, siteIdx) => {
+            this.editSite(idx, siteIdx);
+          },
+          onDeleteSite: (idx, siteIdx) => {
+            this.deleteSite(idx, siteIdx);
+          },
+          notificationCallback: this.notificationCallback
+        }
+      );
+      configGroupsContainer.appendChild(component.render());
+    });
   }
 
   // 切换配置组选择
@@ -451,42 +175,44 @@ export class SiteEditorManager {
     if (index > -1) {
       this.selectedGroups.splice(index, 1);
     } else {
-      // 这里可以根据需要决定是单选还是多选
-      // 当前实现为单选
-      this.selectedGroups = [groupIndex];
+      this.selectedGroups.push(groupIndex);
     }
+    // We don't need to re-render everything, but for simplicity we do
+    // to update the checkbox state if it wasn't handled locally.
+    // The component handles the checkbox change event, but we need to sync the state.
     this.updateConfigDisplay();
   }
 
   // 添加配置组
   private addConfigGroup(): void {
-    // 生成默认组名，格式为enveil + 3位随机数字
     let defaultGroupName: string;
     let attempts = 0;
     do {
-      const randomNumber = Math.floor(100 + Math.random() * 900); // 100-999之间的随机数
+      const randomNumber = Math.floor(100 + Math.random() * 900);
       defaultGroupName = `enveil-${randomNumber}`;
       attempts++;
-      // 防止无限循环，如果尝试超过100次就跳出
       if (attempts > 100) break;
     } while (this.appConfig.settings.some(setting => setting.name === defaultGroupName));
 
-    // 添加新的配置组
     this.appConfig.settings.push({
       name: defaultGroupName,
       enable: true,
       sites: []
     });
 
-    // 选中新添加的配置组
-    const newGroupIndex = this.appConfig.settings.length - 1;
-    this.selectedGroups = [newGroupIndex];
+    // Optionally select the new group for export? 
+    // User didn't specify, but usually we don't auto-select for export unless it's the only one.
+    if (this.appConfig.settings.length === 1) {
+      this.selectedGroups.push(0);
+    }
 
-    this.updateConfigDisplay();
     this.saveConfigCallback();
-    
-    // 在添加完成后，自动进入编辑模式
+    this.updateConfigDisplay();
+
+    // Auto-focus logic would need to find the new element.
+    // Since we re-rendered, we can find the last group.
     setTimeout(() => {
+      const newGroupIndex = this.appConfig.settings.length - 1;
       const groupElement = document.querySelector(`[data-group-index="${newGroupIndex}"]`) as HTMLElement;
       if (groupElement) {
         const editBtn = groupElement.querySelector('.group-edit-btn') as HTMLButtonElement;
@@ -495,31 +221,8 @@ export class SiteEditorManager {
         }
       }
     }, 100);
-    
+
     this.notificationCallback(`Configuration group "${defaultGroupName}" added successfully`, 'success');
-  }
-
-  // 编辑配置组名称
-  private editConfigGroupName(groupIndex: number): void {
-    const setting = this.appConfig.settings[groupIndex];
-    if (!setting) return;
-
-    const newName = prompt('Enter new configuration group name:', setting.name);
-    if (!newName || newName.trim() === '') {
-      this.notificationCallback('Group name cannot be empty', 'error');
-      return;
-    }
-
-    // 检查新名称是否已被其他组使用
-    if (this.appConfig.settings.some((s, index) => s.name === newName.trim() && index !== groupIndex)) {
-      this.notificationCallback('Configuration group with this name already exists', 'error');
-      return;
-    }
-
-    setting.name = newName.trim();
-    this.updateConfigDisplay();
-    this.saveConfigCallback();
-    this.notificationCallback('Configuration group name updated successfully', 'success');
   }
 
   // 删除配置组
@@ -534,31 +237,38 @@ export class SiteEditorManager {
     }
 
     const setting = this.appConfig.settings[groupIndex];
-    if (!setting) return;
 
-    // 删除配置组
     this.appConfig.settings.splice(groupIndex, 1);
 
-    // 从选中数组中移除
+    // Update selectedGroups indices
+    // Remove the deleted index
     const selectedIndex = this.selectedGroups.indexOf(groupIndex);
     if (selectedIndex > -1) {
       this.selectedGroups.splice(selectedIndex, 1);
     }
 
-    // 如果没有选中的组，默认选中第一个
-    if (this.selectedGroups.length === 0 && this.appConfig.settings.length > 0) {
-      this.selectedGroups = [0];
-    }
+    // Shift indices for groups after the deleted one
+    this.selectedGroups = this.selectedGroups.map(idx => idx > groupIndex ? idx - 1 : idx);
 
-    this.updateConfigDisplay();
     this.saveConfigCallback();
+    this.updateConfigDisplay();
     this.notificationCallback(`Configuration group "${setting.name}" deleted successfully`, 'success');
   }
 
   // 打开添加网站模态框
-  public openAddSiteModal(): void {
-    // 重置模态框为添加模式
+  public openAddSiteModal(groupIndex: number): void {
     this.addSiteModal.setEditMode(false);
+
+    // We need to override the onSave to target the specific group
+    this.addSiteModal.onSave((site: SiteConfig) => {
+      if (this.appConfig.settings[groupIndex]) {
+        this.appConfig.settings[groupIndex].sites.push(site);
+        this.saveConfigCallback();
+        this.updateConfigDisplay();
+        this.notificationCallback('Site added successfully', 'success');
+      }
+    });
+
     this.addSiteModal.open();
   }
 
@@ -568,17 +278,17 @@ export class SiteEditorManager {
     if (!setting || !setting.sites[siteIndex]) return;
 
     const site = setting.sites[siteIndex];
-    // 设置编辑模式并传入现有数据
     this.addSiteModal.setEditMode(true, site);
-    
-    // 使用现有的添加网站模态框进行编辑
+
     this.addSiteModal.onSave((updatedSite: SiteConfig) => {
-      setting.sites[siteIndex] = updatedSite;
-      this.updateConfigDisplay();
-      this.saveConfigCallback();
-      this.notificationCallback('Site configuration updated successfully', 'success');
+      if (this.appConfig.settings[groupIndex]) {
+        this.appConfig.settings[groupIndex].sites[siteIndex] = updatedSite;
+        this.saveConfigCallback();
+        this.updateConfigDisplay();
+        this.notificationCallback('Site configuration updated successfully', 'success');
+      }
     });
-    
+
     this.addSiteModal.open();
   }
 
@@ -591,11 +301,10 @@ export class SiteEditorManager {
     const setting = this.appConfig.settings[groupIndex];
     if (!setting || !setting.sites[siteIndex]) return;
 
-    // 删除网站配置
     setting.sites.splice(siteIndex, 1);
 
-    this.updateConfigDisplay();
     this.saveConfigCallback();
+    this.updateConfigDisplay();
     this.notificationCallback('Site configuration deleted successfully', 'success');
   }
 }

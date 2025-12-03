@@ -12,7 +12,7 @@ export class StorageManager {
   private static instance: StorageManager;
   private storageType: StorageType = StorageType.Local;
 
-  private constructor() {}
+  private constructor() { }
 
   // 获取单例实例
   public static getInstance(): StorageManager {
@@ -28,95 +28,102 @@ export class StorageManager {
   }
 
   // 获取当前存储API
-  private getStorageApi() {
+  private getStorageApi(type?: StorageType) {
+    const targetType = type || this.storageType;
     if (typeof chrome !== 'undefined' && chrome.storage) {
-      return this.storageType === StorageType.Sync ? chrome.storage.sync : chrome.storage.local;
+      return targetType === StorageType.Sync ? chrome.storage.sync : chrome.storage.local;
     }
-    // 如果在非浏览器环境中提供模拟实现
-    return {
-      get: (keys: string | string[] | object | null, callback?: (items: { [key: string]: any }) => void) => {
-        if (callback) callback({});
-      },
-      set: (items: { [key: string]: any }, callback?: () => void) => {
-        if (callback) callback();
-      },
-      remove: (keys: string | string[], callback?: () => void) => {
-        if (callback) callback();
-      },
-      clear: (callback?: () => void) => {
-        if (callback) callback();
-      }
-    };
+    throw new Error('Chrome storage API is not available');
   }
 
   // 保存数据
-  public async set<T>(key: string, value: T): Promise<void> {
+  public async set<T>(key: string, value: T, type?: StorageType): Promise<void> {
     return new Promise((resolve, reject) => {
-      const storageApi = this.getStorageApi();
-      storageApi.set({ [key]: value }, () => {
-        if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message));
-        } else {
-          resolve();
-        }
-      });
+      try {
+        const storageApi = this.getStorageApi(type);
+        storageApi.set({ [key]: value }, () => {
+          if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve();
+          }
+        });
+      } catch (e) {
+        reject(e);
+      }
     });
   }
 
   // 获取数据
-  public async get<T>(key: string, defaultValue?: T): Promise<T | undefined> {
+  public async get<T>(key: string, defaultValue?: T, type?: StorageType): Promise<T | undefined> {
     return new Promise((resolve, reject) => {
-      const storageApi = this.getStorageApi();
-      storageApi.get([key], (result: { [key: string]: any }) => {
-        if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message));
-        } else {
-          const value = result[key];
-          resolve(value !== undefined ? value : defaultValue);
-        }
-      });
+      try {
+        const storageApi = this.getStorageApi(type);
+        storageApi.get([key], (result: { [key: string]: any }) => {
+          if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            const value = result[key];
+            resolve(value !== undefined ? value : defaultValue);
+          }
+        });
+      } catch (e) {
+        reject(e);
+      }
     });
   }
 
   // 获取多个键的数据
-  public async getAll(keys: string[]): Promise<{ [key: string]: any }> {
+  public async getAll(keys: string[], type?: StorageType): Promise<{ [key: string]: any }> {
     return new Promise((resolve, reject) => {
-      const storageApi = this.getStorageApi();
-      storageApi.get(keys, (result: { [key: string]: any }) => {
-        if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message));
-        } else {
-          resolve(result);
-        }
-      });
+      try {
+        const storageApi = this.getStorageApi(type);
+        storageApi.get(keys, (result: { [key: string]: any }) => {
+          if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve(result);
+          }
+        });
+      } catch (e) {
+        reject(e);
+      }
     });
   }
 
   // 删除指定键的数据
-  public async remove(key: string): Promise<void> {
+  public async remove(key: string, type?: StorageType): Promise<void> {
     return new Promise((resolve, reject) => {
-      const storageApi = this.getStorageApi();
-      storageApi.remove(key, () => {
-        if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message));
-        } else {
-          resolve();
-        }
-      });
+      try {
+        const storageApi = this.getStorageApi(type);
+        storageApi.remove(key, () => {
+          if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve();
+          }
+        });
+      } catch (e) {
+        reject(e);
+      }
     });
   }
 
   // 清空所有数据
-  public async clear(): Promise<void> {
+  public async clear(type?: StorageType): Promise<void> {
     return new Promise((resolve, reject) => {
-      const storageApi = this.getStorageApi();
-      storageApi.clear(() => {
-        if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message));
-        } else {
-          resolve();
-        }
-      });
+      try {
+        const storageApi = this.getStorageApi(type);
+        storageApi.clear(() => {
+          if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve();
+          }
+        });
+      } catch (e) {
+        reject(e);
+      }
     });
   }
 
