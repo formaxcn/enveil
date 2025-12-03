@@ -1,5 +1,5 @@
 import { AppConfig, SiteConfig } from '../types';
-import { AddSiteModal } from '../../../components/AddSiteModal';
+import { SiteConfigModal } from '../../../components/SiteConfigModal';
 import { StorageManager } from '../../../components/StorageManager';
 import { ConfigGroupTable } from '../../../components/ConfigGroupTable';
 
@@ -8,7 +8,7 @@ export class SiteEditorManager {
   private selectedGroups: number[];
   private notificationCallback: (message: string, type: 'success' | 'error' | 'warning' | 'info') => void;
   private saveConfigCallback: () => void;
-  private addSiteModal: AddSiteModal;
+  private addSiteModal: SiteConfigModal;
   private storageManager: StorageManager;
 
   constructor(
@@ -22,7 +22,7 @@ export class SiteEditorManager {
     this.notificationCallback = notificationCallback;
     this.saveConfigCallback = saveConfigCallback;
     this.storageManager = StorageManager.getInstance();
-    this.addSiteModal = new AddSiteModal();
+    this.addSiteModal = new SiteConfigModal();
     this.initAddSiteModal();
   }
 

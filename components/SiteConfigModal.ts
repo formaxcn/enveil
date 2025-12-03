@@ -17,7 +17,7 @@ interface SiteConfig {
   flagEnable: boolean;
 }
 
-export class AddSiteModal {
+export class SiteConfigModal {
   private modal: HTMLElement;
   private onSaveCallback?: (site: SiteConfig) => void;
   private enableSwitch!: SwitchComponent;
