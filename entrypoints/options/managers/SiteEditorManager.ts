@@ -38,28 +38,37 @@ export class SiteEditorManager {
   // 初始化添加网站模态框
   private initAddSiteModal(): void {
     this.addSiteModal.onSave((site: SiteConfig) => {
-      // 添加到默认组（索引为0）
-      if (!this.appConfig.settings[0]) {
-        // 如果默认组不存在，创建它
-        this.appConfig.settings.push({
-          name: "default",
-          enable: true,
-          sites: []
-        });
-      }
-
-      // Use first selected group if available, otherwise default
-      const targetGroupIndex = this.selectedGroups.length > 0 ? this.selectedGroups[0] : 0;
-      if (this.appConfig.settings[targetGroupIndex]) {
-        this.appConfig.settings[targetGroupIndex].sites.push(site);
-      } else {
-        // Fallback
+      if (this.isAddingToDefaultGroup()) {
+        // 添加到默认组（索引为0）
+        if (!this.appConfig.settings[0]) {
+          // 如果默认组不存在，创建它
+          this.appConfig.settings.push({
+            name: "default",
+            enable: true,
+            sites: []
+          });
+        }
         this.appConfig.settings[0].sites.push(site);
+      } else {
+        // Use first selected group if available
+        const targetGroupIndex = this.selectedGroups.length > 0 ? this.selectedGroups[0] : 0;
+        if (this.appConfig.settings[targetGroupIndex]) {
+          this.appConfig.settings[targetGroupIndex].sites.push(site);
+        } else {
+          // Fallback to first group
+          this.appConfig.settings[0].sites.push(site);
+        }
       }
 
       this.updateConfigDisplay();
       this.saveConfigCallback();
     });
+  }
+  
+  // 检查是否应该添加到默认组
+  private isAddingToDefaultGroup(): boolean {
+    // 如果没有选中的组，则添加到默认组
+    return this.selectedGroups.length === 0;
   }
 
   // 初始化网站编辑相关UI
@@ -427,6 +436,8 @@ export class SiteEditorManager {
 
   // 打开添加网站模态框
   public openAddSiteModal(): void {
+    // 重置模态框为添加模式
+    this.addSiteModal.setEditMode(false);
     this.addSiteModal.open();
   }
 
@@ -436,6 +447,9 @@ export class SiteEditorManager {
     if (!setting || !setting.sites[siteIndex]) return;
 
     const site = setting.sites[siteIndex];
+    // 设置编辑模式并传入现有数据
+    this.addSiteModal.setEditMode(true, site);
+    
     // 使用现有的添加网站模态框进行编辑
     this.addSiteModal.onSave((updatedSite: SiteConfig) => {
       setting.sites[siteIndex] = updatedSite;
@@ -444,9 +458,6 @@ export class SiteEditorManager {
       this.notificationCallback('Site configuration updated successfully', 'success');
     });
     
-    // 打开模态框并传入现有站点数据
-    // 注意：由于AddSiteModal目前不支持直接编辑模式，我们需要暂时调整其API
-    // 或者创建一个新的编辑方法
     this.addSiteModal.open();
   }
 

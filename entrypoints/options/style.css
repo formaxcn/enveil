@@ -515,7 +515,8 @@ button:focus-visible {
   align-items: center;
 }
 
-.group-edit-btn, .group-delete-btn {
+.group-edit-btn, .group-delete-btn,
+.site-edit-btn, .site-delete-btn {
   width: 30px;
   height: 30px;
   display: flex;
@@ -529,19 +530,23 @@ button:focus-visible {
   color: white;
 }
 
-.group-edit-btn {
+.group-edit-btn,
+.site-edit-btn {
   background-color: #646cff;
 }
 
-.group-edit-btn:hover {
+.group-edit-btn:hover,
+.site-edit-btn:hover {
   background-color: #535bf2;
 }
 
-.group-delete-btn {
+.group-delete-btn,
+.site-delete-btn {
   background-color: #ff4444;
 }
 
-.group-delete-btn:hover {
+.group-delete-btn:hover,
+.site-delete-btn:hover {
   background-color: #cc0000;
 }
 

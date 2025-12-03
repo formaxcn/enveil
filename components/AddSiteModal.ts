@@ -24,6 +24,8 @@ export class AddSiteModal {
   private flagSwitch!: SwitchComponent;
   private positionSelect!: HTMLSelectElement;
   private colorPicker!: Pickr;
+  private isEditMode: boolean = false;
+  private currentSiteData?: SiteConfig;
 
   constructor() {
     // 创建模态框HTML结构
@@ -218,17 +220,13 @@ export class AddSiteModal {
     const form = this.modal.querySelector('#add-site-form') as HTMLFormElement;
     form.reset();
     
-    // 重置开关状态
-    this.enableSwitch.setChecked(false);
-    this.backgroundSwitch.setChecked(false);
-    this.flagSwitch.setChecked(false);
-    
-    // 设置颜色选择器为默认值
-    this.colorPicker.setColor('#8ac64d');
-    
-    // 隐藏position选择器
-    const positionGroup = this.modal.querySelector('.modal-position-group') as HTMLElement;
-    positionGroup.style.display = 'none';
+    if (this.isEditMode && this.currentSiteData) {
+      // 填充现有数据用于编辑
+      this.populateForm(this.currentSiteData);
+    } else {
+      // 重置为添加模式
+      this.resetForm();
+    }
     
     document.body.appendChild(this.modal);
     // 触发显示动画
@@ -245,9 +243,68 @@ export class AddSiteModal {
         this.modal.parentElement.removeChild(this.modal);
       }
     }, 300);
+    
+    // 退出编辑模式
+    this.isEditMode = false;
+    this.currentSiteData = undefined;
   }
 
   public onSave(callback: (site: SiteConfig) => void) {
     this.onSaveCallback = callback;
+  }
+  
+  // 设置编辑模式
+  public setEditMode(isEdit: boolean, siteData?: SiteConfig) {
+    this.isEditMode = isEdit;
+    this.currentSiteData = siteData;
+    
+    const title = this.modal.querySelector('.modal-header h3') as HTMLHeadingElement;
+    if (isEdit) {
+      title.textContent = 'Edit Site Configuration';
+    } else {
+      title.textContent = 'Add New Site Configuration';
+    }
+  }
+  
+  // 填充表单用于编辑
+  private populateForm(site: SiteConfig) {
+    // 填充文本输入
+    (this.modal.querySelector('#env-name') as HTMLInputElement).value = site.envName;
+    (this.modal.querySelector('#match-value') as HTMLInputElement).value = site.matchValue;
+    
+    // 设置下拉选择
+    (this.modal.querySelector('#match-pattern') as HTMLSelectElement).value = site.matchPattern;
+    (this.modal.querySelector('#position') as HTMLSelectElement).value = site.Position;
+    
+    // 设置开关状态
+    this.enableSwitch.setChecked(site.enable);
+    this.backgroundSwitch.setChecked(site.backgroudEnable);
+    this.flagSwitch.setChecked(site.flagEnable);
+    
+    // 设置颜色选择器
+    this.colorPicker.setColor(site.color);
+    
+    // 根据flag开关状态显示/隐藏position选择器
+    const positionGroup = this.modal.querySelector('.modal-position-group') as HTMLElement;
+    if (site.flagEnable) {
+      positionGroup.style.display = 'block';
+    } else {
+      positionGroup.style.display = 'none';
+    }
+  }
+  
+  // 重置表单为添加模式
+  private resetForm() {
+    // 重置开关状态
+    this.enableSwitch.setChecked(false);
+    this.backgroundSwitch.setChecked(false);
+    this.flagSwitch.setChecked(false);
+    
+    // 设置颜色选择器为默认值
+    this.colorPicker.setColor('#8ac64d');
+    
+    // 隐藏position选择器
+    const positionGroup = this.modal.querySelector('.modal-position-group') as HTMLElement;
+    positionGroup.style.display = 'none';
   }
 }
