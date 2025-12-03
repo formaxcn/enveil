@@ -18,6 +18,7 @@ export class AddSiteModal {
   private enableSwitch!: SwitchComponent;
   private backgroundSwitch!: SwitchComponent;
   private flagSwitch!: SwitchComponent;
+  private positionSelect!: HTMLSelectElement;
 
   constructor() {
     // 创建模态框HTML结构
@@ -32,53 +33,58 @@ export class AddSiteModal {
         </div>
         <div class="modal-body">
           <form id="add-site-form">
-            <div class="form-group">
-              <label for="match-pattern">Match Pattern:</label>
-              <select id="match-pattern" required>
-                <option value="regex">Regex</option>
-                <option value="urlPrefix">URL Prefix</option>
-                <option value="domain" selected>Domain</option>
-              </select>
+            <div class="form-row modal-enable-row">
+              <div class="form-group switch-group">
+                <label>Enable:</label>
+                <div id="enable-switch"></div>
+              </div>
+              <div class="form-group modal-name-group">
+                <label for="env-name">Name:</label>
+                <input type="text" id="env-name" placeholder="e.g. dev" required />
+              </div>
             </div>
             
-            <div class="form-group">
-              <label for="match-value">Match Value:</label>
+            <div class="form-row modal-pattern-color-row">
+              <div class="form-group modal-pattern-group">
+                <label for="match-pattern">Pattern:</label>
+                <select id="match-pattern" required>
+                  <option value="regex">Regex</option>
+                  <option value="urlPrefix">URL Prefix</option>
+                  <option value="domain" selected>Domain</option>
+                </select>
+              </div>
+              <div class="form-group modal-color-group">
+                <label for="color">Color:</label>
+                <input type="color" id="color" value="#FF0000" />
+              </div>
+            </div>
+            
+            <div class="form-group modal-value-group">
+              <label for="match-value">Value:</label>
               <input type="text" id="match-value" placeholder="e.g. baidu.com" required />
             </div>
             
-            <div class="form-group">
-              <label for="env-name">Environment Name:</label>
-              <input type="text" id="env-name" placeholder="e.g. dev" required />
+            <div class="form-row modal-flag-row">
+              <div class="form-group flag-enable-group">
+                <label>Flag Enable:</label>
+                <div id="flag-switch"></div>
+              </div>
+              <div class="form-group modal-position-group">
+                <label for="position">Position:</label>
+                <select id="position" required>
+                  <option value="leftTop">Left Top</option>
+                  <option value="rightTop">Right Top</option>
+                  <option value="leftBottom">Left Bottom</option>
+                  <option value="rightBottom">Right Bottom</option>
+                </select>
+              </div>
             </div>
             
-            <div class="form-group">
-              <label for="color">Color:</label>
-              <input type="color" id="color" value="#FF0000" />
-            </div>
-            
-            <div class="form-group">
-              <label for="position">Position:</label>
-              <select id="position" required>
-                <option value="leftTop">Left Top</option>
-                <option value="rightTop">Right Top</option>
-                <option value="leftBottom">Left Bottom</option>
-                <option value="rightBottom">Right Bottom</option>
-              </select>
-            </div>
-            
-            <div class="form-group switch-group">
-              <label>Enable:</label>
-              <div id="enable-switch"></div>
-            </div>
-            
-            <div class="form-group switch-group">
-              <label>Background Enable:</label>
-              <div id="background-switch"></div>
-            </div>
-            
-            <div class="form-group switch-group">
-              <label>Flag Enable:</label>
-              <div id="flag-switch"></div>
+            <div class="form-row modal-background-row">
+              <div class="form-group background-enable-group">
+                <label>Background Enable:</label>
+                <div id="background-switch"></div>
+              </div>
             </div>
             
             <div class="form-actions">
@@ -107,6 +113,13 @@ export class AddSiteModal {
     const flagSwitchContainer = this.modal.querySelector('#flag-switch') as HTMLElement;
     this.flagSwitch = new SwitchComponent(flagSwitchContainer, '', 'modal-flag', 'local');
     this.flagSwitch.setChecked(false);
+    
+    // 获取position下拉菜单引用
+    this.positionSelect = this.modal.querySelector('#position') as HTMLSelectElement;
+    
+    // 初始隐藏position选择器
+    const positionGroup = this.modal.querySelector('.modal-position-group') as HTMLElement;
+    positionGroup.style.display = 'none';
   }
 
   private bindEvents() {
@@ -128,6 +141,16 @@ export class AddSiteModal {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       this.handleSave();
+    });
+    
+    // 当flag开关切换时，显示/隐藏position选择器
+    this.flagSwitch.onChange((checked) => {
+      const positionGroup = this.modal.querySelector('.modal-position-group') as HTMLElement;
+      if (checked) {
+        positionGroup.style.display = 'block';
+      } else {
+        positionGroup.style.display = 'none';
+      }
     });
   }
 
@@ -166,6 +189,10 @@ export class AddSiteModal {
     this.enableSwitch.setChecked(false);
     this.backgroundSwitch.setChecked(false);
     this.flagSwitch.setChecked(false);
+    
+    // 隐藏position选择器
+    const positionGroup = this.modal.querySelector('.modal-position-group') as HTMLElement;
+    positionGroup.style.display = 'none';
     
     document.body.appendChild(this.modal);
     // 触发显示动画

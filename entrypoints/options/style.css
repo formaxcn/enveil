@@ -38,7 +38,6 @@ body {
   margin: 0;
   display: flex;
   flex-direction: column;
-  min-height: 800px;
   min-width: 1400px;
 }
 
@@ -80,7 +79,8 @@ main {
   width: 100%;
   justify-content: space-between;
   max-width: 200px;
-  margin: 0 auto 1rem auto;
+  padding: 0.5rem;
+  border: 1px solid rgba(0, 0, 0, 0);
 }
 
 /* 确保config-group-header中的开关垂直居中 */
@@ -323,63 +323,104 @@ button:focus-visible {
   font-size: 1.1em;
 }
 
-/* 表单样式 */
-.form-group {
-  margin-bottom: 15px;
-  text-align: left;
-}
-
 .form-group label {
   display: block;
-  margin-bottom: 5px;
-  font-size: 0.9em;
+  margin-bottom: 0.2rem;
   font-weight: 500;
-}
-
-.form-control {
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid #444;
-  border-radius: 4px;
-  background-color: #333;
-  color: white;
-  font-size: 0.9em;
-  box-sizing: border-box;
-}
-
-.dark-theme .form-control {
-  background-color: #333;
-  border: 1px solid #444;
-  color: white;
-}
-
-.light-theme .form-control {
-  background-color: white;
-  border: 1px solid #ddd;
-  color: #213547;
-}
-
-.form-control:focus {
-  outline: none;
-  border-color: #646cff;
 }
 
 .form-row {
   display: flex;
   gap: 10px;
-  margin-bottom: 15px;
+  align-items: center;
 }
 
-.form-row .form-group.half {
-  flex: 1;
-  margin-bottom: 0;
+.switch-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.switch-group label {
+  margin-bottom: 0.2rem;
 }
 
 .form-actions {
   display: flex;
-  gap: 10px;
   justify-content: flex-end;
-  margin-top: 15px;
+  gap: 10px;
+  margin-top: 0.5rem;
+}
+
+.flag-enable-group,
+.background-enable-group {
+  text-align: left;
+}
+
+.flag-enable-group label,
+.background-enable-group label {
+  display: block;
+  margin-bottom: 0.2rem;
+  font-weight: 500;
+}
+
+.flag-enable-group .switch-container,
+.background-enable-group .switch-container {
+  display: inline-flex;
+  margin: 0;
+}
+
+/* Add Site Modal Specific Styles */
+.modal-enable-row {
+  align-items: center;
+}
+
+.modal-enable-row .switch-group {
+  width: 100px;
+}
+
+.modal-enable-row .modal-name-group {
+  flex: 1;
+  margin-left: 20px;
+}
+
+.modal-pattern-color-row {
+  align-items: center;
+}
+
+.modal-pattern-color-row .modal-pattern-group {
+  flex: 1;
+}
+
+.modal-pattern-color-row .modal-color-group {
+  flex: 1;
+  margin-left: 20px;
+}
+
+.modal-value-group {
+  margin-bottom: 0.5rem;
+}
+
+.modal-flag-row {
+  align-items: center;
+}
+
+.modal-flag-row .flag-enable-group {
+  flex: 1;
+}
+
+.modal-flag-row .modal-position-group {
+  flex: 1;
+  margin-left: 20px;
+  display: none;
+}
+
+.modal-background-row {
+  align-items: center;
+}
+
+.modal-background-row .background-enable-group .switch-container {
+  display: inline-flex;
 }
 
 /* Sync部分样式 */
@@ -943,10 +984,6 @@ button:focus-visible {
   padding: 1rem;
 }
 
-.form-group {
-  margin-bottom: 1rem;
-}
-
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
@@ -987,19 +1024,19 @@ button:focus-visible {
 
 .switch-group {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .switch-group label {
-  margin-bottom: 0;
+  margin-bottom: 0.2rem;
 }
 
 .form-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 1.5rem;
+  margin-top: 0.5rem;
 }
 
 .cancel-btn,
@@ -1047,18 +1084,20 @@ button:focus-visible {
   background-color: #45a049;
 }
 
-@media (max-width: 500px) {
-  #options-container {
-    flex-direction: column;
-  }
+.flag-enable-group,
+.background-enable-group {
+  text-align: left;
+}
 
-  #left-panel,
-  #right-panel {
-    width: 100%;
-    padding-right: 0;
-  }
+.flag-enable-group label,
+.background-enable-group label {
+  display: block;
+  margin-bottom: 0.2rem;
+  font-weight: 500;
+}
 
-  #left-panel {
-    margin-bottom: 20px;
-  }
+.flag-enable-group .switch-container,
+.background-enable-group .switch-container {
+  display: inline-flex;
+  margin: 0;
 }
