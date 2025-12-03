@@ -39,7 +39,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 800px;
-  min-width: 1600px;
+  min-width: 1400px;
 }
 
 #app {
@@ -664,6 +664,17 @@ button:focus-visible {
 .group-header-actions {
   display: flex;
   gap: 5px;
+}
+
+.group-enable-switch {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: 10px;
+}
+
+.group-enable-switch .switch-container {
+  margin: 0;
 }
 
 .group-toggle {

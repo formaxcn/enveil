@@ -168,6 +168,39 @@ export class SiteEditorManager {
       this.openAddSiteModal();
     });
     
+    // 组启用开关
+    const groupEnableSwitch = document.createElement('div');
+    groupEnableSwitch.className = 'group-enable-switch';
+    const groupEnableLabel = document.createElement('span');
+    groupEnableLabel.className = 'switch-label';
+    groupEnableLabel.textContent = 'Enable Group';
+    
+    const switchContainer = document.createElement('div');
+    switchContainer.className = 'switch-container';
+    
+    const switchLabel = document.createElement('label');
+    switchLabel.className = 'switch';
+    
+    const switchInput = document.createElement('input');
+    switchInput.type = 'checkbox';
+    switchInput.className = 'group-enable-toggle';
+    switchInput.checked = setting.enable;
+    
+    const sliderSpan = document.createElement('span');
+    sliderSpan.className = 'slider';
+    
+    switchLabel.appendChild(switchInput);
+    switchLabel.appendChild(sliderSpan);
+    switchContainer.appendChild(switchLabel);
+    
+    groupEnableSwitch.appendChild(groupEnableLabel);
+    groupEnableSwitch.appendChild(switchContainer);
+    
+    switchInput.addEventListener('change', () => {
+      setting.enable = switchInput.checked;
+      this.saveConfigCallback();
+    });
+    
     // 编辑配置组名称按钮
     const editBtn = document.createElement('button');
     editBtn.className = 'group-edit-btn';
@@ -186,6 +219,7 @@ export class SiteEditorManager {
       this.deleteConfigGroup(groupIndex);
     });
     
+    headerActions.appendChild(groupEnableSwitch);
     headerActions.appendChild(addSiteBtn);
     headerActions.appendChild(editBtn);
     headerActions.appendChild(deleteBtn);
