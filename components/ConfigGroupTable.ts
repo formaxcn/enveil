@@ -150,9 +150,6 @@ export class ConfigGroupTable {
 
         switchInput.addEventListener('change', () => {
             this.setting.enable = switchInput.checked;
-            if (this.setting.sites) {
-                this.setting.sites.forEach(site => site.enable = switchInput.checked);
-            }
             this.onSave();
             this.onUpdate(); // Re-render to update children toggles
         });
@@ -242,12 +239,13 @@ export class ConfigGroupTable {
     private createSiteRow(site: SiteConfig, siteIndex: number): HTMLTableRowElement {
         const row = document.createElement('tr');
         const contrastColor = this.getContrastColor(site.color);
+        const isGroupEnabled = this.setting.enable;
 
             row.innerHTML = `
       <td>
         <div class="switch-container">
           <label class="switch">
-            <input type="checkbox" class="site-enable-toggle" ${site.enable ? 'checked' : ''}>
+            <input type="checkbox" class="site-enable-toggle" ${site.enable ? 'checked' : ''} ${!isGroupEnabled ? 'disabled' : ''} ${!isGroupEnabled ? 'class="disabled-switch"' : ''}>
             <span class="slider"></span>
           </label>
         </div>
@@ -263,7 +261,7 @@ export class ConfigGroupTable {
       <td>
         <div class="switch-container">
           <label class="switch">
-            <input type="checkbox" class="site-background-toggle" ${site.backgroudEnable ? 'checked' : ''}>
+            <input type="checkbox" class="site-background-toggle" ${site.backgroudEnable ? 'checked' : ''} ${!isGroupEnabled ? 'disabled' : ''} ${!isGroupEnabled ? 'class="disabled-switch"' : ''}>
             <span class="slider"></span>
           </label>
         </div>
@@ -271,19 +269,27 @@ export class ConfigGroupTable {
       <td>
         <div class="switch-container">
           <label class="switch">
-            <input type="checkbox" class="site-flag-toggle" ${site.flagEnable ? 'checked' : ''}>
+            <input type="checkbox" class="site-flag-toggle" ${site.flagEnable ? 'checked' : ''} ${!isGroupEnabled ? 'disabled' : ''} ${!isGroupEnabled ? 'class="disabled-switch"' : ''}>
             <span class="slider"></span>
           </label>
         </div>
       </td>
       <td>${site.flagEnable ? '<div class="position-cell-container"></div>' : '-'}</td>
       <td>
-        <button class="site-edit-btn" title="Edit site"><i class="fas fa-edit"></i></button>
+        <button class="site-edit-btn" title="Edit site" ${!isGroupEnabled ? 'disabled' : ''}><i class="fas fa-edit"></i></button>
       </td>
       <td>
         <button class="site-delete-btn" title="Delete site"><i class="fas fa-trash"></i></button>
       </td>
     `;
+
+        // 添加disabled样式
+        if (!isGroupEnabled) {
+            const switchContainers = row.querySelectorAll('.switch-container');
+            switchContainers.forEach(container => {
+                container.classList.add('disabled-switch-container');
+            });
+        }
 
         // 初始化位置选择器（只读模式），仅当flagEnable为true时
         if (site.flagEnable) {
@@ -297,22 +303,26 @@ export class ConfigGroupTable {
 
         const enableToggle = row.querySelector('.site-enable-toggle') as HTMLInputElement;
         enableToggle.addEventListener('change', () => {
-            site.enable = enableToggle.checked;
-            this.onSave();
-            // Logic to check parent enable state could be here or in parent
-            // For simplicity, we'll trigger an update if needed, but basic save is done
+            if (this.setting.enable) {
+                site.enable = enableToggle.checked;
+                this.onSave();
+            }
         });
 
         const backgroundToggle = row.querySelector('.site-background-toggle') as HTMLInputElement;
         backgroundToggle.addEventListener('change', () => {
-            site.backgroudEnable = backgroundToggle.checked;
-            this.onSave();
+            if (this.setting.enable) {
+                site.backgroudEnable = backgroundToggle.checked;
+                this.onSave();
+            }
         });
 
         const flagToggle = row.querySelector('.site-flag-toggle') as HTMLInputElement;
         flagToggle.addEventListener('change', () => {
-            site.flagEnable = flagToggle.checked;
-            this.onSave();
+            if (this.setting.enable) {
+                site.flagEnable = flagToggle.checked;
+                this.onSave();
+            }
         });
 
         const editBtn = row.querySelector('.site-edit-btn') as HTMLButtonElement;
