@@ -127,8 +127,8 @@ export class ConfigGroupComponent {
             }
 
             groupNameInput.style.display = 'none';
-    groupTitle.style.display = 'block';
-    editBtn.style.display = 'flex'; // Restore display with flex layout to keep icon centered
+            groupTitle.style.display = 'block';
+            editBtn.style.display = 'flex'; // Restore display with flex layout to keep icon centered
         };
 
         groupNameInput.addEventListener('blur', saveGroupName);
