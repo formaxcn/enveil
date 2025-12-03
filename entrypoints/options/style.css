@@ -768,23 +768,23 @@ button:focus-visible {
 }
 
 .position-quadrant.left-top .position-triangle {
-  top: 10%;
-  left: 10%;
+  top: 0;
+  left: 0;
 }
 
 .position-quadrant.right-top .position-triangle {
-  top: 10%;
-  right: 10%;
+  top: 0;
+  right: 0;
 }
 
 .position-quadrant.left-bottom .position-triangle {
-  bottom: 10%;
-  left: 10%;
+  bottom: 0;
+  left: 0;
 }
 
 .position-quadrant.right-bottom .position-triangle {
-  bottom: 10%;
-  right: 10%;
+  bottom: 0;
+  right: 0;
 }
 
 /* 用 clip-path 画出直角三角形（最干净、最准、无锯齿） */

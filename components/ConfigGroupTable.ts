@@ -208,7 +208,6 @@ export class ConfigGroupTable {
         <th>Pattern</th>
         <th>Value</th>
         <th>Name</th>
-        <th>Color</th>
         <th>Background</th>
         <th>Flag</th>
         <th>Position</th>
@@ -222,7 +221,7 @@ export class ConfigGroupTable {
         if (this.setting.sites.length === 0) {
             const emptyRow = document.createElement('tr');
             emptyRow.innerHTML = `
-        <td colspan="9" class="empty-group-message">No sites configured in this group. Click "Add Site" to add your first site.</td>
+        <td colspan="8" class="empty-group-message">No sites configured in this group. Click "Add Site" to add your first site.</td>
       `;
             tableBody.appendChild(emptyRow);
         } else {
@@ -254,9 +253,6 @@ export class ConfigGroupTable {
       <td>${site.matchValue}</td>
       <td style="background-color: ${site.color}; color: ${contrastColor}; font-weight: bold;">
         ${site.envName}
-      </td>
-      <td>
-        <div style="width: 20px; height: 20px; background-color: ${site.color}; border-radius: 50%; margin: auto;"></div>
       </td>
       <td>
         <div class="switch-container">
