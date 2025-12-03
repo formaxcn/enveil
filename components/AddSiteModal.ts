@@ -1,4 +1,5 @@
 import { SwitchComponent } from './SwitchComponent';
+import { PositionSelector } from './PositionSelector';
 // @ts-ignore
 import Pickr from '@simonwep/pickr';
 // @ts-ignore
@@ -22,7 +23,7 @@ export class AddSiteModal {
   private enableSwitch!: SwitchComponent;
   private backgroundSwitch!: SwitchComponent;
   private flagSwitch!: SwitchComponent;
-  private positionSelect!: HTMLSelectElement;
+  private positionSelector!: PositionSelector;
   private colorPicker!: Pickr;
   private isEditMode: boolean = false;
   private currentSiteData?: SiteConfig;
@@ -77,13 +78,8 @@ export class AddSiteModal {
                 <div id="flag-switch"></div>
               </div>
               <div class="form-group modal-position-group">
-                <label for="position">Position:</label>
-                <select id="position" required>
-                  <option value="leftTop">Left Top</option>
-                  <option value="rightTop">Right Top</option>
-                  <option value="leftBottom">Left Bottom</option>
-                  <option value="rightBottom">Right Bottom</option>
-                </select>
+                <label>Position:</label>
+                <div id="position-selector"></div>
               </div>
             </div>
             
@@ -149,8 +145,12 @@ export class AddSiteModal {
       }
     });
 
-    // 获取position下拉菜单引用
-    this.positionSelect = this.modal.querySelector('#position') as HTMLSelectElement;
+    // 初始化位置选择器
+    const positionSelectorContainer = this.modal.querySelector('#position-selector') as HTMLElement;
+    this.positionSelector = new PositionSelector(positionSelectorContainer, {
+      initialPosition: 'leftTop',
+      color: '#8ac64d'
+    });
     
     // 显示position选择器，因为flag默认为开启
     const positionGroup = this.modal.querySelector('.modal-position-group') as HTMLElement;
@@ -195,7 +195,7 @@ export class AddSiteModal {
     const matchValue = (this.modal.querySelector('#match-value') as HTMLInputElement).value;
     const envName = (this.modal.querySelector('#env-name') as HTMLInputElement).value;
     const color = this.colorPicker.getColor().toHEXA().toString();
-    const position = (this.modal.querySelector('#position') as HTMLSelectElement).value;
+    const position = this.positionSelector.getPosition();
     
     const siteConfig: SiteConfig = {
       enable: this.enableSwitch.isChecked(),
@@ -274,7 +274,9 @@ export class AddSiteModal {
     
     // 设置下拉选择
     (this.modal.querySelector('#match-pattern') as HTMLSelectElement).value = site.matchPattern;
-    (this.modal.querySelector('#position') as HTMLSelectElement).value = site.Position;
+    
+    // 更新位置选择器
+    this.positionSelector.setPosition(site.Position);
     
     // 设置开关状态
     this.enableSwitch.setChecked(site.enable);
@@ -302,6 +304,9 @@ export class AddSiteModal {
     
     // 设置颜色选择器为默认值
     this.colorPicker.setColor('#8ac64d');
+    
+    // 更新位置选择器的颜色
+    this.positionSelector.setColor('#8ac64d');
     
     // 显示position选择器，因为flag默认为开启
     const positionGroup = this.modal.querySelector('.modal-position-group') as HTMLElement;

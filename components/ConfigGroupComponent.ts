@@ -1,4 +1,5 @@
 import { Setting, SiteConfig } from '../entrypoints/options/types';
+import { PositionSelector } from './PositionSelector';
 
 export class ConfigGroupComponent {
     private setting: Setting;
@@ -242,15 +243,7 @@ export class ConfigGroupComponent {
         const row = document.createElement('tr');
         const contrastColor = this.getContrastColor(site.color);
 
-        const positionClass = (site.Position || 'leftTop').replace(/([A-Z])/g, '-$1').toLowerCase();
-
-        const positionVisual = `
-      <div class="position-cell" style="--triangle-color: ${site.color};">
-        <div class="position-triangle ${positionClass}"></div>
-      </div>
-    `;
-
-        row.innerHTML = `
+            row.innerHTML = `
       <td>
         <div class="switch-container">
           <label class="switch">
@@ -283,7 +276,7 @@ export class ConfigGroupComponent {
           </label>
         </div>
       </td>
-      <td>${positionVisual}</td>
+      <td><div class="position-cell-container"></div></td>
       <td>
         <button class="site-edit-btn" title="Edit site"><i class="fas fa-edit"></i></button>
       </td>
@@ -291,6 +284,14 @@ export class ConfigGroupComponent {
         <button class="site-delete-btn" title="Delete site"><i class="fas fa-trash"></i></button>
       </td>
     `;
+
+        // 初始化位置选择器（只读模式）
+        const positionCellContainer = row.querySelector('.position-cell-container') as HTMLElement;
+        new PositionSelector(positionCellContainer, {
+          initialPosition: site.Position || 'leftTop',
+          color: site.color,
+          readonly: true
+        });
 
         const enableToggle = row.querySelector('.site-enable-toggle') as HTMLInputElement;
         enableToggle.addEventListener('change', () => {
