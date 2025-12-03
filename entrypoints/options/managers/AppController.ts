@@ -7,7 +7,11 @@ import { StorageManager, StorageType } from '../../../components/StorageManager'
 export class AppController {
   private appConfig: AppConfig = {
     browserSync: { enable: false },
-    settings: []
+    settings: [{
+      name: 'default',
+      enable: true,
+      sites: []
+    }]
   };
   private selectedGroups: number[] = [];
   private storageManager: StorageManager;
@@ -130,9 +134,42 @@ export class AppController {
         syncEnabled ? StorageType.Sync : StorageType.Local
       );
       
-      const config = await this.storageManager.get<AppConfig>('appConfig');
-      if (config) {
-        this.appConfig = { ...this.appConfig, ...config };
+      // 新的存储结构
+      // 1. 加载配置组列表
+      const configGroups = await this.storageManager.get<string[]>('configGroups');
+      
+      if (configGroups && configGroups.length > 0) {
+        // 2. 为每个配置组加载详细信息
+        const settings: AppConfig['settings'] = [];
+        for (const groupName of configGroups) {
+          const groupDetails = await this.storageManager.get<AppConfig['settings'][0]['sites']>(`configDetail-${groupName}`);
+          const groupSetting = await this.storageManager.get<{name: string, enable: boolean}>(`configSetting-${groupName}`);
+          
+          if (groupDetails && groupSetting) {
+            settings.push({
+              name: groupSetting.name,
+              enable: groupSetting.enable,
+              sites: groupDetails
+            });
+          }
+        }
+        
+        // 3. 加载浏览器同步配置
+        const browserSync = await this.storageManager.get<AppConfig['browserSync']>('browserSync');
+        
+        if (settings.length > 0) {
+          this.appConfig.settings = settings;
+        }
+        
+        if (browserSync) {
+          this.appConfig.browserSync = browserSync;
+        }
+      } else {
+        // 回退到旧的存储方式
+        const config = await this.storageManager.get<AppConfig>('appConfig');
+        if (config) {
+          this.appConfig = { ...this.appConfig, ...config };
+        }
       }
     } catch (error) {
       console.error('Failed to load config:', error);
@@ -143,6 +180,24 @@ export class AppController {
   // 保存配置
   private async saveConfig(): Promise<void> {
     try {
+      // 使用新的存储结构保存配置
+      // 1. 保存配置组列表
+      const configGroups = this.appConfig.settings.map(setting => setting.name);
+      await this.storageManager.set('configGroups', configGroups);
+      
+      // 2. 保存每个配置组的详细信息和设置
+      for (const setting of this.appConfig.settings) {
+        await this.storageManager.set(`configDetail-${setting.name}`, setting.sites);
+        await this.storageManager.set(`configSetting-${setting.name}`, {
+          name: setting.name,
+          enable: setting.enable
+        });
+      }
+      
+      // 3. 保存浏览器同步配置
+      await this.storageManager.set('browserSync', this.appConfig.browserSync);
+      
+      // 4. 同时保存旧的结构以保证向后兼容
       await this.storageManager.set('appConfig', this.appConfig);
       
       // 更新各个管理器中的配置引用
