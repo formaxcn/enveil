@@ -672,56 +672,51 @@ button:focus-visible {
   margin-bottom: 20px;
   background-color: #2a2a2a;
 }
+/* 推荐方案：使用 border 正确切角方式 */
+.config-group-table td {
+  position: relative;          /* 给 td 加相对定位 */
+  vertical-align: middle;
+  text-align: center;
+}
 
-/* Position三角形样式 */
 .position-cell {
-  display: block;
-  width: 100%;
-  height: 16px;
-  position: relative;
-  overflow: hidden;
-}
-
-.position-triangle {
-  width: 0;
-  height: 0;
   position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 40px;
+  height: 100%;                /* 还是 100%，但这次绝对有基准了 */
+  margin: auto;                /* 水平 + 垂直居中 */
+}
+/* 3. 三角形：完全不用 px，用百分比 + transform 实现 50% 大小 */
+.position-triangle {
+  position: absolute;
+  width: 50%;                  /* 占父容器一半宽度 */
+  height: 50%;                 /* 占父容器一半高度 */
+  content: "";
 }
 
+/* 用 clip-path 画出直角三角形（最干净、最准、无锯齿） */
 .position-triangle.left-top {
-  border-top: 16px solid var(--triangle-color);
-  border-left: 16px solid var(--triangle-color);
-  border-right: 16px solid transparent;
-  border-bottom: 16px solid transparent;
-  top: 0;
-  left: 0;
+  top: 0; left: 0;
+  clip-path: polygon(0 0, 100% 0, 0 100%);        /* 左上直角三角 */
+  background: var(--triangle-color);
 }
 
 .position-triangle.right-top {
-  border-top: 16px solid var(--triangle-color);
-  border-right: 16px solid var(--triangle-color);
-  border-left: 16px solid transparent;
-  border-bottom: 16px solid transparent;
-  top: 0;
-  right: 0;
+  top: 0; right: 0;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);  /* 右上 */
+  background: var(--triangle-color);
 }
 
 .position-triangle.left-bottom {
-  border-top: 16px solid transparent;
-  border-left: 16px solid var(--triangle-color);
-  border-right: 16px solid transparent;
-  border-bottom: 16px solid var(--triangle-color);
-  bottom: 0;
-  left: 0;
+  bottom: 0; left: 0;
+  clip-path: polygon(0 100%, 100% 100%, 0 0);     /* 左下 */
+  background: var(--triangle-color);
 }
 
 .position-triangle.right-bottom {
-  border-top: 16px solid transparent;
-  border-right: 16px solid var(--triangle-color);
-  border-left: 16px solid transparent;
-  border-bottom: 16px solid var(--triangle-color);
-  bottom: 0;
-  right: 0;
+  bottom: 0; right: 0;
+  clip-path: polygon(100% 100%, 100% 0, 0 100%); /* 右下 */
+  background: var(--triangle-color);
 }
 
 .dark-theme .config-group-container {
