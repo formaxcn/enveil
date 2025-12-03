@@ -1,11 +1,10 @@
 import { AppConfig, GitConfig } from '../types';
-
-// 声明chrome对象
-declare const chrome: any;
+import { StorageManager } from '../../../components/StorageManager';
 
 export class GitSyncManager {
   private appConfig: AppConfig;
   private notificationCallback: (message: string, type: 'success' | 'error' | 'warning' | 'info') => void;
+  private storageManager: StorageManager;
 
   constructor(
     appConfig: AppConfig,
@@ -13,6 +12,7 @@ export class GitSyncManager {
   ) {
     this.appConfig = appConfig;
     this.notificationCallback = notificationCallback;
+    this.storageManager = StorageManager.getInstance();
   }
 
   // 更新配置引用
@@ -24,11 +24,11 @@ export class GitSyncManager {
   public initGitConfigUI(): void {
     // 设置Git配置表单字段值
     if (this.appConfig.gitConfig) {
-      document.getElementById('repo-url')!.value = this.appConfig.gitConfig.repoUrl || '';
-      document.getElementById('branch')!.value = this.appConfig.gitConfig.branch || 'main';
-      document.getElementById('file-path')!.value = this.appConfig.gitConfig.filePath || 'extensions.json';
-      document.getElementById('username')!.value = this.appConfig.gitConfig.username || '';
-      document.getElementById('password')!.value = this.appConfig.gitConfig.password || '';
+      (document.getElementById('repo-url') as HTMLInputElement)!.value = this.appConfig.gitConfig.repoUrl || '';
+      (document.getElementById('branch') as HTMLInputElement)!.value = this.appConfig.gitConfig.branch || 'main';
+      (document.getElementById('file-path') as HTMLInputElement)!.value = this.appConfig.gitConfig.filePath || 'extensions.json';
+      (document.getElementById('username') as HTMLInputElement)!.value = this.appConfig.gitConfig.username || '';
+      (document.getElementById('password') as HTMLInputElement)!.value = this.appConfig.gitConfig.password || '';
       
       // 更新同步信息
       document.getElementById('sync-time')!.textContent = this.appConfig.gitConfig.lastSyncTime || 'Never';

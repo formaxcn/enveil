@@ -1,8 +1,6 @@
 import { AppConfig, SiteConfig, Setting } from '../types';
 import { AddSiteModal } from '../../../components/AddSiteModal';
-
-// 声明chrome对象
-declare const chrome: any;
+import { StorageManager } from '../../../components/StorageManager';
 
 export class SiteEditorManager {
   private appConfig: AppConfig;
@@ -10,6 +8,7 @@ export class SiteEditorManager {
   private notificationCallback: (message: string, type: 'success' | 'error' | 'warning' | 'info') => void;
   private saveConfigCallback: () => void;
   private addSiteModal: AddSiteModal;
+  private storageManager: StorageManager;
 
   constructor(
     appConfig: AppConfig,
@@ -21,6 +20,7 @@ export class SiteEditorManager {
     this.selectedGroups = selectedGroups;
     this.notificationCallback = notificationCallback;
     this.saveConfigCallback = saveConfigCallback;
+    this.storageManager = StorageManager.getInstance();
     this.addSiteModal = new AddSiteModal();
     this.initAddSiteModal();
   }
@@ -158,9 +158,58 @@ export class SiteEditorManager {
       this.saveConfigCallback();
     });
     
+    // 修改这里：使组名可编辑
+    const groupTitleContainer = document.createElement('div');
+    groupTitleContainer.className = 'config-group-title-container';
+    
     const groupTitle = document.createElement('h3');
     groupTitle.className = 'config-group-title';
     groupTitle.innerHTML = `${setting.name} <span class="site-count">(${setting.sites.length} sites)</span>`;
+    
+    const groupNameInput = document.createElement('input');
+    groupNameInput.type = 'text';
+    groupNameInput.className = 'config-group-name-input';
+    groupNameInput.value = setting.name;
+    groupNameInput.style.display = 'none'; // 默认隐藏输入框
+    
+    // 添加保存名称编辑的函数
+    const saveGroupName = () => {
+      const newName = groupNameInput.value.trim();
+      if (newName && newName !== setting.name) {
+        // 检查名称是否已存在
+        if (!this.appConfig.settings.some((s, index) => s.name === newName && index !== groupIndex)) {
+          setting.name = newName;
+          groupTitle.innerHTML = `${setting.name} <span class="site-count">(${setting.sites.length} sites)</span>`;
+          this.saveConfigCallback();
+          this.notificationCallback('Configuration group name updated successfully', 'success');
+        } else {
+          groupNameInput.value = setting.name; // 恢复原名称
+          this.notificationCallback('Configuration group with this name already exists', 'error');
+        }
+      }
+      groupNameInput.style.display = 'none';
+      groupTitle.style.display = 'block';
+    };
+    
+    // 输入框失去焦点时保存
+    groupNameInput.addEventListener('blur', saveGroupName);
+    
+    // 按回车键时保存
+    groupNameInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        saveGroupName();
+      }
+    });
+    
+    groupTitleContainer.appendChild(groupTitle);
+    groupTitleContainer.appendChild(groupNameInput);
+    
+    // 双击标题进入编辑模式
+    groupTitle.addEventListener('dblclick', () => {
+      groupTitle.style.display = 'none';
+      groupNameInput.style.display = 'inline-block';
+      groupNameInput.focus();
+    });
     
     // 添加 Enable 开关到标题旁边
     const enableSwitch = document.createElement('div');
@@ -190,13 +239,23 @@ export class SiteEditorManager {
     enableSwitch.appendChild(enableLabel);
     enableSwitch.appendChild(switchContainer);
     
+    // 主开关控制所有子行开关的逻辑
     switchInput.addEventListener('change', () => {
       setting.enable = switchInput.checked;
+      
+      // 如果启用了配置组，同时更新所有子行的状态
+      if (setting.sites) {
+        setting.sites.forEach(site => {
+          site.enable = switchInput.checked;
+        });
+      }
+      
       this.saveConfigCallback();
+      this.updateConfigDisplay(); // 重新渲染以更新子行状态
     });
     
     headerLeft.appendChild(toggleSwitch);
-    headerLeft.appendChild(groupTitle);
+    headerLeft.appendChild(groupTitleContainer);
     headerLeft.appendChild(enableSwitch);
     
     // 组操作按钮
@@ -217,7 +276,11 @@ export class SiteEditorManager {
     editBtn.innerHTML = '<i class="fas fa-edit"></i>';
     editBtn.title = 'Edit group name';
     editBtn.addEventListener('click', () => {
-      this.editConfigGroupName(groupIndex);
+      // 修改这里：点击编辑按钮时显示输入框
+      groupTitle.style.display = 'none';
+      groupNameInput.style.display = 'inline-block';
+      groupNameInput.value = setting.name; // 确保显示当前名称
+      groupNameInput.focus();
     });
     
     // 删除配置组按钮
@@ -253,10 +316,10 @@ export class SiteEditorManager {
         <th>Pattern</th>
         <th>Value</th>
         <th>Name</th>
-        <th>Position</th>
         <th>Color</th>
         <th>Background</th>
         <th>Flag</th>
+        <th>Position</th>
         <th colspan="2">Actions</th>
       </tr>
     `;
@@ -290,12 +353,26 @@ export class SiteEditorManager {
           <td>
             <span class="site-env-name" style="background-color: ${site.color}; padding: 2px 6px; border-radius: 4px;">${site.envName}</span>
           </td>
-          <td>${site.Position}</td>
           <td>
             <div style="width: 20px; height: 20px; background-color: ${site.color}; border-radius: 50%; margin: auto;"></div>
           </td>
-          <td>${site.backgroudEnable ? 'Yes' : 'No'}</td>
-          <td>${site.flagEnable ? 'Yes' : 'No'}</td>
+          <td>
+            <div class="switch-container">
+              <label class="switch">
+                <input type="checkbox" class="site-background-toggle" ${site.backgroudEnable ? 'checked' : ''}>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </td>
+          <td>
+            <div class="switch-container">
+              <label class="switch">
+                <input type="checkbox" class="site-flag-toggle" ${site.flagEnable ? 'checked' : ''}>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </td>
+          <td>${site.Position}</td>
           <td>
             <button class="site-edit-btn" title="Edit site"><i class="fas fa-edit"></i></button>
           </td>
@@ -309,6 +386,38 @@ export class SiteEditorManager {
         enableToggle.addEventListener('change', () => {
           site.enable = enableToggle.checked;
           this.saveConfigCallback();
+          
+          // 检查是否至少有一个子行启用，如果是，则确保主开关也启用
+          if (site.enable && !switchInput.checked) {
+            switchInput.checked = true;
+            setting.enable = true;
+            this.saveConfigCallback();
+          }
+          
+          // 如果所有子行都被禁用，并且主开关是启用的，则禁用主开关
+          if (!site.enable && switchInput.checked) {
+            const anySiteEnabled = setting.sites.some(s => s.enable);
+            if (!anySiteEnabled) {
+              switchInput.checked = false;
+              setting.enable = false;
+              this.saveConfigCallback();
+            }
+          }
+          
+          this.updateConfigDisplay();
+        });
+        
+        const backgroundToggle = row.querySelector('.site-background-toggle') as HTMLInputElement;
+        backgroundToggle.addEventListener('change', () => {
+          site.backgroudEnable = backgroundToggle.checked;
+          this.saveConfigCallback();
+          this.updateConfigDisplay();
+        });
+        
+        const flagToggle = row.querySelector('.site-flag-toggle') as HTMLInputElement;
+        flagToggle.addEventListener('change', () => {
+          site.flagEnable = flagToggle.checked;
+          this.saveConfigCallback();
           this.updateConfigDisplay();
         });
         
@@ -318,7 +427,8 @@ export class SiteEditorManager {
         });
         
         const deleteBtn = row.querySelector('.site-delete-btn') as HTMLButtonElement;
-        deleteBtn.addEventListener('click', () => {
+        deleteBtn.addEventListener('click', (e) => {
+          e.stopPropagation(); // 防止事件冒泡
           this.deleteSite(groupIndex, siteIndex);
         });
         
@@ -350,21 +460,20 @@ export class SiteEditorManager {
 
   // 添加配置组
   private addConfigGroup(): void {
-    const groupName = prompt('Enter configuration group name:');
-    if (!groupName || groupName.trim() === '') {
-      this.notificationCallback('Group name cannot be empty', 'error');
-      return;
-    }
-
-    // 检查名称是否已存在
-    if (this.appConfig.settings.some(setting => setting.name === groupName.trim())) {
-      this.notificationCallback('Configuration group with this name already exists', 'error');
-      return;
-    }
+    // 生成默认组名，格式为enveil + 3位随机数字
+    let defaultGroupName: string;
+    let attempts = 0;
+    do {
+      const randomNumber = Math.floor(100 + Math.random() * 900); // 100-999之间的随机数
+      defaultGroupName = `enveil-${randomNumber}`;
+      attempts++;
+      // 防止无限循环，如果尝试超过100次就跳出
+      if (attempts > 100) break;
+    } while (this.appConfig.settings.some(setting => setting.name === defaultGroupName));
 
     // 添加新的配置组
     this.appConfig.settings.push({
-      name: groupName.trim(),
+      name: defaultGroupName,
       enable: true,
       sites: []
     });
@@ -375,7 +484,19 @@ export class SiteEditorManager {
 
     this.updateConfigDisplay();
     this.saveConfigCallback();
-    this.notificationCallback(`Configuration group "${groupName.trim()}" added successfully`, 'success');
+    
+    // 在添加完成后，自动进入编辑模式
+    setTimeout(() => {
+      const groupElement = document.querySelector(`[data-group-index="${newGroupIndex}"]`) as HTMLElement;
+      if (groupElement) {
+        const editBtn = groupElement.querySelector('.group-edit-btn') as HTMLButtonElement;
+        if (editBtn) {
+          editBtn.click();
+        }
+      }
+    }, 100);
+    
+    this.notificationCallback(`Configuration group "${defaultGroupName}" added successfully`, 'success');
   }
 
   // 编辑配置组名称

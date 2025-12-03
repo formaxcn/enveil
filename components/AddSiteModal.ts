@@ -111,15 +111,15 @@ export class AddSiteModal {
     // 初始化开关组件
     const enableSwitchContainer = this.modal.querySelector('#enable-switch') as HTMLElement;
     this.enableSwitch = new SwitchComponent(enableSwitchContainer, '', 'modal-enable', 'local');
-    this.enableSwitch.setChecked(false);
+    this.enableSwitch.setChecked(true);
 
     const backgroundSwitchContainer = this.modal.querySelector('#background-switch') as HTMLElement;
     this.backgroundSwitch = new SwitchComponent(backgroundSwitchContainer, '', 'modal-background', 'local');
-    this.backgroundSwitch.setChecked(false);
+    this.backgroundSwitch.setChecked(true);
 
     const flagSwitchContainer = this.modal.querySelector('#flag-switch') as HTMLElement;
     this.flagSwitch = new SwitchComponent(flagSwitchContainer, '', 'modal-flag', 'local');
-    this.flagSwitch.setChecked(false);
+    this.flagSwitch.setChecked(true);
     
     // 初始化颜色选择器
     const colorPickerContainer = this.modal.querySelector('#color-picker-container') as HTMLElement;
@@ -152,9 +152,9 @@ export class AddSiteModal {
     // 获取position下拉菜单引用
     this.positionSelect = this.modal.querySelector('#position') as HTMLSelectElement;
     
-    // 初始隐藏position选择器
+    // 显示position选择器，因为flag默认为开启
     const positionGroup = this.modal.querySelector('.modal-position-group') as HTMLElement;
-    positionGroup.style.display = 'none';
+    positionGroup.style.display = 'block';
   }
 
   private bindEvents() {
@@ -295,16 +295,16 @@ export class AddSiteModal {
   
   // 重置表单为添加模式
   private resetForm() {
-    // 重置开关状态
-    this.enableSwitch.setChecked(false);
-    this.backgroundSwitch.setChecked(false);
-    this.flagSwitch.setChecked(false);
+    // 设置开关状态为开启（默认状态）
+    this.enableSwitch.setChecked(true);
+    this.backgroundSwitch.setChecked(true);
+    this.flagSwitch.setChecked(true);
     
     // 设置颜色选择器为默认值
     this.colorPicker.setColor('#8ac64d');
     
-    // 隐藏position选择器
+    // 显示position选择器，因为flag默认为开启
     const positionGroup = this.modal.querySelector('.modal-position-group') as HTMLElement;
-    positionGroup.style.display = 'none';
+    positionGroup.style.display = 'block';
   }
 }

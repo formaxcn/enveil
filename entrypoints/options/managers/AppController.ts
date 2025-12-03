@@ -2,106 +2,74 @@ import { AppConfig } from '../types';
 import { GitSyncManager } from './GitSyncManager';
 import { ConfigImportExportManager } from './ConfigImportExportManager';
 import { SiteEditorManager } from './SiteEditorManager';
-import { SwitchComponent } from '../../../components/SwitchComponent';
-
-// 声明chrome对象
-declare const chrome: any;
+import { StorageManager, StorageType } from '../../../components/StorageManager';
 
 export class AppController {
-  private appConfig: AppConfig;
-  private selectedGroups: number[];
-  private gitSyncManager: GitSyncManager;
-  private configImportExportManager: ConfigImportExportManager;
-  private siteEditorManager: SiteEditorManager;
-  private browserSyncSwitch: SwitchComponent | null = null;
-  private notificationTimeout: number | null = null;
+  private appConfig: AppConfig = {
+    browserSync: { enable: false },
+    settings: []
+  };
+  private selectedGroups: number[] = [];
+  private storageManager: StorageManager;
+
+  private gitSyncManager!: GitSyncManager;
+  private configImportExportManager!: ConfigImportExportManager;
+  private siteEditorManager!: SiteEditorManager;
+  private notificationContainer!: HTMLDivElement;
 
   constructor() {
-    // 初始化默认配置
-    this.appConfig = this.getDefaultConfig();
-    this.selectedGroups = [];
-
-    // 初始化各个管理器
-    this.gitSyncManager = new GitSyncManager(
-      this.appConfig,
-      this.showNotification.bind(this)
-    );
-
-    this.configImportExportManager = new ConfigImportExportManager(
-      this.appConfig,
-      this.selectedGroups,
-      this.showNotification.bind(this),
-      this.saveConfig.bind(this),
-      this.updateConfig.bind(this)
-    );
-
-    this.siteEditorManager = new SiteEditorManager(
-      this.appConfig,
-      this.selectedGroups,
-      this.showNotification.bind(this),
-      this.saveConfig.bind(this)
-    );
-  }
-
-  // 获取默认配置
-  private getDefaultConfig(): AppConfig {
-    return {
-      browserSync: {
-        enable: false
-      },
-      gitConfig: {
-        repoUrl: '',
-        branch: 'main',
-        filePath: 'enveil-config.json',
-        username: '',
-        password: '',
-        lastSyncTime: '',
-        localCommit: 0
-      },
-      settings: [
-        {
-          name: 'default',
-          enable: true,
-          sites: []
-        }
-      ]
-    };
+    this.storageManager = StorageManager.getInstance();
+    this.init();
   }
 
   // 初始化应用
-  public async init(): Promise<void> {
-    // 加载配置
-    await this.loadConfig();
-    
-    // 更新各个管理器的配置引用
-    this.updateAllManagersConfig();
+  private async init(): Promise<void> {
+    try {
+      // 加载配置
+      await this.loadConfig();
+      
+      // 初始化UI
+      this.initUI();
+      
+      // 初始化各个功能管理器
+      this.gitSyncManager = new GitSyncManager(this.appConfig, (message: string, type: 'success' | 'error' | 'warning' | 'info') => {
+        this.showNotification(message, type);
+      });
+      
+      this.configImportExportManager = new ConfigImportExportManager(
+        this.appConfig,
+        this.selectedGroups,
+        (message: string, type: 'success' | 'error' | 'warning' | 'info') => {
+          this.showNotification(message, type);
+        },
+        () => {
+          this.saveConfig();
+        },
+        (newConfig: AppConfig) => {
+          this.appConfig = newConfig;
+        }
+      );
+      
+      this.siteEditorManager = new SiteEditorManager(
+        this.appConfig,
+        this.selectedGroups,
+        (message: string, type: 'success' | 'error' | 'warning' | 'info') => {
+          this.showNotification(message, type);
+        },
+        () => {
+          this.saveConfig();
+        }
+      );
 
-    // 初始化各个模块的UI
-    this.initUI();
-  }
+      // 初始化网站编辑相关UI
+      this.siteEditorManager.initSiteEditorUI();
 
-  // 更新所有管理器的配置引用
-  private updateAllManagersConfig(): void {
-    this.gitSyncManager.updateConfig(this.appConfig);
-    this.configImportExportManager.updateConfig(this.appConfig);
-    this.configImportExportManager.updateSelectedGroups(this.selectedGroups);
-    this.siteEditorManager.updateConfig(this.appConfig);
-    this.siteEditorManager.updateSelectedGroups(this.selectedGroups);
-  }
-
-  // 初始化UI
-  private initUI(): void {
-    // 初始化Git同步相关UI
-    this.gitSyncManager.initGitConfigUI();
-
-    // 初始化配置导入导出相关UI
-    this.configImportExportManager.initImportExportUI();
-
-    // 初始化网站编辑相关UI
-    this.siteEditorManager.initSiteEditorUI();
-
-    // 初始化浏览器同步开关
-    this.initBrowserSyncToggle();
+      // 初始化浏览器同步开关
+      this.initBrowserSyncToggle();
+    } catch (error) {
+      console.error('Failed to initialize app:', error);
+      this.showNotification('Failed to initialize application', 'error');
+    }
   }
 
   // 初始化浏览器同步开关
@@ -115,120 +83,112 @@ export class AppController {
       toggleContainer.id = 'browser-sync-toggle-container';
       container.appendChild(toggleContainer);
       
-      this.browserSyncSwitch = new SwitchComponent(
-        toggleContainer,
-        'Enable Browser Sync',
-        'browser-sync-enable',
-        'sync',
-        this.appConfig.browserSync.enable,
-        true
-      );
-      
-      this.browserSyncSwitch.onChange((isChecked: boolean) => {
+      // 监听浏览器同步开关变化
+      const handleSyncToggleChange = (isChecked: boolean) => {
         this.appConfig.browserSync.enable = isChecked;
+        // 更新存储管理器的存储类型
+        this.storageManager.setStorageType(
+          isChecked ? StorageType.Sync : StorageType.Local
+        );
         this.saveConfig();
+      };
+      
+      // 创建开关组件
+      const switchComponent = document.createElement('div');
+      toggleContainer.appendChild(switchComponent);
+      
+      // 使用动态导入避免循环依赖
+      import('../../../components/SwitchComponent').then(({ SwitchComponent }) => {
+        const browserSyncSwitch = new SwitchComponent(
+          switchComponent,
+          'Enable Browser Sync',
+          'browser-sync-enable',
+          'sync',
+          this.appConfig.browserSync.enable,
+          true
+        );
+        
+        browserSyncSwitch.onChange(handleSyncToggleChange);
       });
     }
+  }
+
+  // 初始化UI
+  private initUI(): void {
+    // 创建通知容器
+    this.notificationContainer = document.createElement('div');
+    this.notificationContainer.id = 'notification-container';
+    document.body.appendChild(this.notificationContainer);
   }
 
   // 加载配置
   private async loadConfig(): Promise<void> {
     try {
-      const config = await new Promise<AppConfig | null>((resolve) => {
-        chrome.storage.sync.get(['appConfig'], (result: { appConfig: AppConfig | null }) => {
-          resolve(result.appConfig);
-        });
-      });
-
+      // 根据浏览器同步开关状态设置存储类型
+      const syncEnabled = this.appConfig.browserSync?.enable ?? false;
+      this.storageManager.setStorageType(
+        syncEnabled ? StorageType.Sync : StorageType.Local
+      );
+      
+      const config = await this.storageManager.get<AppConfig>('appConfig');
       if (config) {
-        // 合并配置，确保所有必需字段都存在
-        this.appConfig = {
-          browserSync: config.browserSync || this.getDefaultConfig().browserSync,
-          gitConfig: config.gitConfig || this.getDefaultConfig().gitConfig,
-          settings: config.settings || this.getDefaultConfig().settings
-        };
-      }
-
-      // 默认选中第一个配置组
-      if (this.appConfig.settings.length > 0) {
-        this.selectedGroups = [0];
+        this.appConfig = { ...this.appConfig, ...config };
       }
     } catch (error) {
       console.error('Failed to load config:', error);
       this.showNotification('Failed to load configuration', 'error');
-      // 使用默认配置
-      this.appConfig = this.getDefaultConfig();
-      this.selectedGroups = [0];
     }
   }
 
   // 保存配置
-  public saveConfig(): void {
+  private async saveConfig(): Promise<void> {
     try {
-      chrome.storage.sync.set({ appConfig: this.appConfig }, () => {
-        this.showNotification('Configuration saved successfully', 'success');
-        // 更新所有管理器的配置引用
-        this.updateAllManagersConfig();
-      });
+      await this.storageManager.set('appConfig', this.appConfig);
+      
+      // 更新各个管理器中的配置引用
+      this.gitSyncManager.updateConfig(this.appConfig);
+      this.configImportExportManager.updateConfig(this.appConfig);
+      this.siteEditorManager.updateConfig(this.appConfig);
     } catch (error) {
       console.error('Failed to save config:', error);
       this.showNotification('Failed to save configuration', 'error');
     }
   }
 
-  // 更新配置（用于导入等操作）
-  public updateConfig(newConfig: AppConfig): void {
-    this.appConfig = newConfig;
-    // 保存更新后的配置
-    this.saveConfig();
-  }
-
   // 显示通知
-  public showNotification(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info'): void {
-    const notificationContainer = document.getElementById('notification-container');
-    if (!notificationContainer) return;
-
-    // 清除之前的通知
-    if (this.notificationTimeout) {
-      clearTimeout(this.notificationTimeout);
-    }
-
-    // 创建通知元素
+  private showNotification(message: string, type: 'success' | 'error' | 'warning' | 'info'): void {
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.textContent = message;
-
-    // 添加到容器
-    notificationContainer.appendChild(notification);
-
-    // 显示通知
+    
+    // 添加一些基本样式
+    Object.assign(notification.style, {
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      padding: '12px 20px',
+      borderRadius: '4px',
+      color: 'white',
+      fontWeight: 'bold',
+      zIndex: '10000',
+      boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+      transform: 'translateX(0)',
+      transition: 'transform 0.3s ease-in-out',
+      backgroundColor: type === 'success' ? '#4CAF50' : 
+                      type === 'error' ? '#f44336' : 
+                      type === 'warning' ? '#ff9800' : '#2196F3'
+    });
+    
+    this.notificationContainer.appendChild(notification);
+    
+    // 3秒后自动移除通知
     setTimeout(() => {
-      notification.classList.add('show');
-    }, 10);
-
-    // 自动关闭通知
-    this.notificationTimeout = window.setTimeout(() => {
-      notification.classList.remove('show');
+      notification.style.transform = 'translateX(100%)';
       setTimeout(() => {
-        notificationContainer.removeChild(notification);
+        if (notification.parentNode === this.notificationContainer) {
+          this.notificationContainer.removeChild(notification);
+        }
       }, 300);
     }, 3000);
-  }
-
-  // 获取当前配置（用于调试或导出）
-  public getConfig(): AppConfig {
-    return { ...this.appConfig };
-  }
-
-  // 获取选中的配置组索引
-  public getSelectedGroups(): number[] {
-    return [...this.selectedGroups];
-  }
-
-  // 手动更新选中的配置组
-  public updateSelectedGroups(groups: number[]): void {
-    this.selectedGroups = groups;
-    this.siteEditorManager.updateSelectedGroups(groups);
-    this.configImportExportManager.updateSelectedGroups(groups);
   }
 }

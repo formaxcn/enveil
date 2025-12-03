@@ -1,7 +1,5 @@
 import { AppConfig, Setting } from '../types';
-
-// 声明chrome对象
-declare const chrome: any;
+import { StorageManager } from '../../../components/StorageManager';
 
 export class ConfigImportExportManager {
   private appConfig: AppConfig;
@@ -9,6 +7,7 @@ export class ConfigImportExportManager {
   private selectedGroups: number[];
   private saveConfigCallback: () => void;
   private updateConfigCallback: (newConfig: AppConfig) => void;
+  private storageManager: StorageManager;
 
   constructor(
     appConfig: AppConfig,
@@ -22,6 +21,7 @@ export class ConfigImportExportManager {
     this.notificationCallback = notificationCallback;
     this.saveConfigCallback = saveConfigCallback;
     this.updateConfigCallback = updateConfigCallback;
+    this.storageManager = StorageManager.getInstance();
   }
 
   // 更新配置引用

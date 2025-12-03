@@ -1,8 +1,5 @@
 import { AppController } from './managers/AppController';
 
-// 声明chrome对象
-declare const chrome: any;
-
 // 初始化应用控制器
 let appController: AppController;
 
@@ -29,7 +26,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     // 创建并初始化AppController
     appController = new AppController();
-    await appController.init();
     
     console.log('Enveil Options App initialized successfully');
   } catch (error) {
@@ -41,12 +37,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       notification.className = 'notification notification-error';
       notification.textContent = 'Failed to initialize application. Please refresh the page.';
       notificationContainer.appendChild(notification);
-      setTimeout(() => notification.classList.add('show'), 10);
     }
   }
 });
-
-// 导出appController以便在需要时可以访问（例如在控制台调试）
-(window as any).enveilApp = {
-  getController: () => appController
-};

@@ -1,3 +1,5 @@
+import { StorageManager, StorageType } from './StorageManager';
+
 export class SwitchComponent {
   private element: HTMLElement;
   private input: HTMLInputElement;
@@ -5,6 +7,7 @@ export class SwitchComponent {
   private storageType: 'local' | 'sync';
   private persist: boolean;
   private onChangeCallback?: (isChecked: boolean) => void;
+  private storageManager: StorageManager;
 
   constructor(
     container: HTMLElement,
@@ -17,6 +20,8 @@ export class SwitchComponent {
     this.storageKey = storageKey;
     this.storageType = storageType;
     this.persist = persist;
+    this.storageManager = StorageManager.getInstance();
+    this.storageManager.setStorageType(storageType === 'local' ? StorageType.Local : StorageType.Sync);
 
     // 创建开关组件HTML结构
     container.innerHTML = `
@@ -44,53 +49,12 @@ export class SwitchComponent {
     }
   }
 
-  private getStorage() {
-    if (typeof chrome !== 'undefined' && chrome.storage) {
-      return this.storageType === 'local' ? chrome.storage.local : chrome.storage.sync;
-    } else if (typeof browser !== 'undefined' && browser.storage) {
-      // Firefox uses browser namespace
-      return this.storageType === 'local' ? browser.storage.local : browser.storage.sync;
-    } else {
-      // Fallback storage using localStorage
-      return {
-        get: (keys: string[], callback: (result: { [key: string]: any }) => void) => {
-          const result: { [key: string]: any } = {};
-          keys.forEach(key => {
-            try {
-              const item = localStorage.getItem(key);
-              result[key] = item ? JSON.parse(item) : undefined;
-            } catch (e) {
-              result[key] = undefined;
-            }
-          });
-          callback(result);
-        },
-        set: (items: { [key: string]: any }, callback?: () => void) => {
-          Object.keys(items).forEach(key => {
-            try {
-              localStorage.setItem(key, JSON.stringify(items[key]));
-            } catch (e) {
-              console.error('Error saving to localStorage:', e);
-            }
-          });
-          if (callback) callback();
-        }
-      };
-    }
-  }
-
   private async init() {
-    const storage = this.getStorage();
-
     try {
-      const result = await new Promise<{ [key: string]: any }>(resolve => {
-        storage.get([this.storageKey], (result: { [key: string]: any }) => {
-          resolve(result);
-        });
-      });
-
-      const isChecked = result[this.storageKey] !== undefined ? result[this.storageKey] : this.input.checked;
-      this.input.checked = isChecked;
+      const isChecked = await this.storageManager.get<boolean>(this.storageKey, this.input.checked);
+      if (isChecked !== undefined) {
+        this.input.checked = isChecked;
+      }
     } catch (error) {
       console.error('Error initializing switch component:', error);
     }
@@ -100,11 +64,12 @@ export class SwitchComponent {
     const isChecked = this.input.checked;
 
     if (this.persist) {
-      const storage = this.getStorage();
-      storage.set({ [this.storageKey]: isChecked }, () => {
+      this.storageManager.set(this.storageKey, isChecked).then(() => {
         if (this.onChangeCallback) {
           this.onChangeCallback(isChecked);
         }
+      }).catch(error => {
+        console.error('Error saving switch state:', error);
       });
     } else {
       if (this.onChangeCallback) {
