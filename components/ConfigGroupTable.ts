@@ -276,7 +276,7 @@ export class ConfigGroupTable {
           </label>
         </div>
       </td>
-      <td><div class="position-cell-container"></div></td>
+      <td>${site.flagEnable ? '<div class="position-cell-container"></div>' : '-'}</td>
       <td>
         <button class="site-edit-btn" title="Edit site"><i class="fas fa-edit"></i></button>
       </td>
@@ -285,13 +285,15 @@ export class ConfigGroupTable {
       </td>
     `;
 
-        // 初始化位置选择器（只读模式）
-        const positionCellContainer = row.querySelector('.position-cell-container') as HTMLElement;
-        new PositionSelector(positionCellContainer, {
-          initialPosition: site.Position || 'leftTop',
-          color: site.color,
-          readonly: true
-        });
+        // 初始化位置选择器（只读模式），仅当flagEnable为true时
+        if (site.flagEnable) {
+          const positionCellContainer = row.querySelector('.position-cell-container') as HTMLElement;
+          new PositionSelector(positionCellContainer, {
+            initialPosition: site.Position || 'leftTop',
+            color: site.color,
+            readonly: true
+          });
+        }
 
         const enableToggle = row.querySelector('.site-enable-toggle') as HTMLInputElement;
         enableToggle.addEventListener('change', () => {
