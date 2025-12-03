@@ -72,21 +72,20 @@ export class AddSiteModal {
               <input type="text" id="match-value" placeholder="e.g. baidu.com" required />
             </div>
             
-            <div class="form-row modal-flag-row">
-              <div class="form-group flag-enable-group">
-                <label>Flag Enable:</label>
-                <div id="flag-switch"></div>
+            <div class="form-row modal-flag-background-row">
+              <div class="modal-switches-container">
+                <div class="form-group flag-enable-group">
+                  <label>Flag Enable:</label>
+                  <div id="flag-switch"></div>
+                </div>
+                <div class="form-group background-enable-group">
+                  <label>Background Enable:</label>
+                  <div id="background-switch"></div>
+                </div>
               </div>
               <div class="form-group modal-position-group">
                 <label>Position:</label>
                 <div id="position-selector"></div>
-              </div>
-            </div>
-            
-            <div class="form-row modal-background-row">
-              <div class="form-group background-enable-group">
-                <label>Background Enable:</label>
-                <div id="background-switch"></div>
               </div>
             </div>
             
