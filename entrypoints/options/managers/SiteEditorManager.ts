@@ -125,12 +125,15 @@ export class SiteEditorManager {
   // 创建单个配置组元素
   private createConfigGroupElement(setting: Setting, groupIndex: number): HTMLDivElement {
     const groupElement = document.createElement('div');
-    groupElement.className = 'config-group';
+    groupElement.className = 'config-group-container';
     groupElement.dataset.groupIndex = groupIndex.toString();
 
     // 配置组标题和操作栏
     const groupHeader = document.createElement('div');
-    groupHeader.className = 'group-header';
+    groupHeader.className = 'config-group-header';
+    
+    const groupHeaderInner = document.createElement('div');
+    groupHeaderInner.className = 'group-header';
     
     // 组名称和开关
     const headerLeft = document.createElement('div');
@@ -147,6 +150,7 @@ export class SiteEditorManager {
     });
     
     const groupTitle = document.createElement('h3');
+    groupTitle.className = 'config-group-title';
     groupTitle.innerHTML = `${setting.name} <span class="site-count">(${setting.sites.length} sites)</span>`;
     
     headerLeft.appendChild(toggleSwitch);
@@ -156,10 +160,18 @@ export class SiteEditorManager {
     const headerActions = document.createElement('div');
     headerActions.className = 'group-header-actions';
     
+    // 添加网站按钮
+    const addSiteBtn = document.createElement('button');
+    addSiteBtn.className = 'add-site-btn';
+    addSiteBtn.innerHTML = '<i class="fas fa-plus"></i> Add Site';
+    addSiteBtn.addEventListener('click', () => {
+      this.openAddSiteModal();
+    });
+    
     // 编辑配置组名称按钮
     const editBtn = document.createElement('button');
     editBtn.className = 'group-edit-btn';
-    editBtn.textContent = '✏️';
+    editBtn.innerHTML = '<i class="fas fa-edit"></i>';
     editBtn.title = 'Edit group name';
     editBtn.addEventListener('click', () => {
       this.editConfigGroupName(groupIndex);
@@ -168,106 +180,114 @@ export class SiteEditorManager {
     // 删除配置组按钮
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'group-delete-btn';
-    deleteBtn.textContent = '🗑️';
+    deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
     deleteBtn.title = 'Delete group';
     deleteBtn.addEventListener('click', () => {
       this.deleteConfigGroup(groupIndex);
     });
     
+    headerActions.appendChild(addSiteBtn);
     headerActions.appendChild(editBtn);
     headerActions.appendChild(deleteBtn);
     
-    groupHeader.appendChild(headerLeft);
-    groupHeader.appendChild(headerActions);
+    groupHeaderInner.appendChild(headerLeft);
+    groupHeaderInner.appendChild(headerActions);
+    groupHeader.appendChild(groupHeaderInner);
 
     // 网站列表容器
-    const sitesList = document.createElement('div');
-    sitesList.className = 'sites-list';
+    const sitesContainer = document.createElement('div');
+    sitesContainer.className = 'config-group-content';
 
-    // 如果没有网站，显示空状态
+    // 创建网站表格
+    const sitesTable = document.createElement('table');
+    sitesTable.className = 'config-group-table';
+    
+    // 表头
+    const tableHeader = document.createElement('thead');
+    tableHeader.innerHTML = `
+      <tr>
+        <th>Enable</th>
+        <th>Env Name</th>
+        <th>Match</th>
+        <th>Background</th>
+        <th>Position</th>
+        <th>Flag</th>
+        <th>Color</th>
+        <th colspan="2">Actions</th>
+      </tr>
+    `;
+    sitesTable.appendChild(tableHeader);
+    
+    // 表格主体
+    const tableBody = document.createElement('tbody');
+    
+    // 如果没有网站，显示空状态但仍保留表头
     if (setting.sites.length === 0) {
-      const emptySites = document.createElement('div');
-      emptySites.className = 'empty-sites';
-      emptySites.innerHTML = `
-        <p>No sites configured in this group.</p>
-        <p>Click the "+" button to add your first site.</p>
+      const emptyRow = document.createElement('tr');
+      emptyRow.innerHTML = `
+        <td colspan="9" class="empty-group-message">No sites configured in this group. Click "Add Site" to add your first site.</td>
       `;
-      sitesList.appendChild(emptySites);
+      tableBody.appendChild(emptyRow);
     } else {
       // 渲染每个网站配置
       setting.sites.forEach((site, siteIndex) => {
-        const siteElement = this.createSiteElement(site, groupIndex, siteIndex);
-        sitesList.appendChild(siteElement);
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>
+            <div class="switch-container">
+              <label class="switch">
+                <input type="checkbox" class="site-enable-toggle" ${site.enable ? 'checked' : ''}>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </td>
+          <td>
+            <span class="site-env-name" style="background-color: ${site.color}; padding: 2px 6px; border-radius: 4px;">${site.envName}</span>
+          </td>
+          <td>${site.matchPattern}: ${site.matchValue}</td>
+          <td>${site.backgroudEnable ? 'Yes' : 'No'}</td>
+          <td>${site.Position}</td>
+          <td>${site.flagEnable ? 'Yes' : 'No'}</td>
+          <td>
+            <div style="width: 20px; height: 20px; background-color: ${site.color}; border-radius: 50%; margin: auto;"></div>
+          </td>
+          <td>
+            <button class="site-edit-btn" title="Edit site"><i class="fas fa-edit"></i></button>
+          </td>
+          <td>
+            <button class="site-delete-btn" title="Delete site"><i class="fas fa-trash"></i></button>
+          </td>
+        `;
+        
+        // 添加事件监听器
+        const enableToggle = row.querySelector('.site-enable-toggle') as HTMLInputElement;
+        enableToggle.addEventListener('change', () => {
+          site.enable = enableToggle.checked;
+          this.saveConfigCallback();
+          this.updateConfigDisplay();
+        });
+        
+        const editBtn = row.querySelector('.site-edit-btn') as HTMLButtonElement;
+        editBtn.addEventListener('click', () => {
+          this.editSite(groupIndex, siteIndex);
+        });
+        
+        const deleteBtn = row.querySelector('.site-delete-btn') as HTMLButtonElement;
+        deleteBtn.addEventListener('click', () => {
+          this.deleteSite(groupIndex, siteIndex);
+        });
+        
+        tableBody.appendChild(row);
       });
     }
+    
+    sitesTable.appendChild(tableBody);
+    sitesContainer.appendChild(sitesTable);
 
     groupElement.appendChild(groupHeader);
-    groupElement.appendChild(sitesList);
+    groupElement.appendChild(sitesContainer);
 
     return groupElement;
-  }
-
-  // 创建单个网站元素
-  private createSiteElement(site: SiteConfig, groupIndex: number, siteIndex: number): HTMLDivElement {
-    const siteElement = document.createElement('div');
-    siteElement.className = `site-item ${site.enable ? 'enabled' : 'disabled'}`;
-    siteElement.dataset.groupIndex = groupIndex.toString();
-    siteElement.dataset.siteIndex = siteIndex.toString();
-
-    // 启用/禁用开关
-    const toggleSwitch = document.createElement('input');
-    toggleSwitch.type = 'checkbox';
-    toggleSwitch.className = 'site-toggle';
-    toggleSwitch.checked = site.enable;
-    toggleSwitch.addEventListener('change', () => {
-      site.enable = toggleSwitch.checked;
-      this.saveConfigCallback();
-      this.updateConfigDisplay();
-    });
-
-    // 网站信息
-    const siteInfo = document.createElement('div');
-    siteInfo.className = 'site-info';
-    siteInfo.innerHTML = `
-      <div class="site-main-info">
-        <span class="site-env-name" style="background-color: ${site.color}">${site.envName}</span>
-        <span class="site-match">${site.matchPattern}: ${site.matchValue}</span>
-      </div>
-      <div class="site-details">
-        <span class="site-detail-item">Background: ${site.backgroudEnable ? 'Yes' : 'No'}</span>
-        <span class="site-detail-item">Position: ${site.Position}</span>
-        <span class="site-detail-item">Flag: ${site.flagEnable ? 'Yes' : 'No'}</span>
-      </div>
-    `;
-
-    // 操作按钮
-    const actionButtons = document.createElement('div');
-    actionButtons.className = 'site-actions';
-
-    // 编辑按钮
-    const editBtn = document.createElement('button');
-    editBtn.className = 'site-edit-btn';
-    editBtn.textContent = 'Edit';
-    editBtn.addEventListener('click', () => {
-      this.editSite(groupIndex, siteIndex);
-    });
-
-    // 删除按钮
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'site-delete-btn';
-    deleteBtn.textContent = 'Delete';
-    deleteBtn.addEventListener('click', () => {
-      this.deleteSite(groupIndex, siteIndex);
-    });
-
-    actionButtons.appendChild(editBtn);
-    actionButtons.appendChild(deleteBtn);
-
-    siteElement.appendChild(toggleSwitch);
-    siteElement.appendChild(siteInfo);
-    siteElement.appendChild(actionButtons);
-
-    return siteElement;
   }
 
   // 切换配置组选择
@@ -381,12 +401,17 @@ export class SiteEditorManager {
 
     const site = setting.sites[siteIndex];
     // 使用现有的添加网站模态框进行编辑
-    this.addSiteModal.open(site, (updatedSite: SiteConfig) => {
+    this.addSiteModal.onSave((updatedSite: SiteConfig) => {
       setting.sites[siteIndex] = updatedSite;
       this.updateConfigDisplay();
       this.saveConfigCallback();
       this.notificationCallback('Site configuration updated successfully', 'success');
     });
+    
+    // 打开模态框并传入现有站点数据
+    // 注意：由于AddSiteModal目前不支持直接编辑模式，我们需要暂时调整其API
+    // 或者创建一个新的编辑方法
+    this.addSiteModal.open();
   }
 
   // 删除网站

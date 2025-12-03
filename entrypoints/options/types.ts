@@ -26,8 +26,13 @@ export interface GitConfig {
   localCommit: number;
 }
 
+export interface BrowserSyncConfig {
+  enable: boolean;
+  remoteServer?: string;
+}
+
 export interface AppConfig {
-  browserSync: boolean;
+  browserSync: BrowserSyncConfig;
   settings: Setting[];
   gitConfig?: GitConfig;
 }

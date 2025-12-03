@@ -2,6 +2,7 @@ import { AppConfig } from '../types';
 import { GitSyncManager } from './GitSyncManager';
 import { ConfigImportExportManager } from './ConfigImportExportManager';
 import { SiteEditorManager } from './SiteEditorManager';
+import { SwitchComponent } from '../../../components/SwitchComponent';
 
 // 声明chrome对象
 declare const chrome: any;
@@ -12,6 +13,7 @@ export class AppController {
   private gitSyncManager: GitSyncManager;
   private configImportExportManager: ConfigImportExportManager;
   private siteEditorManager: SiteEditorManager;
+  private browserSyncSwitch: SwitchComponent | null = null;
   private notificationTimeout: number | null = null;
 
   constructor() {
@@ -22,8 +24,7 @@ export class AppController {
     // 初始化各个管理器
     this.gitSyncManager = new GitSyncManager(
       this.appConfig,
-      this.showNotification.bind(this),
-      this.saveConfig.bind(this)
+      this.showNotification.bind(this)
     );
 
     this.configImportExportManager = new ConfigImportExportManager(
@@ -46,16 +47,16 @@ export class AppController {
   private getDefaultConfig(): AppConfig {
     return {
       browserSync: {
-        enable: false,
-        remoteServer: 'ws://127.0.0.1:3000'
+        enable: false
       },
       gitConfig: {
-        enable: false,
         repoUrl: '',
         branch: 'main',
+        filePath: 'config.json',
         username: '',
         password: '',
-        path: 'config.json'
+        lastSyncTime: '',
+        localCommit: 0
       },
       settings: [
         {
@@ -91,7 +92,7 @@ export class AppController {
   // 初始化UI
   private initUI(): void {
     // 初始化Git同步相关UI
-    this.gitSyncManager.initGitSyncUI();
+    this.gitSyncManager.initGitConfigUI();
 
     // 初始化配置导入导出相关UI
     this.configImportExportManager.initImportExportUI();
@@ -105,20 +106,26 @@ export class AppController {
 
   // 初始化浏览器同步开关
   private initBrowserSyncToggle(): void {
-    const syncToggle = document.getElementById('browser-sync-toggle') as HTMLInputElement;
-    if (syncToggle) {
-      syncToggle.checked = this.appConfig.browserSync.enable;
-      syncToggle.addEventListener('change', (e) => {
-        this.appConfig.browserSync.enable = (e.target as HTMLInputElement).checked;
-        this.saveConfig();
-      });
-    }
-
-    const remoteServerInput = document.getElementById('remote-server') as HTMLInputElement;
-    if (remoteServerInput) {
-      remoteServerInput.value = this.appConfig.browserSync.remoteServer || 'ws://127.0.0.1:3000';
-      remoteServerInput.addEventListener('change', (e) => {
-        this.appConfig.browserSync.remoteServer = (e.target as HTMLInputElement).value;
+    const container = document.getElementById('browser-sync-option');
+    if (container) {
+      // Clear existing content
+      container.innerHTML = '';
+      
+      const toggleContainer = document.createElement('div');
+      toggleContainer.id = 'browser-sync-toggle-container';
+      container.appendChild(toggleContainer);
+      
+      this.browserSyncSwitch = new SwitchComponent(
+        toggleContainer,
+        'Enable Browser Sync',
+        'browser-sync-enable',
+        'sync',
+        this.appConfig.browserSync.enable,
+        true
+      );
+      
+      this.browserSyncSwitch.onChange((isChecked: boolean) => {
+        this.appConfig.browserSync.enable = isChecked;
         this.saveConfig();
       });
     }

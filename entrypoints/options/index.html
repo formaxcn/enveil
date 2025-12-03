@@ -15,9 +15,6 @@
       <div id="options-container">
         <!-- Left Panel (30%) -->
         <div id="left-panel">
-          <!-- Browser Sync Switch -->
-          <div id="browser-sync-option"></div>
-          
           <!-- Git Configuration -->
           <div id="git-config-section">
             <div class="header-row">
@@ -49,8 +46,12 @@
                 </div>
               </div>
               <div class="form-actions">
-                <button id="save-git-config" class="btn btn-primary">Save</button>
-                <button id="test-connection" class="btn btn-secondary">Test Connection</button>
+                <button id="save-git-config" class="btn btn-primary">
+                  <i class="fas fa-save"></i> Save
+                </button>
+                <button id="test-connection" class="btn btn-secondary">
+                  <i class="fas fa-plug"></i> Test Connection
+                </button>
               </div>
             </div>
           </div>
@@ -89,15 +90,14 @@
               <h3>Settings</h3>
             </div>
             <div class="settings-content">
-              <div class="setting-item">
-                <label>
-                  <input type="checkbox" id="browser-sync-checkbox">
-                  <span>Browser Sync</span>
-                </label>
-              </div>
+              <div id="browser-sync-option"></div>
               <div class="settings-actions">
-              <button id="backup-btn" class="btn btn-secondary">Backup</button>
-              <button id="restore-btn" class="btn btn-secondary">Restore</button>
+              <button id="backup-btn" class="btn btn-secondary">
+                <i class="fas fa-file-export"></i> Backup
+              </button>
+              <button id="restore-btn" class="btn btn-secondary">
+                <i class="fas fa-file-import"></i> Restore
+              </button>
             </div>
             </div>
           </div>
@@ -116,7 +116,9 @@
                 <button id="export-btn" class="icon-btn export-btn" title="Export">
                   <i class="fas fa-file-export"></i>
                 </button>
-                <button id="add-config-group" class="icon-btn add-btn" title="Add Group">+</button>
+                <button id="add-config-group" class="icon-btn add-btn" title="Add Group">
+                  <i class="fas fa-plus"></i>
+                </button>
                 <input type="file" id="import-btn" class="import-input" accept=".json" style="display: none;">
               </div>
             </div>
