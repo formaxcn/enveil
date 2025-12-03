@@ -1,7 +1,7 @@
 import { Setting, SiteConfig } from '../entrypoints/options/types';
 import { PositionSelector } from './PositionSelector';
 
-export class ConfigGroupComponent {
+export class ConfigGroupTable {
     private setting: Setting;
     private groupIndex: number;
     private isSelected: boolean;

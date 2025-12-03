@@ -1,7 +1,7 @@
 import { AppConfig, SiteConfig } from '../types';
 import { AddSiteModal } from '../../../components/AddSiteModal';
 import { StorageManager } from '../../../components/StorageManager';
-import { ConfigGroupComponent } from '../../../components/ConfigGroupComponent';
+import { ConfigGroupTable } from '../../../components/ConfigGroupTable';
 
 export class SiteEditorManager {
   private appConfig: AppConfig;
@@ -67,7 +67,7 @@ export class SiteEditorManager {
         // For now, let's assume the component callback handles the specific add/edit logic
         // and this global callback is a fallback or for the floating button.
 
-        // Actually, to keep it clean, let's rely on the callbacks passed to ConfigGroupComponent.
+        // Actually, to keep it clean, let's rely on the callbacks passed to ConfigGroupTable.
         // But `AddSiteModal` is a single instance.
         // We need to store the "current editing group index" when opening the modal.
       } else {
@@ -136,7 +136,7 @@ export class SiteEditorManager {
     // Render ALL groups
     this.appConfig.settings.forEach((setting, index) => {
       const isSelected = this.selectedGroups.includes(index);
-      const component = new ConfigGroupComponent(
+      const component = new ConfigGroupTable(
         setting,
         index,
         isSelected,
