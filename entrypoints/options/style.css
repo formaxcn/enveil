@@ -673,6 +673,57 @@ button:focus-visible {
   background-color: #2a2a2a;
 }
 
+/* Position三角形样式 */
+.position-cell {
+  display: block;
+  width: 100%;
+  height: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.position-triangle {
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.position-triangle.left-top {
+  border-top: 16px solid var(--triangle-color);
+  border-left: 16px solid var(--triangle-color);
+  border-right: 16px solid transparent;
+  border-bottom: 16px solid transparent;
+  top: 0;
+  left: 0;
+}
+
+.position-triangle.right-top {
+  border-top: 16px solid var(--triangle-color);
+  border-right: 16px solid var(--triangle-color);
+  border-left: 16px solid transparent;
+  border-bottom: 16px solid transparent;
+  top: 0;
+  right: 0;
+}
+
+.position-triangle.left-bottom {
+  border-top: 16px solid transparent;
+  border-left: 16px solid var(--triangle-color);
+  border-right: 16px solid transparent;
+  border-bottom: 16px solid var(--triangle-color);
+  bottom: 0;
+  left: 0;
+}
+
+.position-triangle.right-bottom {
+  border-top: 16px solid transparent;
+  border-right: 16px solid var(--triangle-color);
+  border-left: 16px solid transparent;
+  border-bottom: 16px solid var(--triangle-color);
+  bottom: 0;
+  right: 0;
+}
+
 .dark-theme .config-group-container {
   background-color: #2a2a2a;
   border: 1px solid #444;
@@ -821,6 +872,8 @@ button:focus-visible {
 .config-group-table th:nth-child(8),
 .config-group-table td:nth-child(8) {
   width: 75px;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .config-group-table th:nth-child(9),

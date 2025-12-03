@@ -242,20 +242,11 @@ export class ConfigGroupComponent {
         const row = document.createElement('tr');
         const contrastColor = this.getContrastColor(site.color);
 
-        const dotSize = '8px';
-        const boxSize = '20px';
-        let dotPosition = '';
-        switch (site.Position) {
-            case 'leftTop': dotPosition = 'top: 2px; left: 2px;'; break;
-            case 'rightTop': dotPosition = 'top: 2px; right: 2px;'; break;
-            case 'leftBottom': dotPosition = 'bottom: 2px; left: 2px;'; break;
-            case 'rightBottom': dotPosition = 'bottom: 2px; right: 2px;'; break;
-            default: dotPosition = 'top: 50%; left: 50%; transform: translate(-50%, -50%);';
-        }
+        const positionClass = (site.Position || 'leftTop').replace(/([A-Z])/g, '-$1').toLowerCase();
 
         const positionVisual = `
-      <div style="width: ${boxSize}; height: ${boxSize}; border: 1px solid #ccc; position: relative; margin: auto; background: #fff;">
-        <div style="width: ${dotSize}; height: ${dotSize}; background-color: ${site.color}; position: absolute; ${dotPosition}"></div>
+      <div class="position-cell" style="--triangle-color: ${site.color};">
+        <div class="position-triangle ${positionClass}"></div>
       </div>
     `;
 
