@@ -139,7 +139,7 @@ export class SiteEditorManager {
     const headerLeft = document.createElement('div');
     headerLeft.className = 'group-header-left';
     
-    // 启用/禁用开关
+    // 保留原来的复选框
     const toggleSwitch = document.createElement('input');
     toggleSwitch.type = 'checkbox';
     toggleSwitch.className = 'group-toggle';
@@ -153,27 +153,12 @@ export class SiteEditorManager {
     groupTitle.className = 'config-group-title';
     groupTitle.innerHTML = `${setting.name} <span class="site-count">(${setting.sites.length} sites)</span>`;
     
-    headerLeft.appendChild(toggleSwitch);
-    headerLeft.appendChild(groupTitle);
-    
-    // 组操作按钮
-    const headerActions = document.createElement('div');
-    headerActions.className = 'group-header-actions';
-    
-    // 添加网站按钮
-    const addSiteBtn = document.createElement('button');
-    addSiteBtn.className = 'add-site-btn';
-    addSiteBtn.innerHTML = '<i class="fas fa-plus"></i> Add Site';
-    addSiteBtn.addEventListener('click', () => {
-      this.openAddSiteModal();
-    });
-    
-    // 组启用开关
-    const groupEnableSwitch = document.createElement('div');
-    groupEnableSwitch.className = 'group-enable-switch';
-    const groupEnableLabel = document.createElement('span');
-    groupEnableLabel.className = 'switch-label';
-    groupEnableLabel.textContent = 'Enable Group';
+    // 添加 Enable 开关到标题旁边
+    const enableSwitch = document.createElement('div');
+    enableSwitch.className = 'group-enable-switch';
+    const enableLabel = document.createElement('span');
+    enableLabel.className = 'switch-label';
+    enableLabel.textContent = 'Enable';
     
     const switchContainer = document.createElement('div');
     switchContainer.className = 'switch-container';
@@ -193,12 +178,28 @@ export class SiteEditorManager {
     switchLabel.appendChild(sliderSpan);
     switchContainer.appendChild(switchLabel);
     
-    groupEnableSwitch.appendChild(groupEnableLabel);
-    groupEnableSwitch.appendChild(switchContainer);
+    enableSwitch.appendChild(enableLabel);
+    enableSwitch.appendChild(switchContainer);
     
     switchInput.addEventListener('change', () => {
       setting.enable = switchInput.checked;
       this.saveConfigCallback();
+    });
+    
+    headerLeft.appendChild(toggleSwitch);
+    headerLeft.appendChild(groupTitle);
+    headerLeft.appendChild(enableSwitch);
+    
+    // 组操作按钮
+    const headerActions = document.createElement('div');
+    headerActions.className = 'group-header-actions';
+    
+    // 添加网站按钮
+    const addSiteBtn = document.createElement('button');
+    addSiteBtn.className = 'add-site-btn';
+    addSiteBtn.innerHTML = '<i class="fas fa-plus"></i> Add Site';
+    addSiteBtn.addEventListener('click', () => {
+      this.openAddSiteModal();
     });
     
     // 编辑配置组名称按钮
@@ -219,7 +220,6 @@ export class SiteEditorManager {
       this.deleteConfigGroup(groupIndex);
     });
     
-    headerActions.appendChild(groupEnableSwitch);
     headerActions.appendChild(addSiteBtn);
     headerActions.appendChild(editBtn);
     headerActions.appendChild(deleteBtn);
