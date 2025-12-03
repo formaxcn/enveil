@@ -1,4 +1,8 @@
 import { SwitchComponent } from './SwitchComponent';
+// @ts-ignore
+import Pickr from '@simonwep/pickr';
+// @ts-ignore
+import '@simonwep/pickr/dist/themes/classic.min.css';
 
 // 定义网站配置结构类型
 interface SiteConfig {
@@ -19,6 +23,7 @@ export class AddSiteModal {
   private backgroundSwitch!: SwitchComponent;
   private flagSwitch!: SwitchComponent;
   private positionSelect!: HTMLSelectElement;
+  private colorPicker!: Pickr;
 
   constructor() {
     // 创建模态框HTML结构
@@ -55,7 +60,7 @@ export class AddSiteModal {
               </div>
               <div class="form-group modal-color-group">
                 <label for="color">Color:</label>
-                <input type="color" id="color" value="#FF0000" />
+                <div id="color-picker-container"></div>
               </div>
             </div>
             
@@ -114,6 +119,34 @@ export class AddSiteModal {
     this.flagSwitch = new SwitchComponent(flagSwitchContainer, '', 'modal-flag', 'local');
     this.flagSwitch.setChecked(false);
     
+    // 初始化颜色选择器
+    const colorPickerContainer = this.modal.querySelector('#color-picker-container') as HTMLElement;
+    this.colorPicker = Pickr.create({
+      el: colorPickerContainer,
+      theme: 'classic',
+      default: '#8ac64d',
+      swatches: [
+        '#8ac64d',
+        '#018fd0',
+        '#ea582f'
+      ],
+      components: {
+        preview: true,
+        opacity: true,
+        hue: true,
+        interaction: {
+          hex: true,
+          rgba: true,
+          hsla: false,
+          hsva: false,
+          cmyk: false,
+          input: true,
+          clear: false,
+          save: true
+        }
+      }
+    });
+
     // 获取position下拉菜单引用
     this.positionSelect = this.modal.querySelector('#position') as HTMLSelectElement;
     
@@ -159,7 +192,7 @@ export class AddSiteModal {
     const matchPattern = (this.modal.querySelector('#match-pattern') as HTMLSelectElement).value;
     const matchValue = (this.modal.querySelector('#match-value') as HTMLInputElement).value;
     const envName = (this.modal.querySelector('#env-name') as HTMLInputElement).value;
-    const color = (this.modal.querySelector('#color') as HTMLInputElement).value;
+    const color = this.colorPicker.getColor().toHEXA().toString();
     const position = (this.modal.querySelector('#position') as HTMLSelectElement).value;
     
     const siteConfig: SiteConfig = {
@@ -189,6 +222,9 @@ export class AddSiteModal {
     this.enableSwitch.setChecked(false);
     this.backgroundSwitch.setChecked(false);
     this.flagSwitch.setChecked(false);
+    
+    // 设置颜色选择器为默认值
+    this.colorPicker.setColor('#8ac64d');
     
     // 隐藏position选择器
     const positionGroup = this.modal.querySelector('.modal-position-group') as HTMLElement;
