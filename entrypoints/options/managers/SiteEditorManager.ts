@@ -241,12 +241,13 @@ export class SiteEditorManager {
     tableHeader.innerHTML = `
       <tr>
         <th>Enable</th>
-        <th>Env Name</th>
-        <th>Match</th>
-        <th>Background</th>
+        <th>Pattern</th>
+        <th>Value</th>
+        <th>Name</th>
         <th>Position</th>
-        <th>Flag</th>
         <th>Color</th>
+        <th>Background</th>
+        <th>Flag</th>
         <th colspan="2">Actions</th>
       </tr>
     `;
@@ -275,16 +276,17 @@ export class SiteEditorManager {
               </label>
             </div>
           </td>
+          <td>${site.matchPattern}</td>
+          <td>${site.matchValue}</td>
           <td>
             <span class="site-env-name" style="background-color: ${site.color}; padding: 2px 6px; border-radius: 4px;">${site.envName}</span>
           </td>
-          <td>${site.matchPattern}: ${site.matchValue}</td>
-          <td>${site.backgroudEnable ? 'Yes' : 'No'}</td>
           <td>${site.Position}</td>
-          <td>${site.flagEnable ? 'Yes' : 'No'}</td>
           <td>
             <div style="width: 20px; height: 20px; background-color: ${site.color}; border-radius: 50%; margin: auto;"></div>
           </td>
+          <td>${site.backgroudEnable ? 'Yes' : 'No'}</td>
+          <td>${site.flagEnable ? 'Yes' : 'No'}</td>
           <td>
             <button class="site-edit-btn" title="Edit site"><i class="fas fa-edit"></i></button>
           </td>
