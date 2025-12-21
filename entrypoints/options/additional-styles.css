@@ -1,0 +1,63 @@
+/* 配置组容器样式 - 16:9 aspect ratio */
+#config-groups-container {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: left;
+    background-color: var(--panel-bg);
+    aspect-ratio: 16 / 9;
+    overflow-y: auto;
+    position: relative;
+}
+
+.config-group {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 20px;
+    background-color: var(--panel-bg);
+    padding: 15px;
+}
+
+/* Floating Add Button */
+.floating-add-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    font-size: 32px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.floating-add-button:hover {
+    background-color: var(--primary-hover);
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #888;
+}
+
+.empty-state p {
+    margin: 10px 0;
+}
+
+.empty-sites {
+    text-align: center;
+    padding: 30px 20px;
+    color: #888;
+    font-style: italic;
+}

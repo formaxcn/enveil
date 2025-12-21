@@ -15,6 +15,7 @@ interface SiteConfig {
 export class AddSiteModal {
   private modal: HTMLElement;
   private onSaveCallback?: (site: SiteConfig) => void;
+  private editingSite: SiteConfig | null = null;
   private enableSwitch!: SwitchComponent;
   private backgroundSwitch!: SwitchComponent;
   private flagSwitch!: SwitchComponent;
@@ -35,9 +36,10 @@ export class AddSiteModal {
             <div class="form-group">
               <label for="match-pattern">Match Pattern:</label>
               <select id="match-pattern" required>
+                <option value="domain" selected>Domains</option>
                 <option value="regex">Regex</option>
-                <option value="urlPrefix">URL Prefix</option>
-                <option value="domain" selected>Domain</option>
+                <option value="urlPrefix">URL prefix</option>
+                <option value="url">URL</option>
               </select>
             </div>
             
@@ -89,7 +91,7 @@ export class AddSiteModal {
         </div>
       </div>
     `;
-    
+
     this.initializeComponents();
     this.bindEvents();
   }
@@ -114,15 +116,15 @@ export class AddSiteModal {
     const closeBtn = this.modal.querySelector('.modal-close') as HTMLButtonElement;
     const cancelBtn = this.modal.querySelector('.cancel-btn') as HTMLButtonElement;
     const overlay = this.modal.querySelector('.modal-overlay') as HTMLElement;
-    
+
     const closeHandler = () => {
       this.close();
     };
-    
+
     closeBtn.addEventListener('click', closeHandler);
     cancelBtn.addEventListener('click', closeHandler);
     overlay.addEventListener('click', closeHandler);
-    
+
     // 表单提交事件
     const form = this.modal.querySelector('#add-site-form') as HTMLFormElement;
     form.addEventListener('submit', (e) => {
@@ -138,7 +140,7 @@ export class AddSiteModal {
     const envName = (this.modal.querySelector('#env-name') as HTMLInputElement).value;
     const color = (this.modal.querySelector('#color') as HTMLInputElement).value;
     const position = (this.modal.querySelector('#position') as HTMLSelectElement).value;
-    
+
     const siteConfig: SiteConfig = {
       enable: this.enableSwitch.isChecked(),
       matchPattern,
@@ -149,24 +151,44 @@ export class AddSiteModal {
       Position: position,
       flagEnable: this.flagSwitch.isChecked()
     };
-    
+
     if (this.onSaveCallback) {
       this.onSaveCallback(siteConfig);
     }
-    
+
     this.close();
   }
 
-  public open() {
-    // 重置表单
+  public open(site?: SiteConfig, onSave?: (updatedSite: SiteConfig) => void) {
+    if (onSave) {
+      this.onSaveCallback = onSave;
+    }
+
     const form = this.modal.querySelector('#add-site-form') as HTMLFormElement;
-    form.reset();
-    
-    // 重置开关状态
-    this.enableSwitch.setChecked(false);
-    this.backgroundSwitch.setChecked(false);
-    this.flagSwitch.setChecked(false);
-    
+    const title = this.modal.querySelector('.modal-header h3') as HTMLElement;
+
+    if (site) {
+      this.editingSite = site;
+      title.textContent = 'Edit Site Configuration';
+
+      (this.modal.querySelector('#match-pattern') as HTMLSelectElement).value = site.matchPattern;
+      (this.modal.querySelector('#match-value') as HTMLInputElement).value = site.matchValue;
+      (this.modal.querySelector('#env-name') as HTMLInputElement).value = site.envName;
+      (this.modal.querySelector('#color') as HTMLInputElement).value = site.color;
+      (this.modal.querySelector('#position') as HTMLSelectElement).value = site.Position;
+
+      this.enableSwitch.setChecked(site.enable);
+      this.backgroundSwitch.setChecked(site.backgroudEnable);
+      this.flagSwitch.setChecked(site.flagEnable);
+    } else {
+      this.editingSite = null;
+      title.textContent = 'Add New Site Configuration';
+      form.reset();
+      this.enableSwitch.setChecked(false);
+      this.backgroundSwitch.setChecked(false);
+      this.flagSwitch.setChecked(false);
+    }
+
     document.body.appendChild(this.modal);
     // 触发显示动画
     setTimeout(() => {

@@ -4,14 +4,38 @@
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+
+  /* Theme variables - Default Dark */
+  --bg-color: #1a1a1a;
+  --panel-bg: #2a2a2a;
+  --input-bg: #333;
+  --text-color: rgba(255, 255, 255, 0.87);
+  --border-color: #444;
+  --primary-color: #646cff;
+  --primary-hover: #535bf2;
+  --secondary-bg: #1a1a1a;
+
+  color: var(--text-color);
+  background-color: var(--bg-color);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg-color: #f6f6f6;
+    --panel-bg: #ffffff;
+    --input-bg: #f9f9f9;
+    --text-color: #213547;
+    --border-color: #ddd;
+    --primary-color: #4a9eff;
+    --primary-hover: #357abd;
+    --secondary-bg: #f0f0f0;
+  }
 }
 
 a {
@@ -28,10 +52,9 @@ body {
   margin: 0;
   display: flex;
   flex-direction: column;
-  min-height: 800px;
-  min-width: 1600px;
-  background-color: #242424;
-  color: rgba(255, 255, 255, 0.87);
+  min-height: 100vh;
+  background-color: var(--bg-color);
+  color: var(--text-color);
 }
 
 #app {
@@ -53,16 +76,28 @@ main {
 
 #options-container {
   display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
 }
 
 #left-panel {
-  width: 20%;
-  padding-right: 20px;
+  flex: 1;
+  min-width: 300px;
+  max-width: 400px;
 }
 
 #right-panel {
-  width: 70%;
-  flex: 1;
+  flex: 3;
+  min-width: 600px;
+}
+
+@media (max-width: 1000px) {
+
+  #left-panel,
+  #right-panel {
+    max-width: none;
+    min-width: 100%;
+  }
 }
 
 .switch-container {
@@ -90,7 +125,7 @@ main {
 }
 
 /* 确保表格中的开关垂直居中 */
-.config-group-table td > div {
+.config-group-table td>div {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -114,7 +149,7 @@ main {
 }
 
 /* 移除开关容器的额外边框 */
-.config-group-table td:first-child > div {
+.config-group-table td:first-child>div {
   border: none !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -158,7 +193,7 @@ main {
 }
 
 input:checked+.slider {
-  background-color: #646cff;
+  background-color: var(--primary-color);
 }
 
 input:checked+.slider:before {
@@ -176,13 +211,14 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--secondary-bg);
+  color: var(--text-color);
   cursor: pointer;
   transition: border-color 0.25s;
 }
 
 button:hover {
-  border-color: #646cff;
+  border-color: var(--primary-color);
 }
 
 button:focus,
@@ -262,10 +298,10 @@ button:focus-visible {
 #sync-section,
 #settings-section {
   margin: 20px 0;
-  border: 1px solid #444;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   padding: 15px;
-  background-color: #2a2a2a;
+  background-color: var(--panel-bg);
 }
 
 #git-config-section .header-row,
@@ -300,10 +336,10 @@ button:focus-visible {
 .form-control {
   width: 100%;
   padding: 8px 10px;
-  border: 1px solid #444;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
-  background-color: #333;
-  color: white;
+  background-color: var(--input-bg);
+  color: var(--text-color);
   font-size: 0.9em;
   box-sizing: border-box;
 }
@@ -436,7 +472,8 @@ button:focus-visible {
   color: white;
 }
 
-.group-edit-btn, .group-delete-btn {
+.group-edit-btn,
+.group-delete-btn {
   width: 30px;
   height: 30px;
   display: flex;
@@ -492,18 +529,18 @@ button:focus-visible {
 }
 
 #groups-list-container {
-  border: 1px solid #444;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   min-height: 200px;
   padding: 10px;
   text-align: left;
-  background-color: #2a2a2a;
+  background-color: var(--panel-bg);
 }
 
 .group-item {
   padding: 8px;
   margin: 5px 0;
-  background-color: #333;
+  background-color: var(--input-bg);
   border-radius: 4px;
   cursor: pointer;
   display: flex;
@@ -512,12 +549,12 @@ button:focus-visible {
 }
 
 .group-item.active {
-  background-color: #646cff;
+  background-color: var(--primary-color);
   color: white;
 }
 
 .group-item:hover {
-  background-color: #444;
+  background-color: var(--border-color);
 }
 
 .group-item.active:hover {
@@ -526,10 +563,10 @@ button:focus-visible {
 
 /* 配置编辑器样式 */
 #config-editor-container {
-  border: 1px solid #444;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   padding: 15px;
-  background-color: #2a2a2a;
+  background-color: var(--panel-bg);
 }
 
 #config-editor-container .header-row {
@@ -545,10 +582,10 @@ button:focus-visible {
 
 /* 配置组容器样式 */
 .config-group-container {
-  border: 1px solid #444;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   margin-bottom: 20px;
-  background-color: #2a2a2a;
+  background-color: var(--panel-bg);
 }
 
 .config-group-header .group-header {
@@ -556,8 +593,8 @@ button:focus-visible {
   justify-content: space-between;
   align-items: center;
   padding: 10px;
-  background-color: #333;
-  border-bottom: 1px solid #444;
+  background-color: var(--input-bg);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .group-header-left {
@@ -604,19 +641,21 @@ button:focus-visible {
   width: 100%;
   border-collapse: collapse;
   margin-top: 10px;
-  table-layout: fixed;
 }
 
-.config-group-table th, .config-group-table td {
-  border: 1px solid #444;
-  padding: 6px 4px;
-  text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.9em;
-  display: table-cell;
-  vertical-align: middle;
+.config-group-table th,
+.config-group-table td {
+  border: 1px solid var(--border-color);
+  padding: 12px 15px;
+  text-align: left;
+}
+
+.config-group-table th {
+  background-color: var(--input-bg);
+}
+
+.config-group-table tr:nth-child(even) {
+  background-color: var(--bg-color);
 }
 
 /* Column widths */
@@ -718,16 +757,16 @@ button:focus-visible {
 
 .modal-content {
   position: relative;
-  background-color: #2a2a2a;
+  background-color: var(--panel-bg);
   border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   width: 90%;
   max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
   transform: translateY(-50px);
   transition: transform 0.3s ease;
-  color: rgba(255, 255, 255, 0.87);
+  color: var(--text-color);
 }
 
 .modal.show .modal-content {
@@ -739,7 +778,7 @@ button:focus-visible {
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  border-bottom: 1px solid #444;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .modal-header h3 {
@@ -762,7 +801,7 @@ button:focus-visible {
 }
 
 .modal-close:hover {
-  color: #fff;
+  color: var(--text-color);
 }
 
 .modal-body {
@@ -783,12 +822,12 @@ button:focus-visible {
 .form-group select {
   width: 100%;
   padding: 0.5rem;
-  border: 1px solid #444;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   font-size: 1rem;
   box-sizing: border-box;
-  background-color: #333;
-  color: white;
+  background-color: var(--input-bg);
+  color: var(--text-color);
 }
 
 .form-group input[type="color"] {
@@ -824,8 +863,9 @@ button:focus-visible {
 }
 
 .cancel-btn {
-  background-color: #444;
-  color: white;
+  background-color: var(--secondary-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
 }
 
 .save-btn {
@@ -834,11 +874,136 @@ button:focus-visible {
 }
 
 .cancel-btn:hover {
-  background-color: #555;
+  background-color: var(--border-color);
 }
 
 .save-btn:hover {
   background-color: #45a049;
+}
+
+/* Site Item Styles */
+.sites-list {
+  padding: 10px;
+}
+
+.site-item {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background-color: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+}
+
+.site-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: var(--primary-color);
+}
+
+.site-item.disabled {
+  opacity: 0.7;
+}
+
+.site-toggle {
+  margin-right: 15px;
+}
+
+.site-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: left;
+}
+
+.site-main-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.site-env-name {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-weight: bold;
+  color: white;
+  text-transform: uppercase;
+}
+
+.site-match {
+  font-size: 0.95em;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.site-details {
+  display: flex;
+  gap: 15px;
+  font-size: 0.85em;
+  color: #888;
+}
+
+.site-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.site-edit-btn,
+.site-delete-btn {
+  padding: 6px 12px;
+  font-size: 0.85em;
+}
+
+.site-edit-btn {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.site-delete-btn {
+  background-color: #ff4444;
+  color: white;
+}
+
+/* Notification Styles */
+#notification-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 2000;
+}
+
+.notification {
+  padding: 12px 24px;
+  border-radius: 4px;
+  margin-top: 10px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateX(120%);
+  transition: transform 0.3s ease;
+}
+
+.notification.show {
+  transform: translateX(0);
+}
+
+.notification-success {
+  background-color: #4CAF50;
+}
+
+.notification-error {
+  background-color: #f44336;
+}
+
+.notification-info {
+  background-color: #2196F3;
+}
+
+.notification-warning {
+  background-color: #ff9800;
 }
 
 @media (prefers-color-scheme: light) {
