@@ -40,22 +40,22 @@ A Chrome extension to distinguish different environments by adding banners and o
 1. Clone this repository
 2. Install dependencies:
    ```bash
-   npm install
+   bun install
    ```
 3. Build the extension:
    ```bash
-   npm run build
+   bun run build
    ```
 4. Open Chrome and go to `chrome://extensions`
 5. Enable "Developer mode"
-6. Click "Load unpacked" and select the `dist` directory
+6. Click "Load unpacked" and select the `.output/chrome-mv3` directory
 
 ## Development
 
 To run the extension in development mode:
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 This will start the development server and build the extension in watch mode.
