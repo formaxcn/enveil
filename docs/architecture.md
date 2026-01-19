@@ -1,3 +1,9 @@
+---
+layout: default
+title: Architecture
+nav_order: 5
+---
+
 # Architecture Documentation
 
 ## Overview

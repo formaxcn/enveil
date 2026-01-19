@@ -1,72 +1,56 @@
-# Enveil - Chrome Extension
+# Enveil - Environment Veil
 
-A Chrome extension to distinguish different environments by adding banners and overlays.
+> **Status**: Beta / Active Development
+
+A Chrome extension for Developers and DevOps to visually distinguish different environments (Local, Staging, Production) by adding configurable banners and overlays.
+
+## Documentation
+
+Full documentation is available in the [`docs/`](./docs/) directory or [View on GitHub Pages](#).
+
+- [Getting Started](./docs/getting-started.md)
+- [Configuration Guide](./docs/configuration.md)
+- [Development](./docs/development.md)
+- [Architecture](./docs/architecture.md)
+
+## Features
+
+- **Visual Indicators**: Customizable corner ribbons and full-page overlays.
+- **Flexible Matching**: Match by Domain, URL Prefix, Exact URL, or Regex.
+- **Privacy Focused**: 100% local configuration, no external tracking.
+- **Lightweight**: Built with WXT + Vanilla JS for minimal footprint.
 
 ## Directory Structure
 
 ```
 .
-├── components
-│   ├── SwitchComponent.ts
-│   └── counter.ts
-├── entrypoints
-│   ├── options
-│   │   ├── index.html
-│   │   ├── main.ts
-│   │   └── style.css
-│   ├── popup
-│   │   ├── index.html
-│   │   ├── main.ts
-│   │   └── style.css
-│   ├── background.ts
-│   └── content.ts
-├── README.md
-├── package.json
-├── tsconfig.json
-└── wxt.config.ts
+├── components/      # Shared UI logic
+├── entrypoints/     # Extension entry points (background, content, options, popup)
+├── docs/            # Project documentation
+└── wxt.config.ts    # Build configuration
 ```
 
-## Features
-
-1. Add customizable banner to website corners to differentiate environments
-2. Add overall overlay mask with customizable color and opacity
-3. Configuration page for setting domain patterns, colors, positions, and toggle switches
-4. Import/export configuration as JSON files
-
-**Note: These features are planned but not yet implemented.**
-
-## Installation
-
-1. Clone this repository
-2. Install dependencies:
-   ```bash
-   bun install
-   ```
-3. Build the extension:
-   ```bash
-   bun run build
-   ```
-4. Open Chrome and go to `chrome://extensions`
-5. Enable "Developer mode"
-6. Click "Load unpacked" and select the `.output/chrome-mv3` directory
-
-## Development
-
-To run the extension in development mode:
+## Quick Build
 
 ```bash
+# Install dependencies
+bun install
+
+# Development mode
 bun run dev
+
+# Build for production
+bun run build
 ```
 
-This will start the development server and build the extension in watch mode.
+## TODO / Roadmap
 
-## Usage
+- [ ] **Shadow DOM**: Implement Shadow DOM for UI injection to prevent style conflicts with host pages.
+- [ ] **Tests**: Add unit and E2E tests for matching logic.
+- [ ] **UI Polish**: Improve the Options page UX.
+- [ ] **Storage Migration**: Robust handling of configuration schema updates.
+- [ ] **Export/Import**: Verify JSON config export/import functionality.
 
-After installing the extension:
+## License
 
-1. Click the extension icon in the toolbar to open the popup
-2. Click "Options" to configure the extension settings
-3. Configure domain patterns, banner colors, and other settings
-4. The extension will automatically apply styles to matching domains
-
-**Note: The full functionality is not yet implemented.**
+MIT
