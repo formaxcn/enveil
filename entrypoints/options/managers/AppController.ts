@@ -1,5 +1,4 @@
 import { AppConfig } from '../types';
-import { GitSyncManager } from './GitSyncManager';
 import { ConfigImportExportManager } from './ConfigImportExportManager';
 import { SiteEditorManager } from './SiteEditorManager';
 
@@ -9,7 +8,6 @@ declare const chrome: any;
 export class AppController {
   private appConfig: AppConfig;
   private selectedGroups: number[];
-  private gitSyncManager: GitSyncManager;
   private configImportExportManager: ConfigImportExportManager;
   private siteEditorManager: SiteEditorManager;
   private notificationTimeout: number | null = null;
@@ -20,12 +18,6 @@ export class AppController {
     this.selectedGroups = [];
 
     // 初始化各个管理器
-    this.gitSyncManager = new GitSyncManager(
-      this.appConfig,
-      this.showNotification.bind(this),
-      this.saveConfig.bind(this)
-    );
-
     this.configImportExportManager = new ConfigImportExportManager(
       this.appConfig,
       this.selectedGroups,
@@ -48,14 +40,6 @@ export class AppController {
       browserSync: {
         enable: false,
         remoteServer: 'ws://127.0.0.1:3000'
-      },
-      gitConfig: {
-        enable: false,
-        repoUrl: '',
-        branch: 'main',
-        username: '',
-        password: '',
-        path: 'config.json'
       },
       settings: [
         {
@@ -81,7 +65,6 @@ export class AppController {
 
   // 更新所有管理器的配置引用
   private updateAllManagersConfig(): void {
-    this.gitSyncManager.updateConfig(this.appConfig);
     this.configImportExportManager.updateConfig(this.appConfig);
     this.configImportExportManager.updateSelectedGroups(this.selectedGroups);
     this.siteEditorManager.updateConfig(this.appConfig);
@@ -90,9 +73,6 @@ export class AppController {
 
   // 初始化UI
   private initUI(): void {
-    // 初始化Git同步相关UI
-    this.gitSyncManager.initGitSyncUI();
-
     // 初始化配置导入导出相关UI
     this.configImportExportManager.initImportExportUI();
 
@@ -137,7 +117,6 @@ export class AppController {
         // 合并配置，确保所有必需字段都存在
         this.appConfig = {
           browserSync: config.browserSync || this.getDefaultConfig().browserSync,
-          gitConfig: config.gitConfig || this.getDefaultConfig().gitConfig,
           settings: config.settings || this.getDefaultConfig().settings
         };
       }

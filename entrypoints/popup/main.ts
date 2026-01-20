@@ -36,12 +36,8 @@ globalSwitch.waitForInitialization().then(() => {
 
 // 配置按钮点击事件
 configureBtn.addEventListener('click', () => {
-  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.openOptionsPage) {
-    chrome.runtime.openOptionsPage();
-  } else {
-    // Fallback method to open options page
-    window.open(chrome.runtime.getURL('options.html'));
-  }
+  // 直接在新标签页中打开选项页面，确保页面宽度足够
+  window.open(chrome.runtime.getURL('options.html'));
 });
 
 // 添加配置按钮点击事件

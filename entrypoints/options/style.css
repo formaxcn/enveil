@@ -55,13 +55,18 @@ body {
   min-height: 100vh;
   background-color: var(--bg-color);
   color: var(--text-color);
+  /* 使用固定宽度确保页面保持足够宽 */
+  min-width: 1200px;
+  width: 1200px;
+  min-height: 800px;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 #app {
   width: 100%;
   box-sizing: border-box;
   margin: 0 auto;
-  padding: 2rem;
   text-align: center;
 }
 
@@ -76,19 +81,25 @@ main {
 
 #options-container {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 20px;
+  /* 确保容器充分利用可用空间 */
+  width: 100%;
+  min-width: 1160px;
 }
 
 #left-panel {
   flex: 1;
-  min-width: 300px;
-  max-width: 400px;
+  min-width: 350px;
+  /* 确保左侧面板保持最小宽度 */
+  width: 350px;
 }
 
 #right-panel {
   flex: 3;
-  min-width: 600px;
+  min-width: 800px;
+  /* 确保右侧面板保持足够宽度 */
+  width: 800px;
 }
 
 @media (max-width: 1000px) {
