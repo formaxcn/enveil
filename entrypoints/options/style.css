@@ -111,72 +111,58 @@ main {
   }
 }
 
+/* Switches Grid for Modal */
+.switches-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin: 20px 0;
+  padding: 15px;
+  background: var(--input-bg);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.switch-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.color-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--input-bg);
+  padding: 4px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+#color {
+  padding: 0;
+  border: none;
+  width: 40px;
+  height: 32px;
+  cursor: pointer;
+  background: none;
+}
+
 .switch-container {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  justify-content: space-between;
-  max-width: 200px;
-  margin: 0 auto 1rem auto;
-}
-
-/* 确保group-header中的开关垂直居中 */
-.group-header .switch-container {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.group-header .switch {
-  display: inline-flex;
-  align-items: center;
-  vertical-align: middle;
-}
-
-/* 确保表格中的开关垂直居中 */
-.config-group-table td>div {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-}
-
-.config-group-table td .switch-container {
-  margin: 0;
+  gap: 0.8rem;
   width: auto;
+  justify-content: flex-start;
+  margin: 0;
 }
 
-/* 修复表格中Enable列样式问题 */
-.config-group-table td:first-child {
-  display: table-cell;
-  vertical-align: middle;
-  text-align: center;
-  padding: 8px 0;
-  border: none !important;
-}
-
-/* 移除开关容器的额外边框 */
-.config-group-table td:first-child>div {
-  border: none !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
+/* Premium Switch Styling */
 .switch {
   position: relative;
   display: inline-block;
-  width: 40px;
-  height: 20px;
-}
-
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
+  width: 46px;
+  height: 24px;
 }
 
 .slider {
@@ -186,21 +172,22 @@ main {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #ccc;
-  transition: .4s;
-  border-radius: 20px;
+  background-color: #444;
+  transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 24px;
 }
 
 .slider:before {
   position: absolute;
   content: "";
-  height: 14px;
-  width: 14px;
+  height: 18px;
+  width: 18px;
   left: 3px;
   bottom: 3px;
   background-color: white;
-  transition: .4s;
+  transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 input:checked+.slider {
@@ -208,11 +195,13 @@ input:checked+.slider {
 }
 
 input:checked+.slider:before {
-  transform: translateX(20px);
+  transform: translateX(22px);
 }
 
 .switch-label {
-  font-size: 1em;
+  font-size: 0.9em;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 button {
@@ -366,21 +355,32 @@ button:focus-visible {
   text-align: left;
 }
 
-.sync-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+#browser-sync-option {
+  background: var(--panel-bg);
+  padding: 15px 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#browser-sync-option .switch-container {
+  justify-content: space-between;
+  width: 100%;
+}
+
+#browser-sync-option .switch-label {
   font-size: 1.1em;
-  font-weight: 500;
-  cursor: pointer;
-  margin-bottom: 5px;
+  font-weight: 600;
+  color: var(--primary-color);
 }
 
 .sync-description {
-  margin: 5px 0 0 25px;
+  margin: 10px 0 0 0;
   font-size: 0.85em;
   color: #aaa;
   line-height: 1.4;
+  text-align: left;
 }
 
 .setting-item input[type="checkbox"] {

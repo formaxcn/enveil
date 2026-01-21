@@ -1,6 +1,7 @@
 import { AppConfig } from '../types';
 import { ConfigImportExportManager } from './ConfigImportExportManager';
 import { SiteEditorManager } from './SiteEditorManager';
+import { SwitchComponent } from '../../../components/SwitchComponent';
 
 // 声明chrome对象
 declare const chrome: any;
@@ -82,14 +83,18 @@ export class AppController {
 
   // 初始化浏览器同步开关
   private initBrowserSyncToggle(): void {
-    const syncToggle = document.getElementById('browser-sync-checkbox') as HTMLInputElement;
-    if (syncToggle) {
-      // 简化browserSync类型，只使用布尔值
-      syncToggle.checked = this.appConfig.browserSync;
+    const syncContainer = document.getElementById('browser-sync-option');
+    if (syncContainer) {
+      const syncSwitch = new SwitchComponent(
+        syncContainer,
+        'Browser Sync',
+        'browser-sync-toggle',
+        'sync',
+        this.appConfig.browserSync,
+        false
+      );
 
-      syncToggle.addEventListener('change', (e) => {
-        const isChecked = (e.target as HTMLInputElement).checked;
-        // 简化browserSync配置为布尔值
+      syncSwitch.onChange((isChecked) => {
         this.appConfig.browserSync = isChecked;
         this.saveConfig();
 
@@ -99,6 +104,10 @@ export class AppController {
           this.showNotification('Browser sync disabled.', 'info');
         }
       });
+
+      // Remove old checkbox item if it exists
+      const oldItem = document.querySelector('.setting-item:has(#browser-sync-checkbox)');
+      if (oldItem) oldItem.remove();
     }
   }
 

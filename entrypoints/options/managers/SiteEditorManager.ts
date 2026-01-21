@@ -1,6 +1,7 @@
 import { AppConfig, SiteConfig, Setting } from '../types';
 import { AddSiteModal } from '../../../components/AddSiteModal';
 import { AddGroupModal } from '../../../components/AddGroupModal';
+import { SwitchComponent } from '../../../components/SwitchComponent';
 
 // 声明chrome对象
 declare const chrome: any;
@@ -139,12 +140,12 @@ export class SiteEditorManager {
     headerLeft.className = 'group-header-left';
 
     // 启用/禁用开关
-    const toggleSwitch = document.createElement('input');
-    toggleSwitch.type = 'checkbox';
-    toggleSwitch.className = 'group-toggle';
-    toggleSwitch.checked = setting.enable;
-    toggleSwitch.addEventListener('change', () => {
-      setting.enable = toggleSwitch.checked;
+    const toggleContainer = document.createElement('div');
+    toggleContainer.className = 'group-toggle-container';
+
+    const configSwitch = new SwitchComponent(toggleContainer, '', `group-${groupIndex}-enable`, 'sync', setting.enable, false);
+    configSwitch.onChange((checked) => {
+      setting.enable = checked;
       this.saveConfigCallback();
     });
 
@@ -157,7 +158,7 @@ export class SiteEditorManager {
       this.editConfigGroupName(groupIndex);
     });
 
-    headerLeft.appendChild(toggleSwitch);
+    headerLeft.appendChild(toggleContainer);
     headerLeft.appendChild(groupTitle);
 
     // 组操作按钮
@@ -233,12 +234,12 @@ export class SiteEditorManager {
     siteElement.dataset.siteIndex = siteIndex.toString();
 
     // 启用/禁用开关
-    const toggleSwitch = document.createElement('input');
-    toggleSwitch.type = 'checkbox';
-    toggleSwitch.className = 'site-toggle';
-    toggleSwitch.checked = site.enable;
-    toggleSwitch.addEventListener('change', () => {
-      site.enable = toggleSwitch.checked;
+    const toggleContainer = document.createElement('div');
+    toggleContainer.className = 'site-toggle-container';
+
+    const siteSwitch = new SwitchComponent(toggleContainer, '', `site-${groupIndex}-${siteIndex}-enable`, 'sync', site.enable, false);
+    siteSwitch.onChange((checked) => {
+      site.enable = checked;
       this.saveConfigCallback();
       this.updateConfigDisplay();
     });
@@ -281,7 +282,7 @@ export class SiteEditorManager {
     actionButtons.appendChild(editBtn);
     actionButtons.appendChild(deleteBtn);
 
-    siteElement.appendChild(toggleSwitch);
+    siteElement.appendChild(toggleContainer);
     siteElement.appendChild(siteInfo);
     siteElement.appendChild(actionButtons);
 

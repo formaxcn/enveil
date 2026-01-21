@@ -33,60 +33,55 @@ export class AddSiteModal {
         </div>
         <div class="modal-body">
           <form id="add-site-form">
+            <div class="form-row">
+              <div class="form-group half">
+                <label for="match-pattern">Match Pattern</label>
+                <select id="match-pattern" class="form-control" required>
+                  <option value="everything">Everything</option>
+                  <option value="url">URL</option>
+                  <option value="urlPrefix">URLs starting with</option>
+                  <option value="domain" selected>URLs on the domain</option>
+                  <option value="regex">URLs matching the regexp</option>
+                </select>
+              </div>
+              <div class="form-group half">
+                <label for="match-value">Match Value</label>
+                <input type="text" id="match-value" class="form-control" placeholder="e.g. baidu.com" required />
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group half">
+                <label for="env-name">Environment Name</label>
+                <input type="text" id="env-name" class="form-control" placeholder="e.g. dev" required />
+              </div>
+              <div class="form-group half">
+                <label for="color">Theme Color</label>
+                <div class="color-input-wrapper" style="display: flex; align-items: center; gap: 10px;">
+                  <input type="color" id="color" value="#FF0000" style="padding: 0; border: none; width: 40px; height: 35px; cursor: pointer; background: none;" />
+                </div>
+              </div>
+            </div>
+            
             <div class="form-group">
-              <label for="match-pattern">Match Pattern:</label>
-              <select id="match-pattern" required>
-                <option value="everything">Everything</option>
-                <option value="url">URL</option>
-                <option value="urlPrefix">URLs starting with</option>
-                <option value="domain" selected>URLs on the domain</option>
-                <option value="regex">URLs matching the regexp</option>
+              <label for="position">Banner Position</label>
+              <select id="position" class="form-control" required>
+                <option value="leftTop">Top Left Corner</option>
+                <option value="rightTop">Top Right Corner</option>
+                <option value="leftBottom">Bottom Left Corner</option>
+                <option value="rightBottom">Bottom Right Corner</option>
               </select>
             </div>
             
-            <div class="form-group">
-              <label for="match-value">Match Value:</label>
-              <input type="text" id="match-value" placeholder="e.g. baidu.com" required />
-            </div>
-            
-            <div class="form-group">
-              <label for="env-name">Environment Name:</label>
-              <input type="text" id="env-name" placeholder="e.g. dev" required />
-            </div>
-            
-            <div class="form-group">
-              <label for="color">Color:</label>
-              <input type="color" id="color" value="#FF0000" />
-            </div>
-            
-            <div class="form-group">
-              <label for="position">Position:</label>
-              <select id="position" required>
-                <option value="leftTop">Left Top</option>
-                <option value="rightTop">Right Top</option>
-                <option value="leftBottom">Left Bottom</option>
-                <option value="rightBottom">Right Bottom</option>
-              </select>
-            </div>
-            
-            <div class="form-group switch-group">
-              <label>Enable:</label>
-              <div id="enable-switch"></div>
-            </div>
-            
-            <div class="form-group switch-group">
-              <label>Background Enable:</label>
-              <div id="background-switch"></div>
-            </div>
-            
-            <div class="form-group switch-group">
-              <label>Flag Enable:</label>
-              <div id="flag-switch"></div>
+            <div class="switches-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0;">
+              <div class="switch-item" id="enable-switch"></div>
+              <div class="switch-item" id="background-switch"></div>
+              <div class="switch-item" id="flag-switch"></div>
             </div>
             
             <div class="form-actions">
-              <button type="button" class="cancel-btn">Cancel</button>
-              <button type="submit" class="save-btn">Save</button>
+              <button type="button" class="btn btn-secondary cancel-btn">Cancel</button>
+              <button type="submit" class="btn btn-primary save-btn">Save Configuration</button>
             </div>
           </form>
         </div>
@@ -100,16 +95,13 @@ export class AddSiteModal {
   private initializeComponents() {
     // 初始化开关组件
     const enableSwitchContainer = this.modal.querySelector('#enable-switch') as HTMLElement;
-    this.enableSwitch = new SwitchComponent(enableSwitchContainer, '', 'modal-enable', 'local');
-    this.enableSwitch.setChecked(false);
+    this.enableSwitch = new SwitchComponent(enableSwitchContainer, 'Enable', 'modal-enable', 'local', false, false);
 
     const backgroundSwitchContainer = this.modal.querySelector('#background-switch') as HTMLElement;
-    this.backgroundSwitch = new SwitchComponent(backgroundSwitchContainer, '', 'modal-background', 'local');
-    this.backgroundSwitch.setChecked(false);
+    this.backgroundSwitch = new SwitchComponent(backgroundSwitchContainer, 'Background', 'modal-background', 'local', false, false);
 
     const flagSwitchContainer = this.modal.querySelector('#flag-switch') as HTMLElement;
-    this.flagSwitch = new SwitchComponent(flagSwitchContainer, '', 'modal-flag', 'local');
-    this.flagSwitch.setChecked(false);
+    this.flagSwitch = new SwitchComponent(flagSwitchContainer, 'Banner', 'modal-flag', 'local', false, false);
   }
 
   private bindEvents() {
