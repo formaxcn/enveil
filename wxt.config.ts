@@ -17,5 +17,6 @@ export default defineConfig({
       page: "entrypoints/options/index.html",
       open_in_tab: true,
     },
+    permissions: ["storage"],
   },
 });

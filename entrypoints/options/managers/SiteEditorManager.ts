@@ -1,5 +1,6 @@
 import { AppConfig, SiteConfig, Setting } from '../types';
 import { AddSiteModal } from '../../../components/AddSiteModal';
+import { AddGroupModal } from '../../../components/AddGroupModal';
 
 // 声明chrome对象
 declare const chrome: any;
@@ -10,6 +11,7 @@ export class SiteEditorManager {
   private notificationCallback: (message: string, type: 'success' | 'error' | 'warning' | 'info') => void;
   private saveConfigCallback: () => void;
   private addSiteModal: AddSiteModal;
+  private addGroupModal: AddGroupModal;
 
   constructor(
     appConfig: AppConfig,
@@ -22,6 +24,7 @@ export class SiteEditorManager {
     this.notificationCallback = notificationCallback;
     this.saveConfigCallback = saveConfigCallback;
     this.addSiteModal = new AddSiteModal();
+    this.addGroupModal = new AddGroupModal();
     this.initAddSiteModal();
   }
 
@@ -75,9 +78,15 @@ export class SiteEditorManager {
     // 绑定添加配置组按钮事件
     const addConfigGroupBtn = document.getElementById('add-config-group') as HTMLButtonElement;
     if (addConfigGroupBtn) {
-      addConfigGroupBtn.addEventListener('click', () => {
+      console.log('Attaching click event to add-config-group button');
+      addConfigGroupBtn.addEventListener('click', (e) => {
+        console.log('Add config group button clicked');
+        e.preventDefault();
+        e.stopPropagation();
         this.addConfigGroup();
       });
+    } else {
+      console.error('Could not find add-config-group button');
     }
 
     // 初始渲染配置显示
@@ -96,27 +105,20 @@ export class SiteEditorManager {
 
     configGroupsContainer.innerHTML = '';
 
-    // 渲染选中的配置组
-    if (this.selectedGroups.length > 0) {
-      this.selectedGroups.forEach(groupIndex => {
-        const setting = this.appConfig.settings[groupIndex];
-        if (!setting) return;
-
-        const groupElement = this.createConfigGroupElement(setting, groupIndex);
+    // 渲染所有配置组，而不是只渲染选中的
+    if (this.appConfig.settings.length > 0) {
+      console.log(`Rendering ${this.appConfig.settings.length} config groups`);
+      this.appConfig.settings.forEach((setting, index) => {
+        const groupElement = this.createConfigGroupElement(setting, index);
         configGroupsContainer.appendChild(groupElement);
       });
-    } else if (this.appConfig.settings.length > 0) {
-      // 如果没有选中的配置组，默认显示第一个
-      const defaultSetting = this.appConfig.settings[0];
-      const groupElement = this.createConfigGroupElement(defaultSetting, 0);
-      configGroupsContainer.appendChild(groupElement);
     } else {
       // 如果没有配置组，显示空状态
       const emptyState = document.createElement('div');
       emptyState.className = 'empty-state';
       emptyState.innerHTML = `
         <p>No configuration groups found.</p>
-        <p>Click the "+" button to add your first configuration group.</p>
+        <p>Click the "Add Group" button to add your first configuration group.</p>
       `;
       configGroupsContainer.appendChild(emptyState);
     }
@@ -131,11 +133,11 @@ export class SiteEditorManager {
     // 配置组标题和操作栏
     const groupHeader = document.createElement('div');
     groupHeader.className = 'group-header';
-    
+
     // 组名称和开关
     const headerLeft = document.createElement('div');
     headerLeft.className = 'group-header-left';
-    
+
     // 启用/禁用开关
     const toggleSwitch = document.createElement('input');
     toggleSwitch.type = 'checkbox';
@@ -145,17 +147,23 @@ export class SiteEditorManager {
       setting.enable = toggleSwitch.checked;
       this.saveConfigCallback();
     });
-    
+
     const groupTitle = document.createElement('h3');
+    groupTitle.className = 'group-title-text';
     groupTitle.innerHTML = `${setting.name} <span class="site-count">(${setting.sites.length} sites)</span>`;
-    
+    groupTitle.title = 'Click to rename group';
+    groupTitle.style.cursor = 'pointer';
+    groupTitle.addEventListener('click', () => {
+      this.editConfigGroupName(groupIndex);
+    });
+
     headerLeft.appendChild(toggleSwitch);
     headerLeft.appendChild(groupTitle);
-    
+
     // 组操作按钮
     const headerActions = document.createElement('div');
     headerActions.className = 'group-header-actions';
-    
+
     // 添加配置按钮
     const addSiteBtn = document.createElement('button');
     addSiteBtn.className = 'add-site-btn';
@@ -164,7 +172,7 @@ export class SiteEditorManager {
     addSiteBtn.addEventListener('click', () => {
       this.openAddSiteModal();
     });
-    
+
     // 编辑配置组名称按钮
     const editBtn = document.createElement('button');
     editBtn.className = 'group-edit-btn';
@@ -173,7 +181,7 @@ export class SiteEditorManager {
     editBtn.addEventListener('click', () => {
       this.editConfigGroupName(groupIndex);
     });
-    
+
     // 删除配置组按钮
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'group-delete-btn';
@@ -182,11 +190,11 @@ export class SiteEditorManager {
     deleteBtn.addEventListener('click', () => {
       this.deleteConfigGroup(groupIndex);
     });
-    
+
     headerActions.appendChild(addSiteBtn);
     headerActions.appendChild(editBtn);
     headerActions.appendChild(deleteBtn);
-    
+
     groupHeader.appendChild(headerLeft);
     groupHeader.appendChild(headerActions);
 
@@ -295,32 +303,35 @@ export class SiteEditorManager {
 
   // 添加配置组
   private addConfigGroup(): void {
-    const groupName = prompt('Enter configuration group name:');
-    if (!groupName || groupName.trim() === '') {
-      this.notificationCallback('Group name cannot be empty', 'error');
-      return;
-    }
+    console.log('addConfigGroup method start');
 
-    // 检查名称是否已存在
-    if (this.appConfig.settings.some(setting => setting.name === groupName.trim())) {
-      this.notificationCallback('Configuration group with this name already exists', 'error');
-      return;
-    }
+    this.addGroupModal.open('', (trimmedName: string) => {
+      console.log('Modal result:', trimmedName);
 
-    // 添加新的配置组
-    this.appConfig.settings.push({
-      name: groupName.trim(),
-      enable: true,
-      sites: []
+      // 检查名称是否已存在
+      if (this.appConfig.settings.some(setting => setting.name === trimmedName)) {
+        this.notificationCallback('Configuration group with this name already exists', 'error');
+        return;
+      }
+
+      // 添加新的配置组
+      const newGroup: Setting = {
+        name: trimmedName,
+        enable: true,
+        sites: []
+      };
+
+      this.appConfig.settings.push(newGroup);
+      console.log('New group added to appConfig.settings. Total groups:', this.appConfig.settings.length);
+
+      // 选中新添加的配置组
+      const newGroupIndex = this.appConfig.settings.length - 1;
+      this.selectedGroups = [newGroupIndex];
+
+      this.updateConfigDisplay();
+      this.saveConfigCallback();
+      this.notificationCallback(`Configuration group "${trimmedName}" added successfully`, 'success');
     });
-
-    // 选中新添加的配置组
-    const newGroupIndex = this.appConfig.settings.length - 1;
-    this.selectedGroups = [newGroupIndex];
-
-    this.updateConfigDisplay();
-    this.saveConfigCallback();
-    this.notificationCallback(`Configuration group "${groupName.trim()}" added successfully`, 'success');
   }
 
   // 编辑配置组名称
@@ -328,22 +339,18 @@ export class SiteEditorManager {
     const setting = this.appConfig.settings[groupIndex];
     if (!setting) return;
 
-    const newName = prompt('Enter new configuration group name:', setting.name);
-    if (!newName || newName.trim() === '') {
-      this.notificationCallback('Group name cannot be empty', 'error');
-      return;
-    }
+    this.addGroupModal.open(setting.name, (trimmedName: string) => {
+      // 检查新名称是否已被其他组使用
+      if (this.appConfig.settings.some((s, index) => s.name === trimmedName && index !== groupIndex)) {
+        this.notificationCallback('Configuration group with this name already exists', 'error');
+        return;
+      }
 
-    // 检查新名称是否已被其他组使用
-    if (this.appConfig.settings.some((s, index) => s.name === newName.trim() && index !== groupIndex)) {
-      this.notificationCallback('Configuration group with this name already exists', 'error');
-      return;
-    }
-
-    setting.name = newName.trim();
-    this.updateConfigDisplay();
-    this.saveConfigCallback();
-    this.notificationCallback('Configuration group name updated successfully', 'success');
+      setting.name = trimmedName;
+      this.updateConfigDisplay();
+      this.saveConfigCallback();
+      this.notificationCallback('Configuration group name updated successfully', 'success');
+    });
   }
 
   // 删除配置组

@@ -544,6 +544,15 @@ button:focus-visible {
   margin: 0;
 }
 
+.config-group {
+  margin-bottom: 30px;
+  background-color: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
 .group-header {
   display: flex;
   justify-content: space-between;
@@ -609,6 +618,25 @@ button:focus-visible {
   background-color: #45a049;
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.group-title-text:hover {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+.add-group-btn {
+  background-color: var(--primary-color);
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.add-group-btn:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .config-group-table {

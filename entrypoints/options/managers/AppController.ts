@@ -52,7 +52,7 @@ export class AppController {
   public async init(): Promise<void> {
     // 加载配置
     await this.loadConfig();
-    
+
     // 更新各个管理器的配置引用
     this.updateAllManagersConfig();
 
@@ -85,16 +85,14 @@ export class AppController {
     const syncToggle = document.getElementById('browser-sync-checkbox') as HTMLInputElement;
     if (syncToggle) {
       // 简化browserSync类型，只使用布尔值
-      syncToggle.checked = typeof this.appConfig.browserSync === 'boolean' 
-        ? this.appConfig.browserSync 
-        : this.appConfig.browserSync?.enable || false;
-      
+      syncToggle.checked = this.appConfig.browserSync;
+
       syncToggle.addEventListener('change', (e) => {
         const isChecked = (e.target as HTMLInputElement).checked;
         // 简化browserSync配置为布尔值
         this.appConfig.browserSync = isChecked;
         this.saveConfig();
-        
+
         if (isChecked) {
           this.showNotification('Browser sync enabled. Configurations will be synced across browsers.', 'success');
         } else {
@@ -107,6 +105,13 @@ export class AppController {
   // 加载配置
   private async loadConfig(): Promise<void> {
     try {
+      if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.sync) {
+        console.warn('Chrome storage sync API not available, using default config');
+        this.appConfig = this.getDefaultConfig();
+        this.selectedGroups = [0];
+        return;
+      }
+
       const config = await new Promise<AppConfig | null>((resolve) => {
         chrome.storage.sync.get(['appConfig'], (result: { appConfig: AppConfig | null }) => {
           resolve(result.appConfig);
@@ -114,14 +119,9 @@ export class AppController {
       });
 
       if (config) {
-        // 处理旧的browserSync对象格式，转换为新的布尔值格式
-        const browserSync = typeof config.browserSync === 'boolean' 
-          ? config.browserSync 
-          : config.browserSync?.enable || false;
-        
         // 合并配置，确保所有必需字段都存在
         this.appConfig = {
-          browserSync: browserSync,
+          browserSync: typeof config.browserSync === 'boolean' ? config.browserSync : false,
           settings: config.settings || this.getDefaultConfig().settings
         };
       }
