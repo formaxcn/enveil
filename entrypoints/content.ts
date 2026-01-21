@@ -1,4 +1,5 @@
 import { AppConfig, SiteConfig } from './options/types';
+import { Matcher } from '../utils/matcher';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
@@ -9,12 +10,16 @@ export default defineContentScript({
     const config = await loadConfig();
     if (!config || !config.settings) return;
 
+    const url = window.location.href;
+    const host = window.location.host;
+
     // Check all enabled settings and sites
     for (const setting of config.settings) {
       if (!setting.enable) continue;
 
       for (const site of setting.sites) {
-        if (site.enable && isMatch(site)) {
+        if (site.enable && Matcher.isMatch(site, url, host)) {
+          console.log(`[Enveil] Page Matched: ${Matcher.getMatchInfo(site)}`);
           applySiteUI(site);
         }
       }
@@ -41,48 +46,7 @@ async function loadConfig(): Promise<AppConfig | null> {
   }
 }
 
-function isMatch(site: SiteConfig): boolean {
-  const url = window.location.href;
-  const host = window.location.host;
 
-  switch (site.matchPattern) {
-    case 'everything':
-      console.log(`[Enveil] Everything match: ${site.envName}`);
-      return true;
-    case 'domain':
-      const matches = host === site.matchValue || host.endsWith('.' + site.matchValue);
-      if (matches) {
-        console.log(`[Enveil] Domain match: ${site.matchValue} matched ${host} (${site.envName})`);
-      }
-      return matches;
-    case 'urlPrefix':
-      const prefixMatches = url.startsWith(site.matchValue);
-      if (prefixMatches) {
-        console.log(`[Enveil] URL Prefix match: ${site.matchValue} matched ${url} (${site.envName})`);
-      }
-      return prefixMatches;
-    case 'url':
-      const exactMatches = url === site.matchValue;
-      if (exactMatches) {
-        console.log(`[Enveil] Exact URL match: ${site.matchValue} (${site.envName})`);
-      }
-      return exactMatches;
-    case 'regex':
-      try {
-        const regex = new RegExp(site.matchValue);
-        const regexMatches = regex.test(url);
-        if (regexMatches) {
-          console.log(`[Enveil] Regex match: ${site.matchValue} matched ${url} (${site.envName})`);
-        }
-        return regexMatches;
-      } catch (e) {
-        console.error('[Enveil] Invalid regex:', site.matchValue);
-        return false;
-      }
-    default:
-      return false;
-  }
-}
 
 function applySiteUI(site: SiteConfig) {
   if (site.flagEnable) {
