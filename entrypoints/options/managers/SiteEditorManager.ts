@@ -156,6 +156,15 @@ export class SiteEditorManager {
     const headerActions = document.createElement('div');
     headerActions.className = 'group-header-actions';
     
+    // 添加配置按钮
+    const addSiteBtn = document.createElement('button');
+    addSiteBtn.className = 'add-site-btn';
+    addSiteBtn.innerHTML = '<i class="fas fa-plus"></i> Add Config';
+    addSiteBtn.title = 'Add configuration to this group';
+    addSiteBtn.addEventListener('click', () => {
+      this.openAddSiteModal();
+    });
+    
     // 编辑配置组名称按钮
     const editBtn = document.createElement('button');
     editBtn.className = 'group-edit-btn';
@@ -174,6 +183,7 @@ export class SiteEditorManager {
       this.deleteConfigGroup(groupIndex);
     });
     
+    headerActions.appendChild(addSiteBtn);
     headerActions.appendChild(editBtn);
     headerActions.appendChild(deleteBtn);
     

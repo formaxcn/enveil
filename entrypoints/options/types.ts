@@ -16,20 +16,11 @@ export interface Setting {
   sites: SiteConfig[];
 }
 
-export interface GitConfig {
-  repoUrl: string;
-  branch: string;
-  filePath: string;
-  username: string;
-  password: string;
-  lastSyncTime: string;
-  localCommit: number;
-}
+
 
 export interface AppConfig {
   browserSync: boolean;
   settings: Setting[];
-  gitConfig?: GitConfig;
 }
 
 // 通知类型

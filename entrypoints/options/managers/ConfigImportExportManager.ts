@@ -318,6 +318,11 @@ export class ConfigImportExportManager {
           return;
         }
         
+        // 处理旧的browserSync对象格式，转换为新的布尔值格式
+        const importedBrowserSync = typeof importedConfig.browserSync === 'boolean' 
+          ? importedConfig.browserSync 
+          : importedConfig.browserSync?.enable || false;
+        
         // 询问用户导入策略
         const importMode = confirm(
           'Do you want to REPLACE existing configuration or MERGE with existing?\n' +
@@ -331,7 +336,11 @@ export class ConfigImportExportManager {
               return;
             }
           }
-          this.appConfig = importedConfig;
+          // 使用转换后的browserSync布尔值
+          this.appConfig = {
+            browserSync: importedBrowserSync,
+            settings: importedConfig.settings
+          };
         } else {
           // 合并模式：保留现有配置，添加导入的配置组（避免名称冲突）
           let hasChanges = false;
@@ -360,16 +369,20 @@ export class ConfigImportExportManager {
           });
           
           // 检查browserSync设置是否变更
-          if (this.appConfig.browserSync !== importedConfig.browserSync) {
+          const currentBrowserSync = typeof this.appConfig.browserSync === 'boolean' 
+            ? this.appConfig.browserSync 
+            : this.appConfig.browserSync?.enable || false;
+          
+          if (currentBrowserSync !== importedBrowserSync) {
             const changeBrowserSync = confirm(
               `Imported configuration has different Browser Sync setting.\n` +
-              `Current: ${this.appConfig.browserSync ? 'Enabled' : 'Disabled'}\n` +
-              `Imported: ${importedConfig.browserSync ? 'Enabled' : 'Disabled'}\n` +
+              `Current: ${currentBrowserSync ? 'Enabled' : 'Disabled'}\n` +
+              `Imported: ${importedBrowserSync ? 'Enabled' : 'Disabled'}\n` +
               'Do you want to update it?'
             );
             
             if (changeBrowserSync) {
-              this.appConfig.browserSync = importedConfig.browserSync;
+              this.appConfig.browserSync = importedBrowserSync;
               hasChanges = true;
             }
           }
@@ -410,8 +423,10 @@ export class ConfigImportExportManager {
       return false;
     }
     
-    // 检查browserSync属性
-    if (typeof config.browserSync !== 'boolean') {
+    // 检查browserSync属性（支持旧的对象格式和新的布尔值格式）
+    const isBrowserSyncValid = typeof config.browserSync === 'boolean' || 
+      (typeof config.browserSync === 'object' && typeof config.browserSync.enable === 'boolean');
+    if (!isBrowserSyncValid) {
       return false;
     }
     
@@ -478,13 +493,12 @@ export class ConfigImportExportManager {
     URL.revokeObjectURL(url);
   }
 
-  // 备份配置（只备份git和sync相关信息，不处理config group）
+  // 备份配置（只备份sync相关信息，不处理config group）
   public backupConfig(): void {
     try {
-      // 创建备份对象，只包含browserSync和gitConfig
+      // 创建备份对象，只包含browserSync
       const backupData = {
-        browserSync: this.appConfig.browserSync,
-        gitConfig: this.appConfig.gitConfig
+        browserSync: this.appConfig.browserSync
       };
       
       // 将对象转换为JSON字符串
@@ -517,13 +531,9 @@ export class ConfigImportExportManager {
         const content = await file.text();
         const backupData = JSON.parse(content);
         
-        // 只恢复browserSync和gitConfig字段
+        // 只恢复browserSync字段
         if (backupData.browserSync !== undefined) {
           this.appConfig.browserSync = backupData.browserSync;
-        }
-        
-        if (backupData.gitConfig) {
-          this.appConfig.gitConfig = backupData.gitConfig;
         }
         
         // 更新配置

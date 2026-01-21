@@ -36,10 +36,11 @@ export class AddSiteModal {
             <div class="form-group">
               <label for="match-pattern">Match Pattern:</label>
               <select id="match-pattern" required>
-                <option value="domain" selected>Domains</option>
-                <option value="regex">Regex</option>
-                <option value="urlPrefix">URL prefix</option>
+                <option value="everything">Everything</option>
                 <option value="url">URL</option>
+                <option value="urlPrefix">URLs starting with</option>
+                <option value="domain" selected>URLs on the domain</option>
+                <option value="regex">URLs matching the regexp</option>
               </select>
             </div>
             

@@ -37,10 +37,7 @@ export class AppController {
   // 获取默认配置
   private getDefaultConfig(): AppConfig {
     return {
-      browserSync: {
-        enable: false,
-        remoteServer: 'ws://127.0.0.1:3000'
-      },
+      browserSync: false,
       settings: [
         {
           name: 'default',
@@ -85,21 +82,24 @@ export class AppController {
 
   // 初始化浏览器同步开关
   private initBrowserSyncToggle(): void {
-    const syncToggle = document.getElementById('browser-sync-toggle') as HTMLInputElement;
+    const syncToggle = document.getElementById('browser-sync-checkbox') as HTMLInputElement;
     if (syncToggle) {
-      syncToggle.checked = this.appConfig.browserSync.enable;
+      // 简化browserSync类型，只使用布尔值
+      syncToggle.checked = typeof this.appConfig.browserSync === 'boolean' 
+        ? this.appConfig.browserSync 
+        : this.appConfig.browserSync?.enable || false;
+      
       syncToggle.addEventListener('change', (e) => {
-        this.appConfig.browserSync.enable = (e.target as HTMLInputElement).checked;
+        const isChecked = (e.target as HTMLInputElement).checked;
+        // 简化browserSync配置为布尔值
+        this.appConfig.browserSync = isChecked;
         this.saveConfig();
-      });
-    }
-
-    const remoteServerInput = document.getElementById('remote-server') as HTMLInputElement;
-    if (remoteServerInput) {
-      remoteServerInput.value = this.appConfig.browserSync.remoteServer || 'ws://127.0.0.1:3000';
-      remoteServerInput.addEventListener('change', (e) => {
-        this.appConfig.browserSync.remoteServer = (e.target as HTMLInputElement).value;
-        this.saveConfig();
+        
+        if (isChecked) {
+          this.showNotification('Browser sync enabled. Configurations will be synced across browsers.', 'success');
+        } else {
+          this.showNotification('Browser sync disabled.', 'info');
+        }
       });
     }
   }
@@ -114,9 +114,14 @@ export class AppController {
       });
 
       if (config) {
+        // 处理旧的browserSync对象格式，转换为新的布尔值格式
+        const browserSync = typeof config.browserSync === 'boolean' 
+          ? config.browserSync 
+          : config.browserSync?.enable || false;
+        
         // 合并配置，确保所有必需字段都存在
         this.appConfig = {
-          browserSync: config.browserSync || this.getDefaultConfig().browserSync,
+          browserSync: browserSync,
           settings: config.settings || this.getDefaultConfig().settings
         };
       }

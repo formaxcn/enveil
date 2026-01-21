@@ -1,8 +1,7 @@
 import { AppController } from '../managers/AppController';
-import { GitSyncManager } from '../managers/GitSyncManager';
 import { ConfigImportExportManager } from '../managers/ConfigImportExportManager';
 import { SiteEditorManager } from '../managers/SiteEditorManager';
-import { AppConfig, GitConfig } from '../types';
+import { AppConfig } from '../types';
 
 // 模拟浏览器环境
 declare const global: any;
@@ -70,49 +69,13 @@ testRunner.addTest('测试类型导入', () => {
     browserSync: true,
     settings: []
   };
-  const mockGitConfig: GitConfig = {
-    repoUrl: '',
-    branch: 'main',
-    filePath: 'test.json',
-    username: '',
-    password: '',
-    lastSyncTime: '',
-    localCommit: 0
-  };
   
-  if (!mockConfig || !mockGitConfig) {
+  if (!mockConfig) {
     throw new Error('类型导入或创建失败');
   }
 });
 
-// 测试GitSyncManager初始化
-testRunner.addTest('测试GitSyncManager初始化', () => {
-  const mockConfig: AppConfig = {
-    browserSync: true,
-    settings: []
-  };
-  
-  // 模拟DOM元素
-  document.body.innerHTML = `
-    <div id="repo-url" value=""></div>
-    <div id="branch" value="main"></div>
-    <div id="file-path" value="extensions.json"></div>
-    <div id="username" value=""></div>
-    <div id="password" value=""></div>
-    <div id="sync-time"></div>
-    <div id="local-commit"></div>
-    <button id="save-git-config"></button>
-    <button id="test-connection"></button>
-    <button id="push-btn"></button>
-    <button id="pull-btn"></button>
-    <button id="sync-btn"></button>
-  `;
-  
-  const gitManager = new GitSyncManager(mockConfig);
-  if (!gitManager) {
-    throw new Error('GitSyncManager初始化失败');
-  }
-});
+
 
 // 测试ConfigImportExportManager初始化
 testRunner.addTest('测试ConfigImportExportManager初始化', () => {
@@ -168,18 +131,6 @@ testRunner.addTest('测试AppController初始化', async () => {
     <input id="import-btn" type="file">
     <button id="backup-btn"></button>
     <button id="restore-btn"></button>
-    <div id="repo-url" value=""></div>
-    <div id="branch" value="main"></div>
-    <div id="file-path" value="extensions.json"></div>
-    <div id="username" value=""></div>
-    <div id="password" value=""></div>
-    <div id="sync-time"></div>
-    <div id="local-commit"></div>
-    <button id="save-git-config"></button>
-    <button id="test-connection"></button>
-    <button id="push-btn"></button>
-    <button id="pull-btn"></button>
-    <button id="sync-btn"></button>
   `;
   
   const appController = new AppController();

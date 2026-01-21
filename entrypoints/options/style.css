@@ -121,15 +121,15 @@ main {
   margin: 0 auto 1rem auto;
 }
 
-/* 确保config-group-header中的开关垂直居中 */
-.config-group-header .switch-container {
+/* 确保group-header中的开关垂直居中 */
+.group-header .switch-container {
   margin: 0;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.config-group-header .switch {
+.group-header .switch {
   display: inline-flex;
   align-items: center;
   vertical-align: middle;
@@ -304,31 +304,14 @@ button:focus-visible {
 
 /* 图标按钮样式已移至header-actions部分 */
 
-/* Git配置部分样式 */
-#git-config-section,
-#sync-section,
 #settings-section {
-  margin: 20px 0;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
   padding: 15px;
-  background-color: var(--panel-bg);
 }
 
-#git-config-section .header-row,
-#sync-section .header-row,
-#settings-section .header-row {
+.settings-content {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 15px;
-  align-items: center;
-}
-
-#git-config-section .header-row h3,
-#sync-section .header-row h3,
-#settings-section .header-row h3 {
-  margin: 0;
-  font-size: 1.1em;
+  flex-direction: column;
+  gap: 15px;
 }
 
 /* 表单样式 */
@@ -378,73 +361,46 @@ button:focus-visible {
   margin-top: 15px;
 }
 
-/* Sync部分样式 */
-.sync-actions {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-
-.sync-info {
-  text-align: left;
-}
-
-.info-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-  font-size: 0.9em;
-}
-
-.info-item span:first-child {
-  width: 120px;
-  color: #aaa;
-}
-
-#local-commit {
-  color: #4CAF50;
-  margin-right: 10px;
-}
-
 /* Settings部分样式 */
 .setting-item {
-  margin-bottom: 15px;
   text-align: left;
 }
 
-.setting-item label {
+.sync-label {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.9em;
+  font-size: 1.1em;
+  font-weight: 500;
   cursor: pointer;
+  margin-bottom: 5px;
+}
+
+.sync-description {
+  margin: 5px 0 0 25px;
+  font-size: 0.85em;
+  color: #aaa;
+  line-height: 1.4;
 }
 
 .setting-item input[type="checkbox"] {
-  width: auto;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
 
-.settings-actions {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.local-extensions {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #444;
-}
-
-.local-extensions h4 {
-  margin: 0 0 10px 0;
-  font-size: 1em;
+.config-management {
   text-align: left;
 }
 
-.extensions-actions {
+.config-actions {
   display: flex;
   gap: 10px;
+}
+
+.config-actions .btn {
+  flex: 1;
+  justify-content: center;
 }
 
 /* 配置组列表样式 */
@@ -574,10 +530,7 @@ button:focus-visible {
 
 /* 配置编辑器样式 */
 #config-editor-container {
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
   padding: 15px;
-  background-color: var(--panel-bg);
 }
 
 #config-editor-container .header-row {
@@ -591,52 +544,55 @@ button:focus-visible {
   margin: 0;
 }
 
-/* 配置组容器样式 */
-.config-group-container {
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  margin-bottom: 20px;
-  background-color: var(--panel-bg);
-}
-
-.config-group-header .group-header {
+.group-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px;
+  padding: 15px 20px;
   background-color: var(--input-bg);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 2px solid var(--primary-color);
+  background: linear-gradient(135deg, var(--input-bg) 0%, rgba(100, 108, 255, 0.1) 100%);
 }
 
 .group-header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 15px;
 }
 
 .group-header-actions {
   display: flex;
-  gap: 5px;
+  gap: 8px;
 }
 
 .group-toggle {
   width: auto;
-  margin-right: 10px;
 }
 
 .config-group-title {
-  font-weight: bold;
-  font-size: 1.1em;
+  font-weight: 600;
+  font-size: 1.2em;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.config-group-count {
+  font-size: 0.85em;
+  color: #aaa;
+  font-weight: 400;
 }
 
 .config-group-actions {
   display: flex;
   gap: 10px;
   align-items: center;
+  padding: 15px 20px;
+  background-color: var(--input-bg);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .add-site-btn {
-  padding: 5px 10px;
+  padding: 8px 16px;
   background-color: #4CAF50;
   color: white;
   border: none;
@@ -645,7 +601,14 @@ button:focus-visible {
   font-size: 0.9em;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
+  transition: background-color 0.2s;
+}
+
+.add-site-btn:hover {
+  background-color: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .config-group-table {

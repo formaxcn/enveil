@@ -1,21 +1,31 @@
 /* 配置组容器样式 - 16:9 aspect ratio */
 #config-groups-container {
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
     padding: 20px;
     text-align: left;
-    background-color: var(--panel-bg);
-    aspect-ratio: 16 / 9;
     overflow-y: auto;
     position: relative;
 }
 
 .config-group {
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    margin-bottom: 20px;
+    border: 2px solid var(--primary-color);
+    border-radius: 12px;
+    margin-bottom: 30px;
     background-color: var(--panel-bg);
-    padding: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.config-group:hover {
+    box-shadow: 0 6px 20px rgba(100, 108, 255, 0.25);
+    transform: translateY(-2px);
+}
+
+.config-group::before {
+    content: '';
+    display: block;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color), #535bf2);
 }
 
 /* Floating Add Button */

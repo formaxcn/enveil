@@ -46,6 +46,9 @@ function isMatch(site: SiteConfig): boolean {
   const host = window.location.host;
 
   switch (site.matchPattern) {
+    case 'everything':
+      console.log(`[Enveil] Everything match: ${site.envName}`);
+      return true;
     case 'domain':
       const matches = host === site.matchValue || host.endsWith('.' + site.matchValue);
       if (matches) {
