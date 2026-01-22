@@ -41,7 +41,7 @@ export class AddSiteModal {
     this.backgroundSwitch = new SwitchComponent(backgroundSwitchContainer, 'Background Effect', 'modal-background', 'local', false, false);
 
     const flagSwitchContainer = this.modal.querySelector('#flag-switch') as HTMLElement;
-    this.flagSwitch = new SwitchComponent(flagSwitchContainer, 'Show Banner', 'modal-flag', 'local', false, false);
+    this.flagSwitch = new SwitchComponent(flagSwitchContainer, 'Corner Banner', 'modal-flag', 'local', false, false);
   }
 
   private bindEvents() {
@@ -87,18 +87,32 @@ export class AddSiteModal {
       const hex = (e.target as HTMLInputElement).value.toUpperCase();
       mainColorInput.value = hex;
       this.updateActiveColorDot(hex);
+      this.updatePreview();
+    });
+
+    // Background switch logic
+    this.backgroundSwitch.onChange(() => {
+      this.updatePreview();
     });
 
     // Banner switch logic
     const positionContainer = this.modal.querySelector('#position-container') as HTMLElement;
+    const positionSelect = this.modal.querySelector('#position') as HTMLSelectElement;
+
     this.flagSwitch.onChange((checked) => {
       if (checked) {
         positionContainer.classList.remove('hidden');
       } else {
         positionContainer.classList.add('hidden');
       }
+      this.updatePreview();
+    });
+
+    positionSelect.addEventListener('change', () => {
+      this.updatePreview();
     });
   }
+
 
   private renderDefaultColorsRow() {
     const container = this.modal.querySelector('#modal-default-colors') as HTMLElement;
@@ -112,8 +126,9 @@ export class AddSiteModal {
       dot.addEventListener('click', () => {
         (this.modal.querySelector('#color') as HTMLInputElement).value = color;
         this.updateActiveColorDot(color);
-
+        this.updatePreview();
       });
+
       container.appendChild(dot);
     });
   }
@@ -231,6 +246,9 @@ export class AddSiteModal {
     // Sync custom picker state
     (this.modal.querySelector('#custom-picker') as HTMLInputElement).value = initialColor;
 
+    this.updatePreview();
+
+
     document.body.appendChild(this.modal);
     // 触发显示动画
     setTimeout(() => {
@@ -269,6 +287,9 @@ export class AddSiteModal {
     // Sync custom picker state
     (this.modal.querySelector('#custom-picker') as HTMLInputElement).value = initialColor;
 
+    this.updatePreview();
+
+
     document.body.appendChild(this.modal);
     setTimeout(() => {
       this.modal.classList.add('show');
@@ -287,5 +308,48 @@ export class AddSiteModal {
 
   public onSave(callback: (site: SiteConfig) => void) {
     this.onSaveCallback = callback;
+  }
+
+  private updatePreview() {
+    const previewContainer = this.modal.querySelector('.form-section-compact-refined') as HTMLElement;
+    if (!previewContainer) return;
+
+    const color = (this.modal.querySelector('#color') as HTMLInputElement).value;
+    const backgroundEnable = this.backgroundSwitch.isChecked();
+    const flagEnable = this.flagSwitch.isChecked();
+    const position = (this.modal.querySelector('#position') as HTMLSelectElement).value;
+
+    // 1. Update background color
+    if (backgroundEnable) {
+      // Create a soft background color using RGBA
+      const rgba = this.hexToRgba(color, 0.15);
+      previewContainer.style.backgroundColor = rgba;
+    } else {
+      previewContainer.style.backgroundColor = '';
+    }
+
+    // 2. Update Ribbon
+    let ribbon = previewContainer.querySelector('.corner-ribbon') as HTMLElement;
+    if (!ribbon) {
+      ribbon = document.createElement('div');
+      ribbon.className = 'corner-ribbon';
+      ribbon.textContent = 'Preview';
+      previewContainer.appendChild(ribbon);
+    }
+
+    if (flagEnable) {
+      ribbon.classList.remove('hidden');
+      ribbon.style.backgroundColor = color;
+      ribbon.className = `corner-ribbon ${position}`;
+    } else {
+      ribbon.classList.add('hidden');
+    }
+  }
+
+  private hexToRgba(hex: string, alpha: number): string {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 }
