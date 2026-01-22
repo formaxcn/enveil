@@ -74,25 +74,26 @@ export class AddSiteModal {
                   </div>
                 </div>
               </div>
-            </div>
-
-            <div class="form-row theme-color-row">
-              <div class="form-group full-width">
-                <label>Theme Color Selection</label>
-                <input type="hidden" id="color" value="#4a9eff" />
-                <div class="modal-color-selection">
-                  <div class="modal-default-colors-header">
-                    <div id="modal-default-colors" class="modal-default-colors"></div>
-                    <button type="button" id="others-color-btn" class="others-toggle-btn">Others...</button>
-                  </div>
-                  <div id="custom-color-picker-area" class="custom-picker-area hidden">
-                    <div class="color-input-group">
-                      <input type="color" id="custom-picker" class="unified-color-picker" />
+              <div class="form-row theme-color-row">
+                <div class="form-group full-width">
+                  <label>Theme Color Selection</label>
+                  <input type="hidden" id="color" value="#4a9eff" />
+                  <div class="modal-color-selection">
+                    <div class="modal-default-colors-header">
+                      <div id="modal-default-colors" class="modal-default-colors"></div>
+                      <button type="button" id="others-color-btn" class="others-toggle-btn">Others...</button>
+                    </div>
+                    <div id="custom-color-picker-area" class="custom-picker-area hidden">
+                      <div class="color-input-group">
+                        <input type="color" id="custom-picker" class="unified-color-picker" />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+
+
             
             <div class="form-actions">
               <button type="button" class="btn btn-secondary cancel-btn">Cancel</button>
