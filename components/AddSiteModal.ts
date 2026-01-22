@@ -79,13 +79,13 @@ export class AddSiteModal {
                   <label>Theme Color Selection</label>
                   <input type="hidden" id="color" value="#4a9eff" />
                   <div class="modal-color-selection">
-                    <div class="modal-default-colors-header">
+                    <div class="modal-default-colors-header" style="position: relative;">
                       <div id="modal-default-colors" class="modal-default-colors"></div>
-                      <button type="button" id="others-color-btn" class="others-toggle-btn">Others...</button>
-                    </div>
-                    <div id="custom-color-picker-area" class="custom-picker-area hidden">
-                      <div class="color-input-group">
-                        <input type="color" id="custom-picker" class="unified-color-picker" />
+                      <div style="position: relative; display: inline-block;">
+                        <div id="others-color-btn" class="color-dot custom-color-dot" title="Custom Color">
+                          <i class="fas fa-palette"></i>
+                        </div>
+                        <input type="color" id="custom-picker" class="unified-color-picker" style="position: absolute; top: 100%; left: 0; opacity: 0; width: 28px; height: 28px; pointer-events: none; margin-top: -10px;" />
                       </div>
                     </div>
                   </div>
@@ -141,22 +141,33 @@ export class AddSiteModal {
       this.handleSave();
     });
 
-    // "Others" toggle
-    const othersBtn = this.modal.querySelector('#others-color-btn') as HTMLButtonElement;
-    const customArea = this.modal.querySelector('#custom-color-picker-area') as HTMLElement;
-    othersBtn.addEventListener('click', () => {
-      othersBtn.classList.toggle('active');
-      customArea.classList.toggle('hidden');
-    });
-
-    // Custom Picker binding
+    // Others 圆形按钮直接触发原生颜色选择器
+    const othersBtn = this.modal.querySelector('#others-color-btn') as HTMLElement;
     const picker = this.modal.querySelector('#custom-picker') as HTMLInputElement;
     const mainColorInput = this.modal.querySelector('#color') as HTMLInputElement;
 
+    othersBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // 临时启用 pointer-events 以确保可触发
+      picker.style.pointerEvents = 'auto';
+      picker.click(); // 直接触发原生颜色选择器
+      // 延迟恢复以避免影响选择器弹出
+      setTimeout(() => {
+        picker.style.pointerEvents = 'none';
+      }, 100);
+    });
+
+    // 颜色选择器变化时，更新主 color input 和 Others 按钮背景色
     picker.addEventListener('input', (e) => {
       const hex = (e.target as HTMLInputElement).value.toUpperCase();
       mainColorInput.value = hex;
       this.updateActiveColorDot(hex);
+
+      // 更新 Others 圆形按钮背景色，并添加 active 状态
+      othersBtn.style.backgroundColor = hex;
+      othersBtn.style.color = this.getContrastColor(hex);
+      othersBtn.classList.add('active');
     });
 
     // Banner switch logic
@@ -202,6 +213,16 @@ export class AddSiteModal {
         dot.classList.remove('active');
       }
     });
+  }
+
+  // 根据背景色计算对比文字颜色
+  private getContrastColor(hexColor: string): string {
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 155 ? '#000000' : '#ffffff';
   }
 
   private handleSave() {
@@ -277,11 +298,11 @@ export class AddSiteModal {
     this.renderDefaultColorsRow();
     this.updateActiveColorDot(initialColor);
 
-    // Reset others toggle
-    const othersBtn = this.modal.querySelector('#others-color-btn') as HTMLButtonElement;
-    const customArea = this.modal.querySelector('#custom-color-picker-area') as HTMLElement;
+    // Reset Others 圆形按钮样式
+    const othersBtn = this.modal.querySelector('#others-color-btn') as HTMLElement;
+    othersBtn.style.backgroundColor = '';
+    othersBtn.style.color = '';
     othersBtn.classList.remove('active');
-    customArea.classList.add('hidden');
 
     // Sync custom picker state
     (this.modal.querySelector('#custom-picker') as HTMLInputElement).value = initialColor;
@@ -319,11 +340,11 @@ export class AddSiteModal {
     this.renderDefaultColorsRow();
     this.updateActiveColorDot(initialColor);
 
-    // Reset others toggle
-    const othersBtn = this.modal.querySelector('#others-color-btn') as HTMLButtonElement;
-    const customArea = this.modal.querySelector('#custom-color-picker-area') as HTMLElement;
+    // Reset Others 圆形按钮样式
+    const othersBtn = this.modal.querySelector('#others-color-btn') as HTMLElement;
+    othersBtn.style.backgroundColor = '';
+    othersBtn.style.color = '';
     othersBtn.classList.remove('active');
-    customArea.classList.add('hidden');
 
     // Sync custom picker state
     (this.modal.querySelector('#custom-picker') as HTMLInputElement).value = initialColor;

@@ -194,10 +194,8 @@ main {
 /* Horizontal Color Selection */
 .modal-color-selection {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 15px;
-  flex-wrap: nowrap;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .modal-default-colors-header {
@@ -327,16 +325,10 @@ main {
 
 
 /* Modal Specific Color Pickers */
-.modal-color-selection {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
 .modal-default-colors {
   display: flex;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .color-dot {
@@ -358,19 +350,23 @@ main {
   box-shadow: 0 0 0 2px var(--primary-color);
 }
 
-.others-toggle-btn {
-  padding: 4px 10px;
-  font-size: 0.8em;
-  background: var(--input-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  white-space: nowrap;
+.custom-color-dot {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
 }
 
-.others-toggle-btn.active {
-  background: var(--primary-color);
-  color: white;
+.custom-color-dot:hover {
+  transform: scale(1.1);
   border-color: var(--primary-color);
+}
+
+.custom-color-dot.active {
+  border-color: white;
+  box-shadow: 0 0 0 2px var(--primary-color);
 }
 
 .custom-picker-area {
@@ -384,7 +380,10 @@ main {
 }
 
 .hidden {
-  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  /* 保持占位，避免显示时产生滚动条 */
 }
 
 .switch-container {
