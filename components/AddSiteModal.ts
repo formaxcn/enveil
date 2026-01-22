@@ -34,8 +34,16 @@ export class AddSiteModal {
         </div>
         <div class="modal-body">
           <form id="add-site-form">
-            <div class="form-row">
-              <div class="form-group half">
+            <div class="form-row env-enable-row">
+              <div id="enable-switch" class="top-enable-switch"></div>
+              <div class="form-group env-name-group">
+                <label for="env-name">Environment Name</label>
+                <input type="text" id="env-name" class="form-control" placeholder="e.g. dev" required />
+              </div>
+            </div>
+
+            <div class="form-row match-row">
+              <div class="form-group match-pattern-group">
                 <label for="match-pattern">Match Pattern</label>
                 <select id="match-pattern" class="form-control" required>
                   <option value="everything" selected>Everything</option>
@@ -45,22 +53,35 @@ export class AddSiteModal {
                   <option value="regex">Regex Match</option>
                 </select>
               </div>
-              <div class="form-group half">
+              <div class="form-group match-value-group">
                 <label for="match-value">Match Value</label>
                 <input type="text" id="match-value" class="form-control" placeholder="e.g. baidu.com" required />
               </div>
             </div>
             
-            <div class="form-row">
-              <div class="form-group half">
-                <label for="env-name">Environment Name</label>
-                <input type="text" id="env-name" class="form-control" placeholder="e.g. dev" required />
+            <div class="form-section-compact-refined">
+              <div class="form-row switches-grid-row">
+                <div class="grid-col" id="background-switch"></div>
+                <div class="grid-col" id="flag-switch"></div>
+                <div class="grid-col hidden" id="position-container">
+                  <div class="form-group position-group" style="margin-bottom: 0;">
+                    <select id="position" class="form-control" required>
+                      <option value="leftTop">Top Left Corner</option>
+                      <option value="rightTop">Top Right Corner</option>
+                      <option value="leftBottom">Bottom Left Corner</option>
+                      <option value="rightBottom">Bottom Right Corner</option>
+                    </select>
+                  </div>
+                </div>
               </div>
-              <div class="form-group half">
-                <label>Theme Color</label>
+            </div>
+
+            <div class="form-row theme-color-row">
+              <div class="form-group full-width">
+                <label>Theme Color Selection</label>
                 <input type="hidden" id="color" value="#4a9eff" />
                 <div class="modal-color-selection">
-                  <div class="modal-default-colors-header" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                  <div class="modal-default-colors-header">
                     <div id="modal-default-colors" class="modal-default-colors"></div>
                     <button type="button" id="others-color-btn" class="others-toggle-btn">Others...</button>
                   </div>
@@ -71,22 +92,6 @@ export class AddSiteModal {
                   </div>
                 </div>
               </div>
-            </div>
-            
-            <div class="form-group">
-              <label for="position">Banner Position</label>
-              <select id="position" class="form-control" required>
-                <option value="leftTop">Top Left Corner</option>
-                <option value="rightTop">Top Right Corner</option>
-                <option value="leftBottom">Bottom Left Corner</option>
-                <option value="rightBottom">Bottom Right Corner</option>
-              </select>
-            </div>
-            
-            <div class="switches-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0;">
-              <div class="switch-item" id="enable-switch"></div>
-              <div class="switch-item" id="background-switch"></div>
-              <div class="switch-item" id="flag-switch"></div>
             </div>
             
             <div class="form-actions">
@@ -105,13 +110,13 @@ export class AddSiteModal {
   private initializeComponents() {
     // 初始化开关组件
     const enableSwitchContainer = this.modal.querySelector('#enable-switch') as HTMLElement;
-    this.enableSwitch = new SwitchComponent(enableSwitchContainer, 'Enable', 'modal-enable', 'local', false, false);
+    this.enableSwitch = new SwitchComponent(enableSwitchContainer, 'Enable Configuration', 'modal-enable', 'local', false, false);
 
     const backgroundSwitchContainer = this.modal.querySelector('#background-switch') as HTMLElement;
-    this.backgroundSwitch = new SwitchComponent(backgroundSwitchContainer, 'Background', 'modal-background', 'local', false, false);
+    this.backgroundSwitch = new SwitchComponent(backgroundSwitchContainer, 'Background Effect', 'modal-background', 'local', false, false);
 
     const flagSwitchContainer = this.modal.querySelector('#flag-switch') as HTMLElement;
-    this.flagSwitch = new SwitchComponent(flagSwitchContainer, 'Banner', 'modal-flag', 'local', false, false);
+    this.flagSwitch = new SwitchComponent(flagSwitchContainer, 'Show Banner', 'modal-flag', 'local', false, false);
   }
 
   private bindEvents() {
@@ -151,6 +156,16 @@ export class AddSiteModal {
       const hex = (e.target as HTMLInputElement).value.toUpperCase();
       mainColorInput.value = hex;
       this.updateActiveColorDot(hex);
+    });
+
+    // Banner switch logic
+    const positionContainer = this.modal.querySelector('#position-container') as HTMLElement;
+    this.flagSwitch.onChange((checked) => {
+      if (checked) {
+        positionContainer.classList.remove('hidden');
+      } else {
+        positionContainer.classList.add('hidden');
+      }
     });
   }
 
@@ -238,6 +253,12 @@ export class AddSiteModal {
       this.enableSwitch.setChecked(site.enable);
       this.backgroundSwitch.setChecked(site.backgroudEnable);
       this.flagSwitch.setChecked(site.flagEnable);
+      const positionContainer = this.modal.querySelector('#position-container') as HTMLElement;
+      if (site.flagEnable) {
+        positionContainer.classList.remove('hidden');
+      } else {
+        positionContainer.classList.add('hidden');
+      }
       initialColor = site.color;
     } else {
       this.editingSite = null;
@@ -286,6 +307,7 @@ export class AddSiteModal {
     this.enableSwitch.setChecked(false);
     this.backgroundSwitch.setChecked(false);
     this.flagSwitch.setChecked(false);
+    (this.modal.querySelector('#position-container') as HTMLElement).classList.add('hidden');
 
     let initialColor = '#4a9eff';
     if (this.defaultColors.length > 0) {
