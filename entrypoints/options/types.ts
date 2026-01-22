@@ -20,6 +20,7 @@ export interface Setting {
 
 export interface AppConfig {
   browserSync: boolean;
+  defaultColors: string[];
   settings: Setting[];
 }
 

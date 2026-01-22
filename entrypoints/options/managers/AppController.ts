@@ -12,6 +12,10 @@ export class AppController {
   private configImportExportManager: ConfigImportExportManager;
   private siteEditorManager: SiteEditorManager;
   private notificationTimeout: number | null = null;
+  private static readonly DISTINCT_COLORS = [
+    '#4a9eff', '#4CAF50', '#ff9800', '#f44336', '#9c27b0',
+    '#00bcd4', '#ffeb3b', '#795548', '#607d8b', '#e91e63'
+  ];
 
   constructor() {
     // 初始化默认配置
@@ -39,6 +43,7 @@ export class AppController {
   private getDefaultConfig(): AppConfig {
     return {
       browserSync: false,
+      defaultColors: ['#4a9eff', '#4CAF50', '#ff9800', '#f44336', '#9c27b0'],
       settings: [
         {
           name: 'default',
@@ -79,6 +84,9 @@ export class AppController {
 
     // 初始化浏览器同步开关
     this.initBrowserSyncToggle();
+
+    // 初始化默认颜色设置
+    this.initDefaultColorsUI();
   }
 
   // 初始化浏览器同步开关
@@ -131,6 +139,7 @@ export class AppController {
         // 合并配置，确保所有必需字段都存在
         this.appConfig = {
           browserSync: typeof config.browserSync === 'boolean' ? config.browserSync : false,
+          defaultColors: config.defaultColors || this.getDefaultConfig().defaultColors,
           settings: config.settings || this.getDefaultConfig().settings
         };
       }
@@ -199,6 +208,77 @@ export class AppController {
         notificationContainer.removeChild(notification);
       }, 300);
     }, 3000);
+  }
+
+  // 初始化默认颜色设置UI
+  private initDefaultColorsUI(): void {
+    const container = document.getElementById('default-colors-container');
+    if (!container) return;
+
+    this.renderDefaultColors();
+  }
+
+  // 渲染默认颜色
+  private renderDefaultColors(): void {
+    const container = document.getElementById('default-colors-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    this.appConfig.defaultColors.forEach((color, index) => {
+      const colorGroup = document.createElement('div');
+      colorGroup.className = 'color-input-group';
+
+      // Native Picker
+      const picker = document.createElement('input');
+      picker.type = 'color';
+      picker.value = color;
+      picker.className = 'unified-color-picker';
+
+      picker.addEventListener('change', (e) => {
+        const newVal = (e.target as HTMLInputElement).value;
+        this.appConfig.defaultColors[index] = newVal.toUpperCase();
+        this.saveConfig();
+      });
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'remove-color-btn';
+      removeBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+      removeBtn.title = 'Remove color';
+      removeBtn.addEventListener('click', () => this.removeDefaultColor(index));
+
+      colorGroup.appendChild(picker);
+      colorGroup.appendChild(removeBtn);
+      container.appendChild(colorGroup);
+    });
+    if (this.appConfig.defaultColors.length < 5) {
+      const addBtn = document.createElement('button');
+      addBtn.className = 'add-color-btn';
+      addBtn.innerHTML = '<i class="fas fa-plus"></i>';
+      addBtn.addEventListener('click', () => this.addDefaultColor());
+      container.appendChild(addBtn);
+    }
+  }
+
+  // 添加默认颜色
+  private addDefaultColor(): void {
+    if (this.appConfig.defaultColors.length >= 5) return;
+
+    // Find a color from the distinct palette that is not currently in the top 5
+    const existingColors = new Set(this.appConfig.defaultColors.map(c => c.toLowerCase()));
+    const nextColor = AppController.DISTINCT_COLORS.find(c => !existingColors.has(c.toLowerCase()))
+      || `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
+
+    this.appConfig.defaultColors.push(nextColor.toUpperCase());
+    this.saveConfig();
+    this.renderDefaultColors();
+  }
+
+  // 移除默认颜色
+  private removeDefaultColor(index: number): void {
+    this.appConfig.defaultColors.splice(index, 1);
+    this.saveConfig();
+    this.renderDefaultColors();
   }
 
   // 获取当前配置（用于调试或导出）

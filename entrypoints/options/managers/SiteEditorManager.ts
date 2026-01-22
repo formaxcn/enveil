@@ -401,12 +401,12 @@ export class SiteEditorManager {
 
   // 打开添加网站模态框
   public openAddSiteModal(): void {
-    this.addSiteModal.open();
+    this.addSiteModal.open(this.appConfig.defaultColors);
   }
 
   // 打开添加网站模态框并预填域名
   public openAddSiteModalWithDomain(domain: string, pattern: string): void {
-    this.addSiteModal.openWithDefaults(domain, pattern);
+    this.addSiteModal.openWithDefaults(this.appConfig.defaultColors, domain, pattern);
   }
 
   // 编辑网站
@@ -416,7 +416,7 @@ export class SiteEditorManager {
 
     const site = setting.sites[siteIndex];
     // 使用现有的添加网站模态框进行编辑
-    this.addSiteModal.open(site, (updatedSite: SiteConfig) => {
+    this.addSiteModal.open(this.appConfig.defaultColors, site, (updatedSite: SiteConfig) => {
       setting.sites[siteIndex] = updatedSite;
       this.updateConfigDisplay();
       this.saveConfigCallback();

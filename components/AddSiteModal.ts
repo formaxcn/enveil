@@ -19,6 +19,7 @@ export class AddSiteModal {
   private enableSwitch!: SwitchComponent;
   private backgroundSwitch!: SwitchComponent;
   private flagSwitch!: SwitchComponent;
+  private defaultColors: string[] = [];
 
   constructor() {
     // 创建模态框HTML结构
@@ -56,9 +57,18 @@ export class AddSiteModal {
                 <input type="text" id="env-name" class="form-control" placeholder="e.g. dev" required />
               </div>
               <div class="form-group half">
-                <label for="color">Theme Color</label>
-                <div class="color-input-wrapper" style="display: flex; align-items: center; gap: 10px;">
-                  <input type="color" id="color" value="#FF0000" style="padding: 0; border: none; width: 40px; height: 35px; cursor: pointer; background: none;" />
+                <label>Theme Color</label>
+                <input type="hidden" id="color" value="#4a9eff" />
+                <div class="modal-color-selection">
+                  <div class="modal-default-colors-header" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <div id="modal-default-colors" class="modal-default-colors"></div>
+                    <button type="button" id="others-color-btn" class="others-toggle-btn">Others...</button>
+                  </div>
+                  <div id="custom-color-picker-area" class="custom-picker-area hidden">
+                    <div class="color-input-group">
+                      <input type="color" id="custom-picker" class="unified-color-picker" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -124,6 +134,58 @@ export class AddSiteModal {
       e.preventDefault();
       this.handleSave();
     });
+
+    // "Others" toggle
+    const othersBtn = this.modal.querySelector('#others-color-btn') as HTMLButtonElement;
+    const customArea = this.modal.querySelector('#custom-color-picker-area') as HTMLElement;
+    othersBtn.addEventListener('click', () => {
+      othersBtn.classList.toggle('active');
+      customArea.classList.toggle('hidden');
+    });
+
+    // Custom Picker binding
+    const picker = this.modal.querySelector('#custom-picker') as HTMLInputElement;
+    const mainColorInput = this.modal.querySelector('#color') as HTMLInputElement;
+
+    picker.addEventListener('input', (e) => {
+      const hex = (e.target as HTMLInputElement).value.toUpperCase();
+      mainColorInput.value = hex;
+      this.updateActiveColorDot(hex);
+    });
+  }
+
+  private renderDefaultColorsRow() {
+    const container = this.modal.querySelector('#modal-default-colors') as HTMLElement;
+    container.innerHTML = '';
+
+    this.defaultColors.forEach(color => {
+      const dot = document.createElement('div');
+      dot.className = 'color-dot';
+      dot.style.backgroundColor = color;
+      dot.dataset.color = color;
+      dot.addEventListener('click', () => {
+        (this.modal.querySelector('#color') as HTMLInputElement).value = color;
+        this.updateActiveColorDot(color);
+
+        // Hide custom area if a default dot is clicked
+        const othersBtn = this.modal.querySelector('#others-color-btn') as HTMLButtonElement;
+        const customArea = this.modal.querySelector('#custom-color-picker-area') as HTMLElement;
+        othersBtn.classList.remove('active');
+        customArea.classList.add('hidden');
+      });
+      container.appendChild(dot);
+    });
+  }
+
+  private updateActiveColorDot(hex: string) {
+    const dots = this.modal.querySelectorAll('.color-dot');
+    dots.forEach(dot => {
+      if ((dot as HTMLElement).dataset.color?.toLowerCase() === hex.toLowerCase()) {
+        dot.classList.add('active');
+      } else {
+        dot.classList.remove('active');
+      }
+    });
   }
 
   private handleSave() {
@@ -152,13 +214,16 @@ export class AddSiteModal {
     this.close();
   }
 
-  public open(site?: SiteConfig, onSave?: (updatedSite: SiteConfig) => void) {
+  public open(defaultColors: string[], site?: SiteConfig, onSave?: (updatedSite: SiteConfig) => void) {
+    this.defaultColors = defaultColors;
     if (onSave) {
       this.onSaveCallback = onSave;
     }
 
     const form = this.modal.querySelector('#add-site-form') as HTMLFormElement;
     const title = this.modal.querySelector('.modal-header h3') as HTMLElement;
+
+    let initialColor = '#4a9eff';
 
     if (site) {
       this.editingSite = site;
@@ -173,6 +238,7 @@ export class AddSiteModal {
       this.enableSwitch.setChecked(site.enable);
       this.backgroundSwitch.setChecked(site.backgroudEnable);
       this.flagSwitch.setChecked(site.flagEnable);
+      initialColor = site.color;
     } else {
       this.editingSite = null;
       title.textContent = 'Add New Site Configuration';
@@ -180,7 +246,23 @@ export class AddSiteModal {
       this.enableSwitch.setChecked(false);
       this.backgroundSwitch.setChecked(false);
       this.flagSwitch.setChecked(false);
+      if (this.defaultColors.length > 0) {
+        initialColor = this.defaultColors[0];
+      }
+      (this.modal.querySelector('#color') as HTMLInputElement).value = initialColor;
     }
+
+    this.renderDefaultColorsRow();
+    this.updateActiveColorDot(initialColor);
+
+    // Reset others toggle
+    const othersBtn = this.modal.querySelector('#others-color-btn') as HTMLButtonElement;
+    const customArea = this.modal.querySelector('#custom-color-picker-area') as HTMLElement;
+    othersBtn.classList.remove('active');
+    customArea.classList.add('hidden');
+
+    // Sync custom picker state
+    (this.modal.querySelector('#custom-picker') as HTMLInputElement).value = initialColor;
 
     document.body.appendChild(this.modal);
     // 触发显示动画
@@ -189,7 +271,8 @@ export class AddSiteModal {
     }, 10);
   }
 
-  public openWithDefaults(domain: string, pattern: string): void {
+  public openWithDefaults(defaultColors: string[], domain: string, pattern: string): void {
+    this.defaultColors = defaultColors;
     const form = this.modal.querySelector('#add-site-form') as HTMLFormElement;
     const title = this.modal.querySelector('.modal-header h3') as HTMLElement;
 
@@ -203,6 +286,24 @@ export class AddSiteModal {
     this.enableSwitch.setChecked(false);
     this.backgroundSwitch.setChecked(false);
     this.flagSwitch.setChecked(false);
+
+    let initialColor = '#4a9eff';
+    if (this.defaultColors.length > 0) {
+      initialColor = this.defaultColors[0];
+    }
+    (this.modal.querySelector('#color') as HTMLInputElement).value = initialColor;
+
+    this.renderDefaultColorsRow();
+    this.updateActiveColorDot(initialColor);
+
+    // Reset others toggle
+    const othersBtn = this.modal.querySelector('#others-color-btn') as HTMLButtonElement;
+    const customArea = this.modal.querySelector('#custom-color-picker-area') as HTMLElement;
+    othersBtn.classList.remove('active');
+    customArea.classList.add('hidden');
+
+    // Sync custom picker state
+    (this.modal.querySelector('#custom-picker') as HTMLInputElement).value = initialColor;
 
     document.body.appendChild(this.modal);
     setTimeout(() => {
