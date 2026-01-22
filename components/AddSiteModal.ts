@@ -1,5 +1,6 @@
 import { SwitchComponent } from './SwitchComponent';
-
+import modalTemplate from './AddSiteModal.html?raw';
+import './AddSiteModal.css';
 // 定义网站配置结构类型
 interface SiteConfig {
   enable: boolean;
@@ -25,84 +26,7 @@ export class AddSiteModal {
     // 创建模态框HTML结构
     this.modal = document.createElement('div');
     this.modal.className = 'modal';
-    this.modal.innerHTML = `
-      <div class="modal-overlay"></div>
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>Add New Site Configuration</h3>
-          <button class="modal-close">&times;</button>
-        </div>
-        <div class="modal-body">
-          <form id="add-site-form">
-            <div class="form-row env-enable-row">
-              <div id="enable-switch" class="top-enable-switch"></div>
-              <div class="form-group env-name-group">
-                <label for="env-name">Environment Name</label>
-                <input type="text" id="env-name" class="form-control" placeholder="e.g. dev" required />
-              </div>
-            </div>
-
-            <div class="form-row match-row">
-              <div class="form-group match-pattern-group">
-                <label for="match-pattern">Match Pattern</label>
-                <select id="match-pattern" class="form-control" required>
-                  <option value="everything" selected>Everything</option>
-                  <option value="url">Full URL</option>
-                  <option value="urlPrefix">Starts with</option>
-                  <option value="domain">Domain</option>
-                  <option value="regex">Regex Match</option>
-                </select>
-              </div>
-              <div class="form-group match-value-group">
-                <label for="match-value">Match Value</label>
-                <input type="text" id="match-value" class="form-control" placeholder="e.g. baidu.com" required />
-              </div>
-            </div>
-            
-            <div class="form-section-compact-refined">
-              <div class="form-row switches-grid-row">
-                <div class="grid-col" id="background-switch"></div>
-                <div class="grid-col" id="flag-switch"></div>
-                <div class="grid-col hidden" id="position-container">
-                  <div class="form-group position-group" style="margin-bottom: 0;">
-                    <select id="position" class="form-control" required>
-                      <option value="leftTop">Top Left Corner</option>
-                      <option value="rightTop">Top Right Corner</option>
-                      <option value="leftBottom">Bottom Left Corner</option>
-                      <option value="rightBottom">Bottom Right Corner</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-              <div class="form-row theme-color-row">
-                <div class="form-group full-width">
-                  <label>Theme Color Selection</label>
-                  <input type="hidden" id="color" value="#4a9eff" />
-                  <div class="modal-color-selection">
-                    <div class="modal-default-colors-header" style="position: relative;">
-                      <div id="modal-default-colors" class="modal-default-colors"></div>
-                      <div style="position: relative; display: inline-block;">
-                        <div id="others-color-btn" class="color-dot custom-color-dot" title="Custom Color">
-                          <i class="fas fa-palette"></i>
-                        </div>
-                        <input type="color" id="custom-picker" class="unified-color-picker" style="position: absolute; top: 100%; left: 0; opacity: 0; width: 28px; height: 28px; pointer-events: none; margin-top: -10px;" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-
-            
-            <div class="form-actions">
-              <button type="button" class="btn btn-secondary cancel-btn">Cancel</button>
-              <button type="submit" class="btn btn-primary save-btn">Save Configuration</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    `;
+    this.modal.innerHTML = modalTemplate;
 
     this.initializeComponents();
     this.bindEvents();
