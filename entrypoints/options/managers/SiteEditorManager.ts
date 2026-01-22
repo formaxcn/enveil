@@ -244,13 +244,25 @@ export class SiteEditorManager {
       this.updateConfigDisplay();
     });
 
+    // 映射matchPattern到友好名称
+    const getFriendlyMatchPattern = (pattern: string): string => {
+      const patternMap: Record<string, string> = {
+        'everything': 'Everything',
+        'url': 'Full URL',
+        'urlPrefix': 'Starts with',
+        'domain': 'Domain',
+        'regex': 'Regex Match'
+      };
+      return patternMap[pattern] || pattern;
+    };
+
     // 网站信息
     const siteInfo = document.createElement('div');
     siteInfo.className = 'site-info';
     siteInfo.innerHTML = `
       <div class="site-main-info">
         <span class="site-env-name" style="background-color: ${site.color}">${site.envName}</span>
-        <span class="site-match">${site.matchPattern}: ${site.matchValue}</span>
+        <span class="site-match">${getFriendlyMatchPattern(site.matchPattern)}: ${site.matchValue}</span>
       </div>
       <div class="site-details">
         <span class="site-detail-item">Background: ${site.backgroudEnable ? 'Yes' : 'No'}</span>
