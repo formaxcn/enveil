@@ -22,16 +22,25 @@ configureBtn.addEventListener('click', () => {
 
 // 添加配置按钮点击事件
 addConfigBtn.addEventListener('click', () => {
-  // 发送消息到 content script 要求添加当前站点
   if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.query) {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs: any) => {
-      if (tabs.length > 0 && tabs[0].id) {
-        chrome.tabs.sendMessage(tabs[0].id, { 
-          action: 'addCurrentSite' 
-        });
+      if (tabs.length > 0 && tabs[0].url) {
+        try {
+          const url = new URL(tabs[0].url);
+          const domain = url.hostname;
+          const optionsUrl = chrome.runtime.getURL('options.html');
+          const urlWithParams = `${optionsUrl}?action=addSite&domain=${encodeURIComponent(domain)}&pattern=everything`;
+          window.open(urlWithParams);
+        } catch (error) {
+          console.error('Failed to parse URL:', error);
+          window.open(chrome.runtime.getURL('options.html'));
+        }
+      } else {
+        window.open(chrome.runtime.getURL('options.html'));
       }
     });
   } else {
-    console.warn('Cannot send message to content script: chrome.tabs is not available');
+    console.warn('Cannot get current tab: chrome.tabs is not available');
+    window.open(chrome.runtime.getURL('options.html'));
   }
 });

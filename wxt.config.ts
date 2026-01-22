@@ -13,6 +13,15 @@ export default defineConfig({
       "96": "icon/96.png",
       "128": "icon/128.png",
     },
+    action: {
+      default_icon: {
+        "16": "icon/16-gray.png",
+        "32": "icon/32-gray.png",
+        "48": "icon/48-gray.png",
+        "96": "icon/96-gray.png",
+        "128": "icon/128-gray.png",
+      },
+    },
     options_ui: {
       page: "entrypoints/options/index.html",
       open_in_tab: true,

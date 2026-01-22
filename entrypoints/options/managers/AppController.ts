@@ -217,4 +217,9 @@ export class AppController {
     this.siteEditorManager.updateSelectedGroups(groups);
     this.configImportExportManager.updateSelectedGroups(groups);
   }
+
+  // 打开添加网站模态框并预填域名
+  public openAddSiteModalWithDomain(domain: string, pattern: string): void {
+    this.siteEditorManager.openAddSiteModalWithDomain(domain, pattern);
+  }
 }

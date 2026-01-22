@@ -189,6 +189,27 @@ export class AddSiteModal {
     }, 10);
   }
 
+  public openWithDefaults(domain: string, pattern: string): void {
+    const form = this.modal.querySelector('#add-site-form') as HTMLFormElement;
+    const title = this.modal.querySelector('.modal-header h3') as HTMLElement;
+
+    this.editingSite = null;
+    title.textContent = 'Add New Site Configuration';
+    form.reset();
+
+    (this.modal.querySelector('#match-pattern') as HTMLSelectElement).value = pattern;
+    (this.modal.querySelector('#match-value') as HTMLInputElement).value = domain;
+
+    this.enableSwitch.setChecked(false);
+    this.backgroundSwitch.setChecked(false);
+    this.flagSwitch.setChecked(false);
+
+    document.body.appendChild(this.modal);
+    setTimeout(() => {
+      this.modal.classList.add('show');
+    }, 10);
+  }
+
   public close() {
     this.modal.classList.remove('show');
     // 等待过渡动画结束后移除元素

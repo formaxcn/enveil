@@ -392,6 +392,11 @@ export class SiteEditorManager {
     this.addSiteModal.open();
   }
 
+  // 打开添加网站模态框并预填域名
+  public openAddSiteModalWithDomain(domain: string, pattern: string): void {
+    this.addSiteModal.openWithDefaults(domain, pattern);
+  }
+
   // 编辑网站
   private editSite(groupIndex: number, siteIndex: number): void {
     const setting = this.appConfig.settings[groupIndex];

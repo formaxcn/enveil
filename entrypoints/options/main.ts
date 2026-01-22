@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     appController = new AppController();
     await appController.init();
     
+    // 检查URL参数，看是否需要打开add modal预填域名
+    checkUrlParams();
+    
     console.log('Enveil Options App initialized successfully');
   } catch (error) {
     console.error('Failed to initialize Enveil Options App:', error);
@@ -27,6 +30,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 });
+
+// 检查URL参数并处理
+function checkUrlParams() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const action = urlParams.get('action');
+  
+  if (action === 'addSite') {
+    const domain = urlParams.get('domain');
+    const pattern = urlParams.get('pattern') || 'everything';
+    
+    if (domain) {
+      // 延迟执行以确保appController已完全初始化
+      setTimeout(() => {
+        if (appController) {
+          appController.openAddSiteModalWithDomain(domain, pattern);
+        }
+      }, 100);
+    }
+    
+    // 清除URL参数，避免刷新时重复触发
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+}
 
 // 导出appController以便在需要时可以访问（例如在控制台调试）
 (window as any).enveilApp = {
