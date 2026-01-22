@@ -163,11 +163,6 @@ export class AddSiteModal {
       const hex = (e.target as HTMLInputElement).value.toUpperCase();
       mainColorInput.value = hex;
       this.updateActiveColorDot(hex);
-
-      // 更新 Others 圆形按钮背景色，并添加 active 状态
-      othersBtn.style.backgroundColor = hex;
-      othersBtn.style.color = this.getContrastColor(hex);
-      othersBtn.classList.add('active');
     });
 
     // Banner switch logic
@@ -194,11 +189,6 @@ export class AddSiteModal {
         (this.modal.querySelector('#color') as HTMLInputElement).value = color;
         this.updateActiveColorDot(color);
 
-        // Hide custom area if a default dot is clicked
-        const othersBtn = this.modal.querySelector('#others-color-btn') as HTMLButtonElement;
-        const customArea = this.modal.querySelector('#custom-color-picker-area') as HTMLElement;
-        othersBtn.classList.remove('active');
-        customArea.classList.add('hidden');
       });
       container.appendChild(dot);
     });
@@ -206,13 +196,27 @@ export class AddSiteModal {
 
   private updateActiveColorDot(hex: string) {
     const dots = this.modal.querySelectorAll('.color-dot');
+    const othersBtn = this.modal.querySelector('#others-color-btn') as HTMLElement;
+    const isDefaultColor = this.defaultColors.some(c => c.toLowerCase() === hex.toLowerCase());
+
     dots.forEach(dot => {
-      if ((dot as HTMLElement).dataset.color?.toLowerCase() === hex.toLowerCase()) {
+      const dotColor = (dot as HTMLElement).dataset.color;
+      if (dotColor && dotColor.toLowerCase() === hex.toLowerCase()) {
         dot.classList.add('active');
       } else {
         dot.classList.remove('active');
       }
     });
+
+    if (!isDefaultColor) {
+      othersBtn.classList.add('active');
+      othersBtn.style.background = hex;
+      othersBtn.style.color = this.getContrastColor(hex);
+    } else {
+      othersBtn.classList.remove('active');
+      othersBtn.style.background = '';
+      othersBtn.style.color = '';
+    }
   }
 
   // 根据背景色计算对比文字颜色
@@ -298,11 +302,7 @@ export class AddSiteModal {
     this.renderDefaultColorsRow();
     this.updateActiveColorDot(initialColor);
 
-    // Reset Others 圆形按钮样式
-    const othersBtn = this.modal.querySelector('#others-color-btn') as HTMLElement;
-    othersBtn.style.backgroundColor = '';
-    othersBtn.style.color = '';
-    othersBtn.classList.remove('active');
+
 
     // Sync custom picker state
     (this.modal.querySelector('#custom-picker') as HTMLInputElement).value = initialColor;
@@ -340,11 +340,7 @@ export class AddSiteModal {
     this.renderDefaultColorsRow();
     this.updateActiveColorDot(initialColor);
 
-    // Reset Others 圆形按钮样式
-    const othersBtn = this.modal.querySelector('#others-color-btn') as HTMLElement;
-    othersBtn.style.backgroundColor = '';
-    othersBtn.style.color = '';
-    othersBtn.classList.remove('active');
+
 
     // Sync custom picker state
     (this.modal.querySelector('#custom-picker') as HTMLInputElement).value = initialColor;
