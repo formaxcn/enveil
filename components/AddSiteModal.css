@@ -19,7 +19,8 @@
 
 .form-section-compact-refined {
     margin: 10px 0 15px 0;
-    padding: 10px 15px;
+    padding: 24px 60px;
+    /* Increased padding to push elements towards middle */
     background: var(--input-bg);
     border-radius: 12px;
     border: 1px solid var(--border-color);
@@ -27,6 +28,9 @@
     position: relative;
     overflow: hidden;
     transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
 .corner-ribbon {
@@ -78,13 +82,17 @@
 .switches-grid-row {
     display: flex;
     align-items: center;
+    justify-content: center;
+    /* Center switches horizontally */
     gap: 30px;
+    flex-wrap: wrap;
 }
 
 .grid-col {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
+    /* Center content within the column */
 }
 
 .match-row {
@@ -112,6 +120,14 @@
 .theme-color-row {
     margin-top: 5px;
     padding-top: 5px;
+    display: flex;
+    justify-content: center;
+}
+
+.form-section-compact-refined .form-group label {
+    text-align: center;
+    display: block;
+    width: 100%;
 }
 
 .modal .form-control {
@@ -134,7 +150,8 @@
 .modal-default-colors-header {
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
+    /* Center colors horizontally */
     gap: 10px;
     flex-wrap: nowrap;
     position: relative;
