@@ -111,6 +111,12 @@ export class AddSiteModal {
     positionSelect.addEventListener('change', () => {
       this.updatePreview();
     });
+
+    // Environment name input logic
+    const envNameInput = this.modal.querySelector('#env-name') as HTMLInputElement;
+    envNameInput.addEventListener('input', () => {
+      this.updatePreview();
+    });
   }
 
 
@@ -330,12 +336,15 @@ export class AddSiteModal {
 
     // 2. Update Ribbon
     let ribbon = previewContainer.querySelector('.corner-ribbon') as HTMLElement;
+    const envName = (this.modal.querySelector('#env-name') as HTMLInputElement).value;
+
     if (!ribbon) {
       ribbon = document.createElement('div');
       ribbon.className = 'corner-ribbon';
-      ribbon.textContent = 'Preview';
       previewContainer.appendChild(ribbon);
     }
+
+    ribbon.textContent = envName || 'Preview';
 
     if (flagEnable) {
       ribbon.classList.remove('hidden');
