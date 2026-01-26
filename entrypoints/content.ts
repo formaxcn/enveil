@@ -1,113 +1,149 @@
 import { AppConfig, SiteConfig } from './options/types';
-import { Matcher } from '../utils/matcher';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
   async main() {
     console.log('Enveil: Content script loaded');
 
-    // Load configuration
-    const config = await loadConfig();
-    if (!config || !config.settings) return;
+    // Initial check (in case background script doesn't send update immediately on reload/install)
+    // However, usually background script handles updates.
+    // We primarily listen for messages.
 
-    const url = window.location.href;
-    const host = window.location.host;
-
-    // Check all enabled settings and sites
-    for (const setting of config.settings) {
-      if (!setting.enable) continue;
-
-      for (const site of setting.sites) {
-        if (site.enable && Matcher.isMatch(site, url, host)) {
-          console.log(`[Enveil] Page Matched: ${Matcher.getMatchInfo(site)}`);
-          applySiteUI(site);
+    browser.runtime.onMessage.addListener((message) => {
+      if (message.action === 'MATCH_UPDATE') {
+        const site = message.site as SiteConfig | null;
+        if (site) {
+          console.log('[Enveil Content] Received MATCH_UPDATE: Match found', site);
+          mountUI(site);
+        } else {
+          console.log('[Enveil Content] Received MATCH_UPDATE: No match, unmounting UI');
+          unmountUI();
         }
       }
-    }
-
-    // Listen for messages from popup/options
-    browser.runtime.onMessage.addListener((request: any, sender: any, sendResponse: any) => {
-      if (request.action === 'addCurrentSite') {
-        console.log('Add current site requested');
-        sendResponse({ status: 'success' });
-      }
-      return true;
     });
   },
 });
 
-async function loadConfig(): Promise<AppConfig | null> {
-  try {
-    const result = await browser.storage.sync.get(['appConfig']);
-    return result.appConfig as AppConfig;
-  } catch (error) {
-    console.error('Enveil: Failed to load config', error);
-    return null;
+let shadowHost: HTMLElement | null = null;
+let shadowRoot: ShadowRoot | null = null;
+
+function mountUI(site: SiteConfig) {
+  // Ensure host exists
+  if (!shadowHost) {
+    shadowHost = document.createElement('div');
+    shadowHost.id = 'enveil-host';
+    shadowHost.style.position = 'fixed'; // Ensure it doesn't affect flow
+    shadowHost.style.zIndex = '2147483647'; // Max z-index
+    shadowHost.style.top = '0';
+    shadowHost.style.left = '0';
+    shadowHost.style.width = '0';
+    shadowHost.style.height = '0';
+    shadowHost.style.pointerEvents = 'none'; // Passthrough
+    document.documentElement.appendChild(shadowHost);
+    shadowRoot = shadowHost.attachShadow({ mode: 'open' });
   }
-}
 
+  if (!shadowRoot) return;
 
+  // Clear existing content
+  shadowRoot.innerHTML = '';
 
-function applySiteUI(site: SiteConfig) {
+  // Apply Banner
   if (site.flagEnable) {
-    createBanner(site);
+    const banner = createBanner(site);
+    shadowRoot.appendChild(banner);
   }
+
+  // Apply Overlay
   if (site.backgroudEnable) {
-    createOverlay(site);
+    const overlay = createOverlay(site);
+    shadowRoot.appendChild(overlay);
   }
 }
 
-function createBanner(site: SiteConfig) {
-  const banner = document.createElement('div');
-  banner.id = 'enveil-banner';
-  banner.textContent = site.envName;
+function unmountUI() {
+  if (shadowHost) {
+    shadowHost.remove();
+    shadowHost = null;
+    shadowRoot = null;
+  }
+}
 
-  // Base styles
-  Object.assign(banner.style, {
+function createBanner(site: SiteConfig): HTMLElement {
+  const container = document.createElement('div');
+  const ribbon = document.createElement('div');
+
+  ribbon.textContent = site.envName;
+
+  // Container Styles (The box in the corner)
+  Object.assign(container.style, {
     position: 'fixed',
     zIndex: '2147483647',
-    padding: '4px 20px',
-    fontSize: '12px',
-    fontWeight: 'bold',
-    color: '#fff',
-    backgroundColor: site.color,
-    boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
+    width: '150px',
+    height: '150px',
+    overflow: 'hidden',
     pointerEvents: 'none',
-    textTransform: 'uppercase',
-    letterSpacing: '1px',
-    fontFamily: 'sans-serif'
   });
 
-  // Position styles
+  // Ribbon Styles (The rotated strip)
+  Object.assign(ribbon.style, {
+    position: 'absolute',
+    padding: '8px 0',
+    width: '220px',
+    textAlign: 'center',
+    fontSize: '13px',
+    fontWeight: '900',
+    color: '#fff',
+    backgroundColor: site.color,
+    boxShadow: '0 4px 10px rgba(0,0,0,0.4)',
+    textTransform: 'uppercase',
+    letterSpacing: '1.5px',
+    fontFamily: '"Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    lineHeight: '1',
+    textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  });
+
+  // Position Logic
   switch (site.Position) {
     case 'leftTop':
-      banner.style.top = '0';
-      banner.style.left = '0';
-      banner.style.borderRadius = '0 0 4px 0';
+      container.style.top = '0';
+      container.style.left = '0';
+      ribbon.style.top = '32px';
+      ribbon.style.left = '-65px';
+      ribbon.style.transform = 'rotate(-45deg)';
       break;
     case 'rightTop':
-      banner.style.top = '0';
-      banner.style.right = '0';
-      banner.style.borderRadius = '0 0 0 4px';
+      container.style.top = '0';
+      container.style.right = '0';
+      ribbon.style.top = '32px';
+      ribbon.style.right = '-65px';
+      ribbon.style.transform = 'rotate(45deg)';
       break;
     case 'leftBottom':
-      banner.style.bottom = '0';
-      banner.style.left = '0';
-      banner.style.borderRadius = '0 4px 0 0';
+      container.style.bottom = '0';
+      container.style.left = '0';
+      ribbon.style.bottom = '32px';
+      ribbon.style.left = '-65px';
+      ribbon.style.transform = 'rotate(45deg)';
       break;
     case 'rightBottom':
-      banner.style.bottom = '0';
-      banner.style.right = '0';
-      banner.style.borderRadius = '4px 0 0 0';
+      container.style.bottom = '0';
+      container.style.right = '0';
+      ribbon.style.bottom = '32px';
+      ribbon.style.right = '-65px';
+      ribbon.style.transform = 'rotate(-45deg)';
       break;
   }
 
-  document.body.appendChild(banner);
+  container.appendChild(ribbon);
+  return container;
 }
 
-function createOverlay(site: SiteConfig) {
+function createOverlay(site: SiteConfig): HTMLElement {
   const overlay = document.createElement('div');
-  overlay.id = 'enveil-overlay';
 
   Object.assign(overlay.style, {
     position: 'fixed',
@@ -121,5 +157,5 @@ function createOverlay(site: SiteConfig) {
     pointerEvents: 'none'
   });
 
-  document.body.appendChild(overlay);
+  return overlay;
 }

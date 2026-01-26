@@ -29,7 +29,7 @@ addConfigBtn.addEventListener('click', () => {
           const url = new URL(tabs[0].url);
           const domain = url.hostname;
           const optionsUrl = chrome.runtime.getURL('options.html');
-          const urlWithParams = `${optionsUrl}?action=addSite&domain=${encodeURIComponent(domain)}&pattern=everything`;
+          const urlWithParams = `${optionsUrl}?action=addSite&domain=${encodeURIComponent(domain)}&pattern=domain`;
           window.open(urlWithParams);
         } catch (error) {
           console.error('Failed to parse URL:', error);

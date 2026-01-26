@@ -1,4 +1,4 @@
-import { AppConfig } from './options/types';
+import { AppConfig, SiteConfig } from './options/types';
 import { Matcher } from '../utils/matcher';
 
 export default defineBackground(() => {
@@ -8,46 +8,7 @@ export default defineBackground(() => {
   browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     // We check if status is complete OR if a URL change is detected (for SPAs)
     if ((changeInfo.status === 'complete' || changeInfo.url) && tab.url) {
-      console.log(`[Enveil Background] Checking tab ${tabId}: ${tab.url}`);
-
-      const config = await loadConfig();
-      if (!config || !config.settings) {
-        console.log('[Enveil Background] No config found or settings empty');
-        setIconForTab(tabId, false);
-        return;
-      }
-
-      const url = tab.url;
-      let host = '';
-      try {
-        host = new URL(url).host;
-      } catch (e) {
-        setIconForTab(tabId, false);
-        return;
-      }
-
-      let matchFound = false;
-      for (const setting of config.settings) {
-        if (!setting.enable) {
-          console.log(`[Enveil Background] Skipping group "${setting.name}" because it is disabled.`);
-          continue;
-        }
-
-        for (const site of setting.sites) {
-          console.log(`[Enveil Background] Checking site rule: ${site.envName} (${site.matchPattern}: ${site.matchValue}), site.enable: ${site.enable}`);
-          if (site.enable && Matcher.isMatch(site, url, host)) {
-            console.log(`[Enveil Background] Match Found for tab ${tabId}: ${Matcher.getMatchInfo(site)}`);
-            matchFound = true;
-          }
-        }
-      }
-
-      setIconForTab(tabId, matchFound);
-
-      if (!matchFound) {
-        // Optional: log when no match is found for debugging
-        // console.log(`[Enveil Background] No match for ${url}`);
-      }
+      await checkAndNotifyTab(tabId, tab.url);
     }
   });
 
@@ -55,40 +16,76 @@ export default defineBackground(() => {
   browser.tabs.onActivated.addListener(async (activeInfo) => {
     const tab = await browser.tabs.get(activeInfo.tabId);
     if (tab.url) {
-      console.log(`[Enveil Background] Tab activated: ${tab.url}`);
+      await checkAndNotifyTab(tab.id!, tab.url);
+    }
+  });
 
-      const config = await loadConfig();
-      if (!config || !config.settings) {
-        setIconForTab(tab.id, false);
-        return;
-      }
-
-      const url = tab.url;
-      let host = '';
-      try {
-        host = new URL(url).host;
-      } catch (e) {
-        setIconForTab(tab.id, false);
-        return;
-      }
-
-      let matchFound = false;
-      for (const setting of config.settings) {
-        if (!setting.enable) continue;
-
-        for (const site of setting.sites) {
-          if (site.enable && Matcher.isMatch(site, url, host)) {
-            matchFound = true;
-            break;
-          }
+  // Listen for configuration changes
+  browser.storage.onChanged.addListener(async (changes, areaName) => {
+    if (areaName === 'sync' && changes.appConfig) {
+      console.log('[Enveil Background] Config changed, re-evaluating all tabs');
+      const tabs = await browser.tabs.query({});
+      for (const tab of tabs) {
+        if (tab.id && tab.url) {
+          await checkAndNotifyTab(tab.id, tab.url);
         }
-        if (matchFound) break;
       }
-
-      setIconForTab(tab.id, matchFound);
     }
   });
 });
+
+async function checkAndNotifyTab(tabId: number, url: string) {
+  // 1. Get Config
+  const config = await loadConfig();
+  if (!config || !config.settings) {
+    await updateTabState(tabId, null);
+    return;
+  }
+
+  // 2. Parse Host
+  let host = '';
+  try {
+    host = new URL(url).host;
+  } catch (e) {
+    await updateTabState(tabId, null);
+    return;
+  }
+
+  // 3. Find Match
+  let matchedSite: SiteConfig | null = null;
+
+  for (const setting of config.settings) {
+    if (!setting.enable) continue;
+
+    for (const site of setting.sites) {
+      if (site.enable && Matcher.isMatch(site, url, host)) {
+        matchedSite = site;
+        break;
+      }
+    }
+    if (matchedSite) break;
+  }
+
+  // 4. Update State
+  await updateTabState(tabId, matchedSite);
+}
+
+async function updateTabState(tabId: number, site: SiteConfig | null) {
+  // Update Icon
+  await setIconForTab(tabId, !!site);
+
+  // Notify Content Script
+  try {
+    await browser.tabs.sendMessage(tabId, {
+      action: 'MATCH_UPDATE',
+      site: site
+    });
+    console.log(`[Enveil Background] Sent MATCH_UPDATE to tab ${tabId}:`, site ? Matcher.getMatchInfo(site) : 'No Match');
+  } catch (error) {
+    // Content script might not be ready or injected on some pages (e.g. chrome://)
+    // console.debug(`[Enveil Background] Failed to send message to tab ${tabId}`, error);
+  }
+}
 
 async function loadConfig(): Promise<AppConfig | null> {
   try {
@@ -100,7 +97,7 @@ async function loadConfig(): Promise<AppConfig | null> {
   }
 }
 
-function setIconForTab(tabId: number, isMatch: boolean): void {
+async function setIconForTab(tabId: number, isMatch: boolean): Promise<void> {
   const iconPath = isMatch ? {
     "16": "icon/16.png",
     "32": "icon/32.png",
@@ -115,10 +112,12 @@ function setIconForTab(tabId: number, isMatch: boolean): void {
     "128": "icon/128-gray.png"
   };
 
-  browser.action.setIcon({
-    tabId: tabId,
-    path: iconPath
-  }).catch((error) => {
+  try {
+    await browser.action.setIcon({
+      tabId: tabId,
+      path: iconPath
+    });
+  } catch (error) {
     console.error(`[Enveil Background] Failed to set icon for tab ${tabId}:`, error);
-  });
+  }
 }
