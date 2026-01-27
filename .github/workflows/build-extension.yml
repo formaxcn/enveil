@@ -1,0 +1,101 @@
+name: Build Chrome Extension
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    env:
+      PRIVATE_KEY: ${{ secrets.EXTENSION_PRIVATE_KEY }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Install crx-cli locally
+        run: npm install crx-cli
+      
+      - name: Determine version and release type
+        id: version
+        run: |
+          if [[ $GITHUB_REF_TYPE == 'tag' && $GITHUB_REF_NAME == v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "tag=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+          else
+            VERSION="$(date +'%Y%m%d-%H%M%S')"
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "tag=build-$VERSION" >> $GITHUB_OUTPUT
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Build extension
+        run: npm run build
+      
+      - name: Create clean build directory
+        run: |
+          mkdir -p build-package
+          rsync -av --progress .output/chrome-mv3/ build-package/ \
+            --exclude '*.map'
+      
+      - name: Write private key to file (if exists)
+        if: env.PRIVATE_KEY != ''
+        run: |
+          echo "$PRIVATE_KEY" > extension-key.pem
+        env:
+          PRIVATE_KEY: ${{ env.PRIVATE_KEY }}
+      
+      - name: Package as ZIP
+        run: |
+          cd build-package
+          zip -r ../enveil-${{ steps.version.outputs.version }}.zip . \
+            -x "*.map"
+          cd ..
+      
+      - name: Package as CRX (only if key exists)
+        if: env.PRIVATE_KEY != ''
+        run: |
+          npx crx pack build-package \
+            -o enveil-${{ steps.version.outputs.version }}.crx \
+            -p extension-key.pem
+      
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: enveil-packages
+          path: |
+            enveil-${{ steps.version.outputs.version }}.zip
+            enveil-${{ steps.version.outputs.version }}.crx
+      
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Enveil ${{ steps.version.outputs.version }}
+          draft: false
+          prerelease: ${{ steps.version.outputs.prerelease == 'true' }}
+          generate_release_notes: true
+          files: |
+            enveil-${{ steps.version.outputs.version }}.zip
+            enveil-${{ steps.version.outputs.version }}.crx
