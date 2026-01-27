@@ -4,6 +4,7 @@ description: Environment Visual Identifier for Chrome - Never work on the wrong 
 show_downloads: true
 
 # GitHub repository information
+repository: formaxcn/enveil
 github:
   repository_url: https://github.com/formaxcn/enveil
   repository_name: enveil
