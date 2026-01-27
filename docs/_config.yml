@@ -1,4 +1,92 @@
 theme: jekyll-theme-cayman
 title: Enveil Documentation
-description: Environment Identifier for Chrome
-show_downloads: false
+description: Environment Visual Identifier for Chrome - Never work on the wrong environment again
+show_downloads: true
+
+# GitHub repository information
+github:
+  repository_url: https://github.com/your-username/enveil
+  repository_name: enveil
+  owner_name: your-username
+
+# GitHub Pages settings
+url: "https://your-username.github.io"
+baseurl: "/enveil"
+
+# Navigation structure
+nav_external_links:
+  - title: GitHub Repository
+    url: https://github.com/your-username/enveil
+    hide_icon: false
+
+# SEO and social
+author: Your Name
+twitter:
+  username: your_twitter
+  card: summary_large_image
+
+# Plugins for GitHub Pages
+plugins:
+  - jekyll-sitemap
+  - jekyll-feed
+  - jekyll-seo-tag
+
+# Markdown settings
+markdown: kramdown
+highlighter: rouge
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false
+
+# Collections
+collections:
+  docs:
+    output: true
+    permalink: /:collection/:name/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+  - scope:
+      path: "docs"
+      type: "pages"
+    values:
+      layout: "default"
+
+# Exclude from processing
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+  - .sass-cache
+  - .jekyll-cache
+  - gemfiles
+  - package.json
+  - package-lock.json
+  - bun.lock
+  - .output
+  - .wxt
+  - .vscode
+  - .git
+  - .gitignore
+  - wxt.config.ts
+  - tsconfig.json
+  - components
+  - entrypoints
+  - utils
+  - public
+  - assets
+  - tests
+
+# Include files
+include:
+  - _pages
