@@ -27,23 +27,23 @@ A powerful Chrome extension for developers, DevOps engineers, and QA teams to vi
 
 ## 📖 Documentation
 
-**Complete documentation available at: [GitHub Pages](https://your-username.github.io/enveil/)**
+**Complete documentation available at: [GitHub Pages](https://formaxcn.github.io/enveil/)**
 
-- **[🏠 Home](https://your-username.github.io/enveil/)** - Overview and quick start
-- **[✨ Features](https://your-username.github.io/enveil/features.html)** - Complete feature list
-- **[🚀 Getting Started](https://your-username.github.io/enveil/getting-started.html)** - Installation and setup
-- **[⚙️ Configuration](https://your-username.github.io/enveil/configuration.html)** - Detailed configuration guide
-- **[🏗️ Architecture](https://your-username.github.io/enveil/architecture.html)** - Technical architecture
-- **[📚 API Reference](https://your-username.github.io/enveil/api-reference.html)** - Developer API docs
-- **[🔧 Development](https://your-username.github.io/enveil/development.html)** - Development guide
-- **[🔒 Security](https://your-username.github.io/enveil/security.html)** - Security and privacy
+- **[🏠 Home](https://formaxcn.github.io/enveil/)** - Overview and quick start
+- **[✨ Features](https://formaxcn.github.io/enveil/features.html)** - Complete feature list
+- **[🚀 Getting Started](https://formaxcn.github.io/enveil/getting-started.html)** - Installation and setup
+- **[⚙️ Configuration](https://formaxcn.github.io/enveil/configuration.html)** - Detailed configuration guide
+- **[🏗️ Architecture](https://formaxcn.github.io/enveil/architecture.html)** - Technical architecture
+- **[📚 API Reference](https://formaxcn.github.io/enveil/api-reference.html)** - Developer API docs
+- **[🔧 Development](https://formaxcn.github.io/enveil/development.html)** - Development guide
+- **[🔒 Security](https://formaxcn.github.io/enveil/security.html)** - Security and privacy
 
 ## 🎯 Quick Start
 
 ### Installation (Development)
 ```bash
 # Clone and build
-git clone https://github.com/your-username/enveil.git
+git clone https://github.com/formaxcn/enveil.git
 cd enveil
 bun install
 bun run build
@@ -201,7 +201,7 @@ Contributions welcome! Whether fixing bugs, adding features, improving docs, or 
 
 ### Development Setup
 ```bash
-git clone https://github.com/your-username/enveil.git
+git clone https://github.com/formaxcn/enveil.git
 cd enveil
 bun install
 bun run dev
@@ -215,4 +215,4 @@ MIT License - see [LICENSE](./LICENSE) for details.
 
 **Never work on the wrong environment again!** 🎯
 
-[📖 Read the Docs](https://your-username.github.io/enveil/) | [🚀 Get Started](https://your-username.github.io/enveil/getting-started.html) | [⚙️ Configuration Guide](https://your-username.github.io/enveil/configuration.html)
+[📖 Read the Docs](https://formaxcn.github.io/enveil/) | [🚀 Get Started](https://formaxcn.github.io/enveil/getting-started.html) | [⚙️ Configuration Guide](https://formaxcn.github.io/enveil/configuration.html)

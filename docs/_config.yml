@@ -5,18 +5,18 @@ show_downloads: true
 
 # GitHub repository information
 github:
-  repository_url: https://github.com/your-username/enveil
+  repository_url: https://github.com/formaxcn/enveil
   repository_name: enveil
-  owner_name: your-username
+  owner_name: formaxcn
 
 # GitHub Pages settings
-url: "https://your-username.github.io"
+url: "https://formaxcn.github.io"
 baseurl: "/enveil"
 
 # Navigation structure
 nav_external_links:
   - title: GitHub Repository
-    url: https://github.com/your-username/enveil
+    url: https://github.com/formaxcn/enveil
     hide_icon: false
 
 # SEO and social

@@ -9,11 +9,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/enveil.git"
+    "url": "https://github.com/formaxcn/enveil.git"
   },
-  "homepage": "https://your-username.github.io/enveil/",
+  "homepage": "https://formaxcn.github.io/enveil/",
   "bugs": {
-    "url": "https://github.com/your-username/enveil/issues"
+    "url": "https://github.com/formaxcn/enveil/issues"
   },
   "scripts": {
     "dev": "wxt",
