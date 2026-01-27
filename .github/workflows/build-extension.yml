@@ -62,7 +62,7 @@ jobs:
       - name: Package as ZIP
         run: |
           cd .output/chrome-mv3
-          zip -r ../../enveil-${{ steps.version.outputs.version }}.zip . \
+          zip -r ../../enveil-${{ steps.version.outputs.version }}.zip * \
             -x "*.map"
           cd ../..
       

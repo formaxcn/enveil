@@ -49,7 +49,7 @@ npm run zip
 
 # 或者手动打包（确保 manifest.json 在根目录）
 cd .output/chrome-mv3
-zip -r ../../enveil-local.zip . -x "*.map"
+zip -r ../../enveil-local.zip * -x "*.map"
 cd ../..
 ```
 
