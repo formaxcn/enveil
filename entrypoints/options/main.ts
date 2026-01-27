@@ -1,4 +1,6 @@
 import { AppController } from './managers/AppController';
+import './test/cloudRolesTabTest'; // Import test utilities
+import './test/cloudConfigUITest'; // Import checkpoint test utilities
 
 // 声明chrome对象
 declare const chrome: any;

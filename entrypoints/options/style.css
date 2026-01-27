@@ -532,6 +532,280 @@ button:focus-visible {
   background-color: #777;
 }
 
+/* Tab Navigation Styles */
+.tab-navigation {
+  display: flex;
+  border-bottom: 2px solid var(--border-color);
+  margin-bottom: 20px;
+  background-color: var(--panel-bg);
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  border-bottom: 3px solid transparent;
+}
+
+.tab-button:hover {
+  background-color: var(--border-color);
+}
+
+.tab-button.active {
+  background-color: var(--primary-color);
+  color: white;
+  border-bottom-color: var(--primary-hover);
+}
+
+.tab-button.active:hover {
+  background-color: var(--primary-hover);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Cloud Roles Tab Styles */
+#cloud-roles-container {
+  padding: 15px;
+}
+
+.cloud-environment {
+  margin-bottom: 20px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  overflow: hidden;
+}
+
+.cloud-environment.disabled {
+  opacity: 0.6;
+}
+
+.environment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: var(--input-bg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.environment-header-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.environment-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.environment-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.environment-provider {
+  font-size: 14px;
+  color: var(--text-secondary, #888);
+  margin: 2px 0 0 0;
+}
+
+.environment-toggle {
+  flex-shrink: 0;
+}
+
+/* Environment accounts container - always expanded */
+.environment-accounts {
+  padding: 0;
+  background: var(--panel-bg);
+  display: block;
+}
+
+.environment-accounts.expanded {
+  display: block;
+}
+
+/* Account item styles */
+.account-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.2s ease;
+}
+
+.account-item:last-child {
+  border-bottom: none;
+}
+
+.account-item:hover {
+  background: var(--hover-bg, rgba(0, 0, 0, 0.05));
+}
+
+.account-item.disabled {
+  opacity: 0.6;
+}
+
+.account-toggle {
+  margin-right: 15px;
+  flex-shrink: 0;
+}
+
+.account-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.account-main-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.account-name {
+  font-weight: 500;
+  color: var(--text-color);
+  font-size: 14px;
+}
+
+.account-color-indicator {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.account-details {
+  display: flex;
+  gap: 15px;
+  font-size: 12px;
+  color: var(--text-secondary, #888);
+}
+
+.account-pattern {
+  font-family: monospace;
+}
+
+.account-roles-count {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.account-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: 15px;
+}
+
+/* Button styles consistent with configs */
+.add-account-btn {
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background: var(--input-bg);
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-account-btn:hover {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.account-edit-btn,
+.account-delete-btn {
+  padding: 4px 8px;
+  font-size: 12px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.account-edit-btn {
+  background: var(--primary-color);
+  color: white;
+}
+
+.account-edit-btn:hover {
+  background: var(--primary-hover);
+}
+
+.account-delete-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.account-delete-btn:hover {
+  background: #c82333;
+}
+
+/* Empty state styles */
+.empty-environment-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary, #888);
+}
+
+.empty-environment-message i {
+  font-size: 48px;
+  margin-bottom: 15px;
+  opacity: 0.5;
+}
+
+/* Remove expand/collapse related styles */
+.environment-expand-icon {
+  display: none;
+}
+
+.environment-header.expanded .environment-expand-icon {
+  display: none;
+}
+
+/* Remove environment actions section (moved to header) */
+.environment-actions {
+  display: none;
+}
+
+/* Responsive adjustments for tabs */
+@media (max-width: 768px) {
+  .tab-button {
+    font-size: 0.9em;
+    padding: 10px 15px;
+  }
+  
+  .tab-button i {
+    display: none;
+  }
+}
+
 /* 配置组列表样式 */
 #config-groups-list {
   margin: 20px 0;

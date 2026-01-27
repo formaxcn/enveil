@@ -85,6 +85,7 @@ export class BrowserSyncManager {
     return {
       configs: this.appConfig.settings,
       defaultColors: this.appConfig.defaultColors,
+      cloudEnvironments: this.appConfig.cloudEnvironments || [], // Include cloud configurations
       lastModified: Date.now(),
       version: this.SYNC_VERSION
     };
@@ -147,8 +148,9 @@ export class BrowserSyncManager {
     // 检查内容差异
     const hasConfigDiff = JSON.stringify(localData.configs) !== JSON.stringify(cloudData.configs);
     const hasColorDiff = JSON.stringify(localData.defaultColors) !== JSON.stringify(cloudData.defaultColors);
+    const hasCloudEnvDiff = JSON.stringify(localData.cloudEnvironments || []) !== JSON.stringify(cloudData.cloudEnvironments || []);
 
-    if (!hasConfigDiff && !hasColorDiff) {
+    if (!hasConfigDiff && !hasColorDiff && !hasCloudEnvDiff) {
       // 没有实际差异
       return 'remote';
     }
@@ -162,9 +164,12 @@ export class BrowserSyncManager {
     const localTime = new Date(localData.lastModified).toLocaleString();
     const cloudTime = new Date(cloudData.lastModified).toLocaleString();
 
+    const localCloudEnvCount = localData.cloudEnvironments?.length || 0;
+    const cloudCloudEnvCount = cloudData.cloudEnvironments?.length || 0;
+
     const message = `Sync conflict detected!\n\n` +
-      `Local data: ${localData.configs.length} groups, modified ${localTime}\n` +
-      `Cloud data: ${cloudData.configs.length} groups, modified ${cloudTime}\n\n` +
+      `Local data: ${localData.configs.length} groups, ${localCloudEnvCount} cloud environments, modified ${localTime}\n` +
+      `Cloud data: ${cloudData.configs.length} groups, ${cloudCloudEnvCount} cloud environments, modified ${cloudTime}\n\n` +
       `Choose resolution:\n` +
       `OK = Use cloud data\n` +
       `Cancel = Use local data`;
@@ -208,7 +213,8 @@ export class BrowserSyncManager {
     const newConfig: AppConfig = {
       ...this.appConfig,
       settings: cloudData.configs,
-      defaultColors: cloudData.defaultColors
+      defaultColors: cloudData.defaultColors,
+      cloudEnvironments: cloudData.cloudEnvironments || [] // Apply cloud environments from sync data
     };
 
     this.updateConfigCallback(newConfig);

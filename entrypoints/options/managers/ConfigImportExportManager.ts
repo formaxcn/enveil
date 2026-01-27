@@ -157,22 +157,32 @@ export class ConfigImportExportManager {
       : (importedConfig.browserSync && typeof importedConfig.browserSync === 'object' && (importedConfig.browserSync as any).enable) || false;
     
     // 确认会覆盖所有配置
-    if (!confirm('This will overwrite ALL existing configurations including default colors and all groups. Are you sure?')) {
+    const hasCloudConfig = importedConfig.cloudEnvironments && importedConfig.cloudEnvironments.length > 0;
+    const confirmMessage = hasCloudConfig 
+      ? 'This will overwrite ALL existing configurations including default colors, all groups, and cloud environments. Are you sure?'
+      : 'This will overwrite ALL existing configurations including default colors and all groups. Are you sure?';
+    
+    if (!confirm(confirmMessage)) {
       return;
     }
     
-    // 完全替换配置
+    // 完全替换配置，包含云配置的向后兼容性
     this.appConfig = {
       browserSync: importedBrowserSync,
       defaultColors: importedConfig.defaultColors || this.appConfig.defaultColors,
-      settings: importedConfig.settings
+      settings: importedConfig.settings,
+      // Backward compatibility: initialize cloudEnvironments if not present in imported config
+      cloudEnvironments: importedConfig.cloudEnvironments || []
     };
     
     // 更新配置
     this.updateConfigCallback(this.appConfig);
     
     // 显示成功通知
-    this.notificationCallback('Full configuration imported successfully!', 'success');
+    const successMessage = hasCloudConfig 
+      ? `Full configuration imported successfully! Imported ${importedConfig.cloudEnvironments?.length || 0} cloud environments.`
+      : 'Full configuration imported successfully!';
+    this.notificationCallback(successMessage, 'success');
   }
 
   // 处理组配置导入
@@ -336,6 +346,38 @@ export class ConfigImportExportManager {
         
         for (const prop of requiredSiteProps) {
           if (typeof site[prop.name] !== prop.type) {
+            return false;
+          }
+        }
+      }
+    }
+    
+    // Validate cloud environments if present (backward compatibility)
+    if (config.cloudEnvironments !== undefined) {
+      if (!Array.isArray(config.cloudEnvironments)) {
+        return false;
+      }
+      
+      // Basic validation for cloud environments
+      for (const env of config.cloudEnvironments) {
+        if (!env || typeof env !== 'object') {
+          return false;
+        }
+        
+        // Check required environment properties
+        if (typeof env.id !== 'string' || typeof env.name !== 'string' || 
+            typeof env.enable !== 'boolean' || !Array.isArray(env.accounts)) {
+          return false;
+        }
+        
+        // Validate accounts
+        for (const account of env.accounts) {
+          if (!account || typeof account !== 'object') {
+            return false;
+          }
+          
+          if (typeof account.id !== 'string' || typeof account.name !== 'string' ||
+              typeof account.enable !== 'boolean' || !Array.isArray(account.roles)) {
             return false;
           }
         }

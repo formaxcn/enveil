@@ -29,12 +29,14 @@ export interface AppConfig {
   browserSync: boolean;
   defaultColors: string[];
   settings: Setting[];
+  cloudEnvironments?: CloudEnvironment[]; // New cloud-specific structure
 }
 
 // 云端同步数据结构
 export interface CloudSyncData {
   configs: Setting[];
   defaultColors: string[];
+  cloudEnvironments?: CloudEnvironment[]; // Include cloud environments in sync data
   lastModified: number;
   version: string;
 }
@@ -44,3 +46,81 @@ export type ConflictResolutionStrategy = 'local' | 'remote' | 'merge' | 'ask';
 
 // 通知类型
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
+
+// Cloud Role System Types
+
+export enum CloudProvider {
+  AWS_CN = 'aws-cn',
+  AWS_GLOBAL = 'aws-global',
+  AZURE = 'azure',
+  GCP = 'gcp',
+  CUSTOM = 'custom'
+}
+
+export interface CloudTemplate {
+  provider: CloudProvider;
+  name: string;
+  accountSelectionUrl: string;
+  consoleDomainPattern: string;
+  samlUrl?: string; // For future auto-relogin functionality
+  // DOM selectors for highlighting
+  selectors: {
+    // Account selection page selectors
+    accountSelection: {
+      // Container elements for account highlighting (background)
+      accountContainers: string[];
+      // Text elements for role highlighting
+      roleElements: string[];
+    };
+    // Console page selectors
+    console: {
+      // Container elements for account highlighting (background)
+      accountContainers: string[];
+      // Text elements for role highlighting
+      roleElements: string[];
+    };
+  };
+}
+
+export interface RoleHighlightStyle {
+  textColor: string;
+  backgroundColor: string;
+  fontWeight: 'normal' | 'bold';
+  textDecoration: 'none' | 'underline';
+  border: string;
+}
+
+export interface CloudRole {
+  id: string;
+  name: string;
+  enable: boolean;
+  keywords: string[];
+  highlightColor: string;
+  highlightStyle: RoleHighlightStyle;
+  created: number;
+  modified: number;
+}
+
+export interface CloudAccount {
+  id: string;
+  name: string;
+  enable: boolean;
+  matchPattern: string;
+  matchValue: string;
+  color: string;
+  backgroundEnable: boolean;
+  roles: CloudRole[];
+  created: number;
+  modified: number;
+}
+
+export interface CloudEnvironment {
+  id: string;
+  name: string;
+  enable: boolean;
+  provider: CloudProvider;
+  template: CloudTemplate;
+  accounts: CloudAccount[];
+  created: number;
+  modified: number;
+}

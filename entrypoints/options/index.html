@@ -48,19 +48,51 @@
 
         <!-- Right Panel (70%) -->
         <div id="right-panel">
-          <div id="config-editor-container">
-            <div class="header-row">
-              <h3 id="editor-title">Configs</h3>
-              <div class="header-actions">
-                <button id="add-config-group" class="btn btn-primary add-group-btn" title="Add Group">
-                  <i class="fas fa-folder-plus"></i> Add Group
-                </button>
+          <!-- Tab Navigation -->
+          <div class="tab-navigation">
+            <button id="configs-tab" class="tab-button active" data-tab="configs">
+              <i class="fas fa-cog"></i> Configs
+            </button>
+            <button id="cloud-roles-tab" class="tab-button" data-tab="cloud-roles">
+              <i class="fas fa-cloud"></i> Cloud Roles
+            </button>
+          </div>
+
+          <!-- Configs Tab Content -->
+          <div id="configs-tab-content" class="tab-content active">
+            <div id="config-editor-container">
+              <div class="header-row">
+                <h3 id="editor-title">Configs</h3>
+                <div class="header-actions">
+                  <button id="add-config-group" class="btn btn-primary add-group-btn" title="Add Group">
+                    <i class="fas fa-folder-plus"></i> Add Group
+                  </button>
+                </div>
+              </div>
+
+              <!-- Configuration Groups Container -->
+              <div id="config-groups-container">
+                <!-- Groups will be rendered here -->
               </div>
             </div>
+          </div>
 
-            <!-- Configuration Groups Container -->
-            <div id="config-groups-container">
-              <!-- Groups will be rendered here -->
+          <!-- Cloud Roles Tab Content -->
+          <div id="cloud-roles-tab-content" class="tab-content">
+            <div id="cloud-roles-container">
+              <div class="header-row">
+                <h3 id="cloud-roles-title">Cloud Roles</h3>
+                <div class="header-actions">
+                  <button id="add-cloud-environment" class="btn btn-primary add-group-btn" title="Add Environment">
+                    <i class="fas fa-plus"></i> Add Environment
+                  </button>
+                </div>
+              </div>
+
+              <!-- Cloud Environments Container -->
+              <div id="cloud-environments-container">
+                <!-- Cloud environments will be rendered here -->
+              </div>
             </div>
           </div>
         </div>

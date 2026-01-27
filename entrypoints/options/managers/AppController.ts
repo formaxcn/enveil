@@ -2,6 +2,8 @@ import { AppConfig } from '../types';
 import { ConfigImportExportManager } from './ConfigImportExportManager';
 import { SiteEditorManager } from './SiteEditorManager';
 import { BrowserSyncManager } from './BrowserSyncManager';
+import { CloudConfigurationManager } from './CloudConfigurationManager';
+import { CloudRolesTab } from './CloudRolesTab';
 import { SwitchComponent } from '../../../components/SwitchComponent';
 
 // 声明chrome对象
@@ -12,6 +14,8 @@ export class AppController {
   private configImportExportManager: ConfigImportExportManager;
   private siteEditorManager: SiteEditorManager;
   private browserSyncManager: BrowserSyncManager;
+  private cloudConfigurationManager: CloudConfigurationManager;
+  private cloudRolesTab: CloudRolesTab;
   private notificationTimeout: number | null = null;
   private static readonly DISTINCT_COLORS = [
     '#4a9eff', '#4CAF50', '#ff9800', '#f44336', '#9c27b0',
@@ -41,6 +45,19 @@ export class AppController {
       this.showNotification.bind(this),
       this.updateConfig.bind(this)
     );
+
+    this.cloudConfigurationManager = new CloudConfigurationManager(
+      this.appConfig,
+      this.showNotification.bind(this),
+      this.saveConfig.bind(this)
+    );
+
+    this.cloudRolesTab = new CloudRolesTab(
+      this.appConfig,
+      this.cloudConfigurationManager,
+      this.showNotification.bind(this),
+      this.saveConfig.bind(this)
+    );
   }
 
   // 获取默认配置
@@ -60,7 +77,8 @@ export class AppController {
             color: '#4a9eff'
           }
         }
-      ]
+      ],
+      cloudEnvironments: [] // Initialize empty cloud environments array
     };
   }
 
@@ -81,6 +99,8 @@ export class AppController {
     this.configImportExportManager.updateConfig(this.appConfig);
     this.siteEditorManager.updateConfig(this.appConfig);
     this.browserSyncManager.updateConfig(this.appConfig);
+    this.cloudConfigurationManager.updateConfig(this.appConfig);
+    this.cloudRolesTab.updateConfig(this.appConfig);
   }
 
   // 初始化UI
@@ -90,6 +110,9 @@ export class AppController {
 
     // 初始化网站编辑相关UI
     this.siteEditorManager.initSiteEditorUI();
+
+    // 初始化云角色标签页
+    this.cloudRolesTab.initializeCloudRolesTab();
 
     // 初始化浏览器同步开关
     this.initBrowserSyncToggle();
@@ -159,7 +182,9 @@ export class AppController {
               flagEnable: false,
               color: '#4a9eff'
             }
-          })) : this.getDefaultConfig().settings
+          })) : this.getDefaultConfig().settings,
+          // Backward compatibility: initialize cloudEnvironments if not present
+          cloudEnvironments: config.cloudEnvironments || []
         };
       }
 
@@ -312,5 +337,10 @@ export class AppController {
   // 打开添加网站模态框并预填域名
   public openAddSiteModalWithDomain(domain: string, pattern: string): void {
     this.siteEditorManager.openAddSiteModalWithDomain(domain, pattern);
+  }
+
+  // 获取云配置管理器（用于云配置相关操作）
+  public getCloudConfigurationManager(): CloudConfigurationManager {
+    return this.cloudConfigurationManager;
   }
 }
