@@ -1,6 +1,7 @@
 import { AppConfig } from '../types';
 import { ConfigImportExportManager } from './ConfigImportExportManager';
 import { SiteEditorManager } from './SiteEditorManager';
+import { BrowserSyncManager } from './BrowserSyncManager';
 import { SwitchComponent } from '../../../components/SwitchComponent';
 
 // 声明chrome对象
@@ -8,9 +9,9 @@ declare const chrome: any;
 
 export class AppController {
   private appConfig: AppConfig;
-  private selectedGroups: number[];
   private configImportExportManager: ConfigImportExportManager;
   private siteEditorManager: SiteEditorManager;
+  private browserSyncManager: BrowserSyncManager;
   private notificationTimeout: number | null = null;
   private static readonly DISTINCT_COLORS = [
     '#4a9eff', '#4CAF50', '#ff9800', '#f44336', '#9c27b0',
@@ -20,12 +21,10 @@ export class AppController {
   constructor() {
     // 初始化默认配置
     this.appConfig = this.getDefaultConfig();
-    this.selectedGroups = [];
 
     // 初始化各个管理器
     this.configImportExportManager = new ConfigImportExportManager(
       this.appConfig,
-      this.selectedGroups,
       this.showNotification.bind(this),
       this.saveConfig.bind(this),
       this.updateConfig.bind(this)
@@ -33,9 +32,14 @@ export class AppController {
 
     this.siteEditorManager = new SiteEditorManager(
       this.appConfig,
-      this.selectedGroups,
       this.showNotification.bind(this),
       this.saveConfig.bind(this)
+    );
+
+    this.browserSyncManager = new BrowserSyncManager(
+      this.appConfig,
+      this.showNotification.bind(this),
+      this.updateConfig.bind(this)
     );
   }
 
@@ -75,9 +79,8 @@ export class AppController {
   // 更新所有管理器的配置引用
   private updateAllManagersConfig(): void {
     this.configImportExportManager.updateConfig(this.appConfig);
-    this.configImportExportManager.updateSelectedGroups(this.selectedGroups);
     this.siteEditorManager.updateConfig(this.appConfig);
-    this.siteEditorManager.updateSelectedGroups(this.selectedGroups);
+    this.browserSyncManager.updateConfig(this.appConfig);
   }
 
   // 初始化UI
@@ -93,6 +96,9 @@ export class AppController {
 
     // 初始化默认颜色设置
     this.initDefaultColorsUI();
+
+    // 初始化浏览器同步
+    this.browserSyncManager.initSync();
   }
 
   // 初始化浏览器同步开关
@@ -113,9 +119,9 @@ export class AppController {
         this.saveConfig();
 
         if (isChecked) {
-          this.showNotification('Browser sync enabled. Configurations will be synced across browsers.', 'success');
+          this.browserSyncManager.enableSync();
         } else {
-          this.showNotification('Browser sync disabled.', 'info');
+          this.browserSyncManager.disableSync();
         }
       });
 
@@ -131,7 +137,6 @@ export class AppController {
       if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.sync) {
         console.warn('Chrome storage sync API not available, using default config');
         this.appConfig = this.getDefaultConfig();
-        this.selectedGroups = [0];
         return;
       }
 
@@ -158,16 +163,12 @@ export class AppController {
         };
       }
 
-      // 默认选中第一个配置组
-      if (this.appConfig.settings.length > 0) {
-        this.selectedGroups = [0];
-      }
+      // 不需要selectedGroups概念
     } catch (error) {
       console.error('Failed to load config:', error);
       this.showNotification('Failed to load configuration', 'error');
       // 使用默认配置
       this.appConfig = this.getDefaultConfig();
-      this.selectedGroups = [0];
     }
   }
 
@@ -178,6 +179,11 @@ export class AppController {
         this.showNotification('Configuration saved successfully', 'success');
         // 更新所有管理器的配置引用
         this.updateAllManagersConfig();
+        
+        // 如果启用了同步，执行同步
+        if (this.appConfig.browserSync) {
+          this.browserSyncManager.performSync();
+        }
       });
     } catch (error) {
       console.error('Failed to save config:', error);
@@ -190,6 +196,10 @@ export class AppController {
     this.appConfig = newConfig;
     // 保存更新后的配置
     this.saveConfig();
+    
+    // 重新渲染UI
+    this.renderDefaultColors();
+    this.siteEditorManager.updateConfigDisplay();
   }
 
   // 显示通知
@@ -265,20 +275,19 @@ export class AppController {
       colorGroup.appendChild(removeBtn);
       container.appendChild(colorGroup);
     });
-    if (this.appConfig.defaultColors.length < 5) {
-      const addBtn = document.createElement('button');
-      addBtn.className = 'add-color-btn';
-      addBtn.innerHTML = '<i class="fas fa-plus"></i>';
-      addBtn.addEventListener('click', () => this.addDefaultColor());
-      container.appendChild(addBtn);
-    }
+    // Always show add button - no limit on colors
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-color-btn';
+    addBtn.innerHTML = '<i class="fas fa-plus"></i>';
+    addBtn.addEventListener('click', () => this.addDefaultColor());
+    container.appendChild(addBtn);
   }
 
   // 添加默认颜色
   private addDefaultColor(): void {
-    if (this.appConfig.defaultColors.length >= 5) return;
+    // Remove the 5 color limit - allow unlimited colors
 
-    // Find a color from the distinct palette that is not currently in the top 5
+    // Find a color from the distinct palette that is not currently used
     const existingColors = new Set(this.appConfig.defaultColors.map(c => c.toLowerCase()));
     const nextColor = AppController.DISTINCT_COLORS.find(c => !existingColors.has(c.toLowerCase()))
       || `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
@@ -298,18 +307,6 @@ export class AppController {
   // 获取当前配置（用于调试或导出）
   public getConfig(): AppConfig {
     return { ...this.appConfig };
-  }
-
-  // 获取选中的配置组索引
-  public getSelectedGroups(): number[] {
-    return [...this.selectedGroups];
-  }
-
-  // 手动更新选中的配置组
-  public updateSelectedGroups(groups: number[]): void {
-    this.selectedGroups = groups;
-    this.siteEditorManager.updateSelectedGroups(groups);
-    this.configImportExportManager.updateSelectedGroups(groups);
   }
 
   // 打开添加网站模态框并预填域名

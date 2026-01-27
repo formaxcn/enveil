@@ -6,19 +6,16 @@ declare const chrome: any;
 export class ConfigImportExportManager {
   private appConfig: AppConfig;
   private notificationCallback: (message: string, type: 'success' | 'error' | 'warning' | 'info') => void;
-  private selectedGroups: number[];
   private saveConfigCallback: () => void;
   private updateConfigCallback: (newConfig: AppConfig) => void;
 
   constructor(
     appConfig: AppConfig,
-    selectedGroups: number[],
     notificationCallback: (message: string, type: 'success' | 'error' | 'warning' | 'info') => void,
     saveConfigCallback: () => void,
     updateConfigCallback: (newConfig: AppConfig) => void
   ) {
     this.appConfig = appConfig;
-    this.selectedGroups = selectedGroups;
     this.notificationCallback = notificationCallback;
     this.saveConfigCallback = saveConfigCallback;
     this.updateConfigCallback = updateConfigCallback;
@@ -29,23 +26,18 @@ export class ConfigImportExportManager {
     this.appConfig = config;
   }
 
-  // 更新选中的配置组
-  public updateSelectedGroups(groups: number[]): void {
-    this.selectedGroups = groups;
-  }
-
   // 初始化导入导出功能
   public initImportExportUI(): void {
-    // 导出配置（根据选择状态决定导出全部或选定）
+    // 导出配置
     const exportBtn = document.getElementById('export-btn') as HTMLButtonElement;
     if (exportBtn) {
       exportBtn.addEventListener('click', () => this.handleExport());
     }
     
     // 导入配置
-    const importBtn = document.getElementById('import-btn') as HTMLInputElement;
-    if (importBtn) {
-      importBtn.addEventListener('change', (event) => this.importConfig(event));
+    const importInput = document.getElementById('import-btn') as HTMLInputElement;
+    if (importInput) {
+      importInput.addEventListener('change', (event) => this.importConfig(event));
     }
   }
 
@@ -57,27 +49,15 @@ export class ConfigImportExportManager {
       return;
     }
     
-    // 检查是否有配置组被选中
-    if (this.selectedGroups.length > 0) {
-      // 如果有选中的配置组，导出选中的配置
-      const selectedSettings = this.selectedGroups.map(index => this.appConfig.settings[index]);
-      this.exportSelectedConfigs(selectedSettings);
-    } else {
-      // 否则导出所有配置
-      this.exportAllConfig();
-    }
+    // 全局导出按钮应该总是导出所有配置
+    this.exportAllConfig();
   }
 
   // 导出全部配置函数
   public exportAllConfig(): void {
-    // 确认导出全部配置
-    if (!confirm('Are you sure you want to export all configurations?')) {
-      return;
-    }
-    
     try {
       const configStr = JSON.stringify(this.appConfig, null, 2);
-      this.downloadJSON(configStr, 'enveil-config-all.json');
+      this.downloadJSON(configStr, 'enveil.json');
       
       // 显示成功通知
       this.notificationCallback('All configurations exported successfully!', 'success');
@@ -88,195 +68,6 @@ export class ConfigImportExportManager {
         'error'
       );
     }
-  }
-
-  // 导出选定配置函数
-  public exportSelectedConfigs(selectedGroups: Setting[]): void {
-    try {
-      // 创建导出配置对象
-      const exportConfig = {
-        settings: selectedGroups,
-        browserSync: this.appConfig.browserSync
-      };
-      
-      // 生成文件名
-      const filename = selectedGroups.length === 1 
-        ? `enveil-config-${selectedGroups[0].name}.json`
-        : 'enveil-config-selected.json';
-      
-      // 下载文件
-      const configStr = JSON.stringify(exportConfig, null, 2);
-      this.downloadJSON(configStr, filename);
-      
-      // 显示成功通知
-      this.notificationCallback(
-        `${selectedGroups.length} configuration group(s) exported successfully!`,
-        'success'
-      );
-    } catch (error) {
-      // 显示错误通知
-      this.notificationCallback(
-        'Failed to export selected configurations: ' + (error instanceof Error ? error.message : 'Unknown error'),
-        'error'
-      );
-    }
-  }
-
-  // 导出所选配置函数（支持手动选择）
-  public exportSelectedConfig(): void {
-    // 如果没有配置组，提示用户
-    if (this.appConfig.settings.length === 0) {
-      this.notificationCallback('No configuration groups available for export.', 'warning');
-      return;
-    }
-    
-    // 创建选择对话框
-    const dialog = document.createElement('div');
-    dialog.className = 'export-selection-dialog';
-    dialog.style.position = 'fixed';
-    dialog.style.top = '0';
-    dialog.style.left = '0';
-    dialog.style.width = '100%';
-    dialog.style.height = '100%';
-    dialog.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-    dialog.style.display = 'flex';
-    dialog.style.justifyContent = 'center';
-    dialog.style.alignItems = 'center';
-    dialog.style.zIndex = '1000';
-    
-    // 对话框内容
-    const dialogContent = document.createElement('div');
-    dialogContent.style.backgroundColor = '#2a2a2a';
-    dialogContent.style.padding = '20px';
-    dialogContent.style.borderRadius = '8px';
-    dialogContent.style.maxWidth = '500px';
-    dialogContent.style.maxHeight = '80vh';
-    dialogContent.style.overflowY = 'auto';
-    dialogContent.style.color = '#fff';
-    
-    // 标题
-    const title = document.createElement('h3');
-    title.textContent = 'Select Configuration Groups to Export';
-    title.style.marginTop = '0';
-    dialogContent.appendChild(title);
-    
-    // 复选框容器
-    const checkboxContainer = document.createElement('div');
-    checkboxContainer.style.marginBottom = '20px';
-    
-    // 为每个配置组创建复选框
-    const checkboxes: HTMLInputElement[] = [];
-    this.appConfig.settings.forEach((setting, index) => {
-      const checkboxDiv = document.createElement('div');
-      checkboxDiv.style.marginBottom = '10px';
-      checkboxDiv.style.display = 'flex';
-      checkboxDiv.style.alignItems = 'center';
-      
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.id = `config-group-${index}`;
-      checkbox.checked = this.selectedGroups.includes(index); // 默认选中当前选中的组
-      checkbox.style.marginRight = '10px';
-      checkboxes.push(checkbox);
-      
-      const label = document.createElement('label');
-      label.htmlFor = `config-group-${index}`;
-      label.textContent = setting.name;
-      label.style.color = '#fff';
-      
-      checkboxDiv.appendChild(checkbox);
-      checkboxDiv.appendChild(label);
-      checkboxContainer.appendChild(checkboxDiv);
-    });
-    
-    dialogContent.appendChild(checkboxContainer);
-    
-    // 按钮容器
-    const buttonContainer = document.createElement('div');
-    buttonContainer.style.display = 'flex';
-    buttonContainer.style.justifyContent = 'flex-end';
-    buttonContainer.style.gap = '10px';
-    
-    // 取消按钮
-    const cancelBtn = document.createElement('button');
-    cancelBtn.textContent = 'Cancel';
-    cancelBtn.style.padding = '8px 16px';
-    cancelBtn.style.backgroundColor = '#666';
-    cancelBtn.style.color = '#fff';
-    cancelBtn.style.border = 'none';
-    cancelBtn.style.borderRadius = '4px';
-    cancelBtn.style.cursor = 'pointer';
-    cancelBtn.addEventListener('click', () => {
-      document.body.removeChild(dialog);
-    });
-    
-    // 导出按钮
-    const exportBtn = document.createElement('button');
-    exportBtn.textContent = 'Export Selected';
-    exportBtn.style.padding = '8px 16px';
-    exportBtn.style.backgroundColor = '#4a9eff';
-    exportBtn.style.color = '#fff';
-    exportBtn.style.border = 'none';
-    exportBtn.style.borderRadius = '4px';
-    exportBtn.style.cursor = 'pointer';
-    exportBtn.addEventListener('click', () => {
-      // 收集选中的配置组
-      const selectedSettings: Setting[] = [];
-      checkboxes.forEach((checkbox, index) => {
-        if (checkbox.checked) {
-          selectedSettings.push(this.appConfig.settings[index]);
-        }
-      });
-      
-      if (selectedSettings.length === 0) {
-        this.notificationCallback('Please select at least one configuration group to export.', 'warning');
-        return;
-      }
-      
-      // 创建导出配置对象
-      const exportConfig: AppConfig = {
-        browserSync: this.appConfig.browserSync,
-        settings: selectedSettings
-      };
-      
-      try {
-        // 导出配置
-        const configStr = JSON.stringify(exportConfig, null, 2);
-        const filename = selectedSettings.length === 1 
-          ? `enveil-config-${selectedSettings[0].name}.json`
-          : `enveil-config-selected-${new Date().toISOString().slice(0, 10)}.json`;
-        this.downloadJSON(configStr, filename);
-        
-        // 显示成功通知
-        this.notificationCallback(
-          `Successfully exported ${selectedSettings.length} configuration group(s)!`,
-          'success'
-        );
-        
-        // 关闭对话框
-        document.body.removeChild(dialog);
-      } catch (error) {
-        // 显示错误通知
-        this.notificationCallback(
-          'Failed to export selected configurations: ' + (error instanceof Error ? error.message : 'Unknown error'),
-          'error'
-        );
-      }
-    });
-    
-    buttonContainer.appendChild(cancelBtn);
-    buttonContainer.appendChild(exportBtn);
-    dialogContent.appendChild(buttonContainer);
-    
-    dialog.appendChild(dialogContent);
-    document.body.appendChild(dialog);
-    
-    // 点击对话框外部关闭
-    dialog.addEventListener('click', (e) => {
-      if (e.target === dialog) {
-        document.body.removeChild(dialog);
-      }
-    });
   }
 
   // 导入配置函数
@@ -295,8 +86,19 @@ export class ConfigImportExportManager {
       return;
     }
     
+    // 检查文件名类型
+    const isGroupFile = file.name.includes('enveil.group.json');
+    const isFullConfigFile = file.name.includes('enveil.json');
+    
+    let confirmMessage = `Are you sure you want to import configuration from ${file.name}?`;
+    if (isFullConfigFile) {
+      confirmMessage += '\n\nThis will overwrite all existing configurations!';
+    } else if (isGroupFile) {
+      confirmMessage += '\n\nThis group will be added to your existing configurations.';
+    }
+    
     // 确认导入操作
-    if (!confirm(`Are you sure you want to import configuration from ${file.name}?`)) {
+    if (!confirm(confirmMessage)) {
       input.value = '';
       return;
     }
@@ -310,94 +112,19 @@ export class ConfigImportExportManager {
         
         // 解析JSON文件
         const fileContent = e.target?.result as string;
-        const importedConfig = JSON.parse(fileContent) as AppConfig;
+        const importedData = JSON.parse(fileContent);
         
-        // 验证配置格式
-        if (!this.validateConfig(importedConfig)) {
+        if (isFullConfigFile || (!isGroupFile && this.validateConfig(importedData))) {
+          // 处理完整配置文件 (enveil.json)
+          this.handleFullConfigImport(importedData);
+        } else if (isGroupFile || this.validateGroupConfig(importedData)) {
+          // 处理组配置文件 (enveil.group.json)
+          this.handleGroupConfigImport(importedData);
+        } else {
           this.notificationCallback('Invalid configuration file format. Please select a valid Enveil configuration file.', 'error');
           return;
         }
         
-        // 处理旧的browserSync对象格式，转换为新的布尔值格式
-        const importedBrowserSync = typeof importedConfig.browserSync === 'boolean' 
-          ? importedConfig.browserSync 
-          : importedConfig.browserSync?.enable || false;
-        
-        // 询问用户导入策略
-        const importMode = confirm(
-          'Do you want to REPLACE existing configuration or MERGE with existing?\n' +
-          'OK = REPLACE, Cancel = MERGE'
-        );
-        
-        if (importMode) {
-          // 替换模式：完全替换现有配置
-          if (this.appConfig.settings.length > 0) {
-            if (!confirm('This will replace all your existing configurations. Are you sure?')) {
-              return;
-            }
-          }
-          // 使用转换后的browserSync布尔值
-          this.appConfig = {
-            browserSync: importedBrowserSync,
-            settings: importedConfig.settings
-          };
-        } else {
-          // 合并模式：保留现有配置，添加导入的配置组（避免名称冲突）
-          let hasChanges = false;
-          importedConfig.settings.forEach(importedSetting => {
-            // 检查是否有同名配置组
-            const existingIndex = this.appConfig.settings.findIndex(
-              setting => setting.name === importedSetting.name
-            );
-            
-            if (existingIndex !== -1) {
-              // 如果存在同名配置组，询问用户如何处理
-              const replaceExisting = confirm(
-                `Configuration group "${importedSetting.name}" already exists.\n` +
-                'Do you want to replace it with the imported one?'
-              );
-              
-              if (replaceExisting) {
-                this.appConfig.settings[existingIndex] = importedSetting;
-                hasChanges = true;
-              }
-            } else {
-              // 如果不存在同名配置组，直接添加
-              this.appConfig.settings.push(importedSetting);
-              hasChanges = true;
-            }
-          });
-          
-          // 检查browserSync设置是否变更
-          const currentBrowserSync = typeof this.appConfig.browserSync === 'boolean' 
-            ? this.appConfig.browserSync 
-            : this.appConfig.browserSync?.enable || false;
-          
-          if (currentBrowserSync !== importedBrowserSync) {
-            const changeBrowserSync = confirm(
-              `Imported configuration has different Browser Sync setting.\n` +
-              `Current: ${currentBrowserSync ? 'Enabled' : 'Disabled'}\n` +
-              `Imported: ${importedBrowserSync ? 'Enabled' : 'Disabled'}\n` +
-              'Do you want to update it?'
-            );
-            
-            if (changeBrowserSync) {
-              this.appConfig.browserSync = importedBrowserSync;
-              hasChanges = true;
-            }
-          }
-          
-          if (!hasChanges) {
-            this.notificationCallback('No changes were made during import.', 'warning');
-            return;
-          }
-        }
-        
-        // 更新配置
-          this.updateConfigCallback(this.appConfig);
-        
-        // 显示成功通知
-        this.notificationCallback('Configuration imported successfully!', 'success');
       } catch (error) {
         // 详细的错误处理
         if (error instanceof SyntaxError) {
@@ -414,6 +141,144 @@ export class ConfigImportExportManager {
     };
     
     reader.readAsText(file);
+  }
+
+  // 处理完整配置导入
+  private handleFullConfigImport(importedConfig: AppConfig): void {
+    // 验证配置格式
+    if (!this.validateConfig(importedConfig)) {
+      this.notificationCallback('Invalid configuration file format. Please select a valid Enveil configuration file.', 'error');
+      return;
+    }
+    
+    // 处理旧的browserSync对象格式，转换为新的布尔值格式
+    const importedBrowserSync = typeof importedConfig.browserSync === 'boolean' 
+      ? importedConfig.browserSync 
+      : (importedConfig.browserSync && typeof importedConfig.browserSync === 'object' && (importedConfig.browserSync as any).enable) || false;
+    
+    // 确认会覆盖所有配置
+    if (!confirm('This will overwrite ALL existing configurations including default colors and all groups. Are you sure?')) {
+      return;
+    }
+    
+    // 完全替换配置
+    this.appConfig = {
+      browserSync: importedBrowserSync,
+      defaultColors: importedConfig.defaultColors || this.appConfig.defaultColors,
+      settings: importedConfig.settings
+    };
+    
+    // 更新配置
+    this.updateConfigCallback(this.appConfig);
+    
+    // 显示成功通知
+    this.notificationCallback('Full configuration imported successfully!', 'success');
+  }
+
+  // 处理组配置导入
+  private handleGroupConfigImport(importedData: any): void {
+    if (!importedData.settings || !Array.isArray(importedData.settings)) {
+      this.notificationCallback('Invalid group configuration file format.', 'error');
+      return;
+    }
+    
+    // 将导入的组添加到现有配置的末尾
+    let addedGroups = 0;
+    importedData.settings.forEach((importedSetting: any) => {
+      if (this.validateSetting(importedSetting)) {
+        // 检查是否有同名配置组
+        const existingIndex = this.appConfig.settings.findIndex(
+          setting => setting.name === importedSetting.name
+        );
+        
+        if (existingIndex !== -1) {
+          // 如果存在同名配置组，询问用户如何处理
+          const replaceExisting = confirm(
+            `Configuration group "${importedSetting.name}" already exists.\n` +
+            'Do you want to replace it with the imported one?'
+          );
+          
+          if (replaceExisting) {
+            this.appConfig.settings[existingIndex] = importedSetting;
+            addedGroups++;
+          }
+        } else {
+          // 如果不存在同名配置组，直接添加到末尾
+          this.appConfig.settings.push(importedSetting);
+          addedGroups++;
+        }
+      }
+    });
+    
+    if (addedGroups === 0) {
+      this.notificationCallback('No valid groups were imported.', 'warning');
+      return;
+    }
+    
+    // 更新配置
+    this.updateConfigCallback(this.appConfig);
+    
+    // 显示成功通知
+    this.notificationCallback(`Successfully imported ${addedGroups} group(s)!`, 'success');
+  }
+
+  // 验证组配置格式
+  private validateGroupConfig(config: any): boolean {
+    if (!config || typeof config !== 'object') {
+      return false;
+    }
+    
+    // 检查settings数组
+    if (!Array.isArray(config.settings)) {
+      return false;
+    }
+    
+    // 验证每个设置项
+    return config.settings.every((setting: any) => this.validateSetting(setting));
+  }
+
+  // 验证单个设置项
+  private validateSetting(setting: any): boolean {
+    if (!setting || typeof setting !== 'object') {
+      return false;
+    }
+    
+    // 检查必要的设置属性
+    if (typeof setting.name !== 'string' || typeof setting.enable !== 'boolean') {
+      return false;
+    }
+    
+    // 检查sites数组
+    if (!Array.isArray(setting.sites)) {
+      return false;
+    }
+    
+    // 验证每个站点配置
+    for (const site of setting.sites) {
+      if (!site || typeof site !== 'object') {
+        return false;
+      }
+      
+      // 检查站点配置的必要属性
+      const requiredSiteProps = [
+        { name: 'enable', type: 'boolean' },
+        { name: 'matchPattern', type: 'string' },
+        { name: 'matchValue', type: 'string' },
+        { name: 'envName', type: 'string' },
+        { name: 'color', type: 'string' },
+        { name: 'backgroudEnable', type: 'boolean' },
+        { name: 'Position', type: 'string' },
+        { name: 'flagEnable', type: 'boolean' }
+      ];
+      
+      for (const prop of requiredSiteProps) {
+        if (typeof site[prop.name] !== prop.type) {
+          return false;
+        }
+      }
+    }
+    
+    return true;
   }
 
   // 验证配置格式函数

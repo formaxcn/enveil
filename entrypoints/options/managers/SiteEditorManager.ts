@@ -8,7 +8,6 @@ declare const chrome: any;
 
 export class SiteEditorManager {
   private appConfig: AppConfig;
-  private selectedGroups: number[];
   private notificationCallback: (message: string, type: 'success' | 'error' | 'warning' | 'info') => void;
   private saveConfigCallback: () => void;
   private addSiteModal: AddSiteModal;
@@ -16,12 +15,10 @@ export class SiteEditorManager {
 
   constructor(
     appConfig: AppConfig,
-    selectedGroups: number[],
     notificationCallback: (message: string, type: 'success' | 'error' | 'warning' | 'info') => void,
     saveConfigCallback: () => void
   ) {
     this.appConfig = appConfig;
-    this.selectedGroups = selectedGroups;
     this.notificationCallback = notificationCallback;
     this.saveConfigCallback = saveConfigCallback;
     this.addSiteModal = new AddSiteModal();
@@ -32,11 +29,6 @@ export class SiteEditorManager {
   // 更新配置引用
   public updateConfig(config: AppConfig): void {
     this.appConfig = config;
-  }
-
-  // 更新选中的配置组
-  public updateSelectedGroups(groups: number[]): void {
-    this.selectedGroups = groups;
   }
 
   // 初始化添加网站模态框
@@ -58,14 +50,24 @@ export class SiteEditorManager {
         });
       }
 
-      // Use first selected group if available, otherwise default
-      const targetGroupIndex = this.selectedGroups.length > 0 ? this.selectedGroups[0] : 0;
-      if (this.appConfig.settings[targetGroupIndex]) {
-        this.appConfig.settings[targetGroupIndex].sites.push(site);
-      } else {
-        // Fallback
-        this.appConfig.settings[0].sites.push(site);
+      // Use first group (index 0) as default, or create default group if none exists
+      if (!this.appConfig.settings[0]) {
+        // 如果默认组不存在，创建它
+        this.appConfig.settings.push({
+          name: "default",
+          enable: true,
+          sites: [],
+          defaults: {
+            envName: 'dev',
+            backgroundEnable: false,
+            flagEnable: false,
+            color: '#4a9eff'
+          }
+        });
       }
+
+      // Add to first group
+      this.appConfig.settings[0].sites.push(site);
 
       this.updateConfigDisplay();
       this.saveConfigCallback();
@@ -198,8 +200,18 @@ export class SiteEditorManager {
       this.deleteConfigGroup(groupIndex);
     });
 
+    // 导出配置组按钮
+    const exportBtn = document.createElement('button');
+    exportBtn.className = 'group-export-btn';
+    exportBtn.innerHTML = '<i class="fas fa-download"></i>';
+    exportBtn.title = 'Export this group';
+    exportBtn.addEventListener('click', () => {
+      this.exportConfigGroup(groupIndex);
+    });
+
     headerActions.appendChild(addSiteBtn);
     headerActions.appendChild(editBtn);
+    headerActions.appendChild(exportBtn);
     headerActions.appendChild(deleteBtn);
 
     groupHeader.appendChild(headerLeft);
@@ -307,19 +319,6 @@ export class SiteEditorManager {
     return siteElement;
   }
 
-  // 切换配置组选择
-  private toggleGroupSelection(groupIndex: number): void {
-    const index = this.selectedGroups.indexOf(groupIndex);
-    if (index > -1) {
-      this.selectedGroups.splice(index, 1);
-    } else {
-      // 这里可以根据需要决定是单选还是多选
-      // 当前实现为单选
-      this.selectedGroups = [groupIndex];
-    }
-    this.updateConfigDisplay();
-  }
-
   // 添加配置组
   private addConfigGroup(): void {
     console.log('addConfigGroup method start');
@@ -344,9 +343,9 @@ export class SiteEditorManager {
       this.appConfig.settings.push(newGroup);
       console.log('New group added to appConfig.settings. Total groups:', this.appConfig.settings.length);
 
-      // 选中新添加的配置组
-      const newGroupIndex = this.appConfig.settings.length - 1;
-      this.selectedGroups = [newGroupIndex];
+      // 选中新添加的配置组 - 移除这个概念，不需要选中
+      // const newGroupIndex = this.appConfig.settings.length - 1;
+      // this.selectedGroups = [newGroupIndex];
 
       this.updateConfigDisplay();
       this.saveConfigCallback();
@@ -391,16 +390,7 @@ export class SiteEditorManager {
     // 删除配置组
     this.appConfig.settings.splice(groupIndex, 1);
 
-    // 从选中数组中移除
-    const selectedIndex = this.selectedGroups.indexOf(groupIndex);
-    if (selectedIndex > -1) {
-      this.selectedGroups.splice(selectedIndex, 1);
-    }
-
-    // 如果没有选中的组，默认选中第一个
-    if (this.selectedGroups.length === 0 && this.appConfig.settings.length > 0) {
-      this.selectedGroups = [0];
-    }
+    // 不需要处理selectedGroups，因为没有这个概念
 
     this.updateConfigDisplay();
     this.saveConfigCallback();
@@ -409,9 +399,8 @@ export class SiteEditorManager {
 
   // 打开添加网站模态框
   public openAddSiteModal(): void {
-    // 获取当前选中组的默认值
-    const targetGroupIndex = this.selectedGroups.length > 0 ? this.selectedGroups[0] : 0;
-    const targetGroup = this.appConfig.settings[targetGroupIndex];
+    // 使用第一个组的默认值，如果存在的话
+    const targetGroup = this.appConfig.settings[0];
     
     // 如果组有默认值，创建一个预填充的站点配置
     if (targetGroup && targetGroup.defaults) {
@@ -434,9 +423,8 @@ export class SiteEditorManager {
 
   // 打开添加网站模态框并预填域名
   public openAddSiteModalWithDomain(domain: string, pattern: string): void {
-    // 获取当前选中组的默认值
-    const targetGroupIndex = this.selectedGroups.length > 0 ? this.selectedGroups[0] : 0;
-    const targetGroup = this.appConfig.settings[targetGroupIndex];
+    // 使用第一个组的默认值，如果存在的话
+    const targetGroup = this.appConfig.settings[0];
     
     if (targetGroup && targetGroup.defaults) {
       // 使用组默认值创建站点配置
@@ -487,5 +475,44 @@ export class SiteEditorManager {
     this.updateConfigDisplay();
     this.saveConfigCallback();
     this.notificationCallback('Site configuration deleted successfully', 'success');
+  }
+
+  // 导出单个配置组
+  private exportConfigGroup(groupIndex: number): void {
+    const setting = this.appConfig.settings[groupIndex];
+    if (!setting) return;
+
+    try {
+      // 创建导出配置对象，只包含这个组（不包含defaultColors）
+      const exportConfig = {
+        settings: [setting]
+      };
+      
+      const configStr = JSON.stringify(exportConfig, null, 2);
+      const filename = `enveil.group.json`;
+      
+      // 下载文件
+      this.downloadJSON(configStr, filename);
+      
+      this.notificationCallback(`Group "${setting.name}" exported successfully!`, 'success');
+    } catch (error) {
+      this.notificationCallback(
+        'Failed to export group: ' + (error instanceof Error ? error.message : 'Unknown error'),
+        'error'
+      );
+    }
+  }
+
+  // 下载JSON文件辅助函数
+  private downloadJSON(jsonStr: string, filename: string): void {
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 }

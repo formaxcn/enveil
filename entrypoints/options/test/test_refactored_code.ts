@@ -67,6 +67,7 @@ const testRunner = new TestRunner();
 testRunner.addTest('测试类型导入', () => {
   const mockConfig: AppConfig = {
     browserSync: true,
+    defaultColors: ['#4a9eff', '#4CAF50'],
     settings: []
   };
   
@@ -81,6 +82,7 @@ testRunner.addTest('测试类型导入', () => {
 testRunner.addTest('测试ConfigImportExportManager初始化', () => {
   const mockConfig: AppConfig = {
     browserSync: true,
+    defaultColors: ['#4a9eff', '#4CAF50'],
     settings: []
   };
   
@@ -92,7 +94,12 @@ testRunner.addTest('测试ConfigImportExportManager初始化', () => {
     <button id="restore-btn"></button>
   `;
   
-  const importExportManager = new ConfigImportExportManager(mockConfig);
+  const importExportManager = new ConfigImportExportManager(
+    mockConfig,
+    () => {},
+    () => {},
+    () => {}
+  );
   if (!importExportManager) {
     throw new Error('ConfigImportExportManager初始化失败');
   }
@@ -102,6 +109,7 @@ testRunner.addTest('测试ConfigImportExportManager初始化', () => {
 testRunner.addTest('测试SiteEditorManager初始化', () => {
   const mockConfig: AppConfig = {
     browserSync: true,
+    defaultColors: ['#4a9eff', '#4CAF50'],
     settings: []
   };
   
@@ -113,7 +121,11 @@ testRunner.addTest('测试SiteEditorManager初始化', () => {
     <button id="add-config-group"></button>
   `;
   
-  const siteEditorManager = new SiteEditorManager(mockConfig);
+  const siteEditorManager = new SiteEditorManager(
+    mockConfig,
+    () => {},
+    () => {}
+  );
   if (!siteEditorManager) {
     throw new Error('SiteEditorManager初始化失败');
   }

@@ -25,13 +25,22 @@ export interface Setting {
   defaults?: GroupDefaults; // 添加组默认配置
 }
 
-
-
 export interface AppConfig {
   browserSync: boolean;
   defaultColors: string[];
   settings: Setting[];
 }
+
+// 云端同步数据结构
+export interface CloudSyncData {
+  configs: Setting[];
+  defaultColors: string[];
+  lastModified: number;
+  version: string;
+}
+
+// 同步冲突解决策略
+export type ConflictResolutionStrategy = 'local' | 'remote' | 'merge' | 'ask';
 
 // 通知类型
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';

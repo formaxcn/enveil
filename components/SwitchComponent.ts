@@ -1,3 +1,6 @@
+// 声明chrome对象
+declare const chrome: any;
+
 export class SwitchComponent {
   private element: HTMLElement;
   private input: HTMLInputElement;
