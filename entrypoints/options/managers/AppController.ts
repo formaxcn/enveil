@@ -48,7 +48,13 @@ export class AppController {
         {
           name: 'default',
           enable: true,
-          sites: []
+          sites: [],
+          defaults: {
+            envName: 'dev',
+            backgroundEnable: false,
+            flagEnable: false,
+            color: '#4a9eff'
+          }
         }
       ]
     };
@@ -140,7 +146,15 @@ export class AppController {
         this.appConfig = {
           browserSync: typeof config.browserSync === 'boolean' ? config.browserSync : false,
           defaultColors: config.defaultColors || this.getDefaultConfig().defaultColors,
-          settings: config.settings || this.getDefaultConfig().settings
+          settings: config.settings ? config.settings.map(setting => ({
+            ...setting,
+            defaults: setting.defaults || {
+              envName: 'dev',
+              backgroundEnable: false,
+              flagEnable: false,
+              color: '#4a9eff'
+            }
+          })) : this.getDefaultConfig().settings
         };
       }
 

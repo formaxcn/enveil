@@ -10,10 +10,19 @@ export interface SiteConfig {
   flagEnable: boolean;
 }
 
+// 定义组默认配置结构
+export interface GroupDefaults {
+  envName: string;
+  backgroundEnable: boolean;
+  flagEnable: boolean;
+  color: string;
+}
+
 export interface Setting {
   name: string;
   enable: boolean;
   sites: SiteConfig[];
+  defaults?: GroupDefaults; // 添加组默认配置
 }
 
 

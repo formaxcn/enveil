@@ -1,4 +1,4 @@
-import { AppConfig, SiteConfig, Setting } from '../types';
+import { AppConfig, SiteConfig, Setting, GroupDefaults } from '../types';
 import { AddSiteModal } from '../../../components/AddSiteModal';
 import { AddGroupModal } from '../../../components/AddGroupModal';
 import { SwitchComponent } from '../../../components/SwitchComponent';
@@ -48,7 +48,13 @@ export class SiteEditorManager {
         this.appConfig.settings.push({
           name: "default",
           enable: true,
-          sites: []
+          sites: [],
+          defaults: {
+            envName: 'dev',
+            backgroundEnable: false,
+            flagEnable: false,
+            color: '#4a9eff'
+          }
         });
       }
 
@@ -318,8 +324,8 @@ export class SiteEditorManager {
   private addConfigGroup(): void {
     console.log('addConfigGroup method start');
 
-    this.addGroupModal.open('', (trimmedName: string) => {
-      console.log('Modal result:', trimmedName);
+    this.addGroupModal.open(this.appConfig.defaultColors, '', undefined, (trimmedName: string, defaults: GroupDefaults) => {
+      console.log('Modal result:', trimmedName, defaults);
 
       // 检查名称是否已存在
       if (this.appConfig.settings.some(setting => setting.name === trimmedName)) {
@@ -331,7 +337,8 @@ export class SiteEditorManager {
       const newGroup: Setting = {
         name: trimmedName,
         enable: true,
-        sites: []
+        sites: [],
+        defaults: defaults
       };
 
       this.appConfig.settings.push(newGroup);
@@ -352,7 +359,7 @@ export class SiteEditorManager {
     const setting = this.appConfig.settings[groupIndex];
     if (!setting) return;
 
-    this.addGroupModal.open(setting.name, (trimmedName: string) => {
+    this.addGroupModal.open(this.appConfig.defaultColors, setting.name, setting.defaults, (trimmedName: string, defaults: GroupDefaults) => {
       // 检查新名称是否已被其他组使用
       if (this.appConfig.settings.some((s, index) => s.name === trimmedName && index !== groupIndex)) {
         this.notificationCallback('Configuration group with this name already exists', 'error');
@@ -360,9 +367,10 @@ export class SiteEditorManager {
       }
 
       setting.name = trimmedName;
+      setting.defaults = defaults;
       this.updateConfigDisplay();
       this.saveConfigCallback();
-      this.notificationCallback('Configuration group name updated successfully', 'success');
+      this.notificationCallback('Configuration group updated successfully', 'success');
     });
   }
 
@@ -401,12 +409,52 @@ export class SiteEditorManager {
 
   // 打开添加网站模态框
   public openAddSiteModal(): void {
-    this.addSiteModal.open(this.appConfig.defaultColors);
+    // 获取当前选中组的默认值
+    const targetGroupIndex = this.selectedGroups.length > 0 ? this.selectedGroups[0] : 0;
+    const targetGroup = this.appConfig.settings[targetGroupIndex];
+    
+    // 如果组有默认值，创建一个预填充的站点配置
+    if (targetGroup && targetGroup.defaults) {
+      const defaultSite: Partial<SiteConfig> = {
+        enable: false,
+        matchPattern: 'domain',
+        matchValue: '',
+        envName: targetGroup.defaults.envName,
+        color: targetGroup.defaults.color,
+        backgroudEnable: targetGroup.defaults.backgroundEnable,
+        Position: 'leftTop',
+        flagEnable: targetGroup.defaults.flagEnable
+      };
+      
+      this.addSiteModal.open(this.appConfig.defaultColors, defaultSite as SiteConfig);
+    } else {
+      this.addSiteModal.open(this.appConfig.defaultColors);
+    }
   }
 
   // 打开添加网站模态框并预填域名
   public openAddSiteModalWithDomain(domain: string, pattern: string): void {
-    this.addSiteModal.openWithDefaults(this.appConfig.defaultColors, domain, pattern);
+    // 获取当前选中组的默认值
+    const targetGroupIndex = this.selectedGroups.length > 0 ? this.selectedGroups[0] : 0;
+    const targetGroup = this.appConfig.settings[targetGroupIndex];
+    
+    if (targetGroup && targetGroup.defaults) {
+      // 使用组默认值创建站点配置
+      const defaultSite: SiteConfig = {
+        enable: false,
+        matchPattern: pattern,
+        matchValue: domain,
+        envName: targetGroup.defaults.envName,
+        color: targetGroup.defaults.color,
+        backgroudEnable: targetGroup.defaults.backgroundEnable,
+        Position: 'leftTop',
+        flagEnable: targetGroup.defaults.flagEnable
+      };
+      
+      this.addSiteModal.open(this.appConfig.defaultColors, defaultSite);
+    } else {
+      this.addSiteModal.openWithDefaults(this.appConfig.defaultColors, domain, pattern);
+    }
   }
 
   // 编辑网站
