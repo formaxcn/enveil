@@ -55,72 +55,72 @@ This implementation plan converts the cloud role highlighting design into discre
 - [x] 5. Checkpoint - Ensure configuration UI is functional
   - Ensure all tests pass, ask the user if questions arise.
 
-- [-] 6. Implement cloud highlighting engine
-  - [-] 6.1 Create CloudMatcher utility class
+- [x] 6. Implement cloud highlighting engine
+  - [x] 6.1 Create CloudMatcher utility class
     - Extend existing Matcher class for cloud-specific URL matching
     - Implement cloud account URL pattern matching
     - Add role keyword matching functionality
     - _Requirements: 2.1, 3.1_
   
-  - [~] 6.2 Build CloudHighlighter component
+  - [x] 6.2 Build CloudHighlighter component
     - Implement account-level background highlighting
     - Create role-level keyword text highlighting
     - Ensure dual-layer highlighting coordination
     - _Requirements: 2.3, 3.3, 8.1, 8.2_
 
-- [~] 7. Integrate cloud highlighting with content script
-  - [~] 7.1 Extend existing content script for cloud detection
+- [x] 7. Integrate cloud highlighting with content script
+  - [x] 7.1 Extend existing content script for cloud detection
     - Add cloud environment detection to existing content script
     - Implement cloud account matching alongside existing site matching
     - Apply account background highlighting using existing overlay system
     - _Requirements: 2.1, 4.2, 7.1_
   
-  - [~] 7.2 Add role text highlighting to content script
+  - [x] 7.2 Add role text highlighting to content script
     - Implement keyword scanning and text highlighting
     - Ensure role highlighting works with account background highlighting
     - Apply highlighting to role names, descriptions, and relevant text
     - _Requirements: 3.1, 3.5, 4.3, 7.2_
 
-- [~] 8. Enhance background service worker for cloud support
-  - [~] 8.1 Extend tab monitoring for cloud environments
+- [x] 8. Enhance background service worker for cloud support
+  - [x] 8.1 Extend tab monitoring for cloud environments
     - Add cloud configuration loading to existing background script
     - Implement cloud account matching in tab update handler
     - Send cloud highlighting messages to content scripts
     - _Requirements: 2.4, 4.4_
   
-  - [~] 8.2 Update icon management for cloud accounts
+  - [x] 8.2 Update icon management for cloud accounts
     - Extend existing icon update logic for cloud account matches
     - Ensure cloud highlighting works alongside existing site highlighting
     - Maintain existing icon behavior for non-cloud sites
     - _Requirements: 2.1, 4.1_
 
-- [~] 9. Implement AWS-specific highlighting features
-  - [~] 9.1 Add AWS account selection page highlighting
+- [x] 9. Implement AWS-specific highlighting features
+  - [x] 9.1 Add AWS account selection page highlighting
     - Implement specific highlighting for https://signin.amazonaws.cn/saml
     - Apply account background highlighting on SAML login pages
     - Add role keyword text highlighting on account selection pages
     - _Requirements: 7.1, 7.2, 7.3_
   
-  - [~] 9.2 Add AWS console interface highlighting
+  - [x] 9.2 Add AWS console interface highlighting
     - Implement highlighting for *.amazonaws.cn/* console pages
     - Apply persistent account information highlighting in console
     - Ensure highlighting consistency across console page navigation
     - _Requirements: 4.1, 4.2, 4.4_
 
-- [~] 10. Final integration and consistency checks
-  - [~] 10.1 Ensure dual-layer highlighting coordination
+- [x] 10. Final integration and consistency checks
+  - [x] 10.1 Ensure dual-layer highlighting coordination
     - Verify account background and role text highlighting work together
     - Implement visual distinction between highlighting layers
     - Test highlighting hierarchy and color separation
     - _Requirements: 8.3, 8.4, 8.5_
   
-  - [~] 10.2 Validate configuration persistence and import/export
+  - [x] 10.2 Validate configuration persistence and import/export
     - Test cloud configuration saving and loading
     - Verify cloud configurations are included in import/export
     - Ensure browser sync includes cloud configurations
     - _Requirements: 5.5_
 
-- [~] 11. Final checkpoint - Ensure all functionality works end-to-end
+- [ ] 11. Final checkpoint - Ensure all functionality works end-to-end
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

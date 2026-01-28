@@ -1,5 +1,6 @@
-import { AppConfig, SiteConfig } from './options/types';
+import { AppConfig, SiteConfig, CloudEnvironment, CloudAccount, CloudRole } from './options/types';
 import { Matcher } from '../utils/matcher';
+import { CloudMatcher } from '../utils/cloudMatcher';
 
 export default defineBackground(() => {
   console.log('Enveil: Background service worker started');
@@ -38,7 +39,7 @@ async function checkAndNotifyTab(tabId: number, url: string) {
   // 1. Get Config
   const config = await loadConfig();
   if (!config || !config.settings) {
-    await updateTabState(tabId, null);
+    await updateTabState(tabId, null, null);
     return;
   }
 
@@ -47,11 +48,11 @@ async function checkAndNotifyTab(tabId: number, url: string) {
   try {
     host = new URL(url).host;
   } catch (e) {
-    await updateTabState(tabId, null);
+    await updateTabState(tabId, null, null);
     return;
   }
 
-  // 3. Find Match
+  // 3. Find Site Match (existing functionality)
   let matchedSite: SiteConfig | null = null;
 
   for (const setting of config.settings) {
@@ -66,24 +67,76 @@ async function checkAndNotifyTab(tabId: number, url: string) {
     if (matchedSite) break;
   }
 
-  // 4. Update State
-  await updateTabState(tabId, matchedSite);
+  // 4. Find Cloud Account Match (new functionality)
+  let matchedCloudAccount: CloudAccount | null = null;
+
+  if (config.cloudEnvironments) {
+    for (const environment of config.cloudEnvironments) {
+      if (!environment.enable) continue;
+
+      const matchingAccounts = CloudMatcher.findMatchingAccounts(environment, url, host);
+      if (matchingAccounts.length > 0) {
+        // Use the first matching account (could be enhanced to handle multiple matches)
+        matchedCloudAccount = matchingAccounts[0];
+        console.log(`[Enveil Background] Found cloud account match:`, CloudMatcher.getCloudAccountMatchInfo(matchedCloudAccount));
+        break;
+      }
+    }
+  }
+
+  // 5. Update State
+  await updateTabState(tabId, matchedSite, matchedCloudAccount);
 }
 
-async function updateTabState(tabId: number, site: SiteConfig | null) {
-  // Update Icon
-  await setIconForTab(tabId, !!site);
+async function updateTabState(tabId: number, site: SiteConfig | null, cloudAccount: CloudAccount | null) {
+  // Update Icon - prioritize site match over cloud account match
+  const hasMatch = !!site || !!cloudAccount;
+  await setIconForTab(tabId, hasMatch);
 
-  // Notify Content Script
+  // Notify Content Script for site matches (existing functionality)
   try {
     await browser.tabs.sendMessage(tabId, {
       action: 'MATCH_UPDATE',
       site: site
     });
-    console.log(`[Enveil Background] Sent MATCH_UPDATE to tab ${tabId}:`, site ? Matcher.getMatchInfo(site) : 'No Match');
+    
+    if (site) {
+      console.log(`[Enveil Background] Sent MATCH_UPDATE to tab ${tabId} (site):`, Matcher.getMatchInfo(site));
+    } else {
+      console.log(`[Enveil Background] Sent MATCH_UPDATE to tab ${tabId}: No site match`);
+    }
   } catch (error) {
     // Content script might not be ready or injected on some pages (e.g. chrome://)
-    // console.debug(`[Enveil Background] Failed to send message to tab ${tabId}`, error);
+    // console.debug(`[Enveil Background] Failed to send site message to tab ${tabId}`, error);
+  }
+
+  // Notify Content Script for cloud matches (new functionality)
+  try {
+    // Find matching roles for the cloud account if we have one
+    let matchingRoles: CloudRole[] = [];
+    if (cloudAccount && cloudAccount.roles && cloudAccount.roles.length > 0) {
+      // Get page content to match against roles - we'll let the content script handle this
+      // For now, just send all enabled roles and let content script do the keyword matching
+      matchingRoles = cloudAccount.roles.filter(role => role.enable);
+    }
+
+    await browser.tabs.sendMessage(tabId, {
+      action: 'CLOUD_MATCH_UPDATE',
+      cloudAccount: cloudAccount,
+      cloudRoles: matchingRoles
+    });
+    
+    if (cloudAccount) {
+      console.log(`[Enveil Background] Sent CLOUD_MATCH_UPDATE to tab ${tabId} (cloud):`, CloudMatcher.getCloudAccountMatchInfo(cloudAccount));
+      if (matchingRoles.length > 0) {
+        console.log(`[Enveil Background] Sent ${matchingRoles.length} cloud roles for keyword matching`);
+      }
+    } else {
+      console.log(`[Enveil Background] Sent CLOUD_MATCH_UPDATE to tab ${tabId}: No cloud match`);
+    }
+  } catch (error) {
+    // Content script might not be ready or injected on some pages (e.g. chrome://)
+    // console.debug(`[Enveil Background] Failed to send cloud message to tab ${tabId}`, error);
   }
 }
 

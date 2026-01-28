@@ -10,6 +10,32 @@ Enveil provides comprehensive environment identification through visual indicato
 
 ## Core Features
 
+### ☁️ Cloud Role Highlighting
+**Advanced cloud platform environment and role identification**
+
+#### Three-Tier Cloud Configuration
+- **Cloud Environments**: Top-level grouping for cloud providers (AWS, Azure, GCP)
+- **Cloud Accounts**: Account-level configuration with background highlighting
+- **Cloud Roles**: Role-specific keyword-based text highlighting
+
+#### Dual-Layer Visual System
+- **Account Background Highlighting**: Subtle full-page overlay for account identification
+- **Role Text Highlighting**: Keyword-based text emphasis for role names and descriptions
+- **Visual Hierarchy**: Account background as base layer, role text as overlay layer
+
+#### Cloud Provider Templates
+- **AWS China (CN)**: Pre-configured for `https://signin.amazonaws.cn/saml` and `*.amazonaws.cn/*`
+- **AWS Global**: Support for global AWS environments
+- **Azure**: Microsoft Azure cloud platform support
+- **Google Cloud Platform**: GCP environment configuration
+- **Custom Providers**: Flexible configuration for any cloud platform
+
+#### Smart Cloud Detection
+- **Account Selection Pages**: Enhanced visual indicators on SAML login pages
+- **Console Interfaces**: Persistent highlighting in cloud provider consoles
+- **Dynamic Content**: Mutation observer handles dynamically loaded content
+- **Cross-Page Consistency**: Maintains highlighting across navigation
+
 ### 🎯 Intelligent URL Matching
 **Five sophisticated matching strategies for maximum flexibility**
 
@@ -34,13 +60,20 @@ Enveil provides comprehensive environment identification through visual indicato
 - **Configurable**: Enable/disable per rule
 - **Perfect for Production**: Subtle warning for dangerous environments
 
-### 📁 Configuration Groups
+### 📁 Configuration Management
 **Organize rules logically for better management**
 
+#### Traditional Site Configuration
 - **Hierarchical Structure**: Groups contain multiple site rules
 - **Group Defaults**: Set default colors, positions, and settings
 - **Bulk Operations**: Enable/disable entire groups at once
 - **Export Individual Groups**: Share specific project configurations
+
+#### Cloud Configuration System
+- **Cloud Environments**: Organize by cloud provider and environment type
+- **Account Management**: Configure cloud accounts with URL patterns and background colors
+- **Role Management**: Define keyword-based role highlighting within accounts
+- **Template Integration**: Quick setup using pre-configured cloud provider templates
 
 ### 🎨 Advanced Color System
 **Comprehensive color management**
@@ -65,15 +98,17 @@ Enveil provides comprehensive environment identification through visual indicato
 **Flexible configuration sharing and backup**
 
 #### Export Options
-- **Full Configuration**: Complete setup with all groups (`enveil.json`)
+- **Full Configuration**: Complete setup with all groups and cloud environments (`enveil.json`)
 - **Individual Groups**: Single group export (`enveil.group.json`)
+- **Cloud Environments**: Export cloud configurations separately
 - **Automatic Naming**: Intelligent filename generation
 
 #### Import Options
-- **Full Import**: Replace entire configuration (with confirmation)
+- **Full Import**: Replace entire configuration including cloud environments (with confirmation)
 - **Group Import**: Add groups to existing configuration
-- **Conflict Resolution**: Automatic handling of duplicate group names
-- **Validation**: Complete configuration integrity checking
+- **Cloud Import**: Import cloud environment configurations
+- **Conflict Resolution**: Automatic handling of duplicate names
+- **Validation**: Complete configuration integrity checking including cloud configurations
 
 ### 🔄 Browser Synchronization
 **Cross-device configuration synchronization**
@@ -81,6 +116,7 @@ Enveil provides comprehensive environment identification through visual indicato
 #### Sync Features
 - **Real-time Updates**: Changes propagate immediately across devices
 - **Chrome Storage Sync**: Built on Chrome's native sync infrastructure
+- **Complete Configuration**: Syncs both traditional site rules and cloud environments
 - **Conflict Detection**: Intelligent handling of simultaneous edits
 - **Version Control**: Timestamp-based conflict resolution
 
@@ -113,12 +149,14 @@ Quick actions via URL parameters:
 - **Split Panel**: 30% left panel for global settings, 70% right for configurations
 - **Responsive Design**: Minimum 1200px width for optimal experience
 - **Dark/Light Theme**: Automatic theme detection and support
+- **Tabbed Interface**: Separate tabs for traditional sites and cloud environments
 
 #### Components
 - **Real-time Preview**: Live preview of banners and overlays
 - **Form Validation**: Real-time validation with error feedback
-- **Modal Dialogs**: Intuitive add/edit interfaces
-- **Drag & Drop**: Reorder rules and groups (planned)
+- **Modal Dialogs**: Intuitive add/edit interfaces for sites and cloud configurations
+- **Cloud Roles Tab**: Dedicated interface for cloud environment management
+- **Role Management Table**: Inline role configuration within cloud account modals
 
 ### 🔧 Popup Interface
 **Quick access and control**

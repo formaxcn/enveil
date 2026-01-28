@@ -1,9 +1,13 @@
-import { AppConfig, SiteConfig } from './options/types';
+import { AppConfig, SiteConfig, CloudAccount, CloudRole } from './options/types';
+import { CloudHighlighter } from '../components/CloudHighlighter';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
   async main() {
     console.log('Enveil: Content script loaded');
+
+    // Initialize cloud highlighter
+    const cloudHighlighter = new CloudHighlighter();
 
     // Initial check (in case background script doesn't send update immediately on reload/install)
     // However, usually background script handles updates.
@@ -18,6 +22,20 @@ export default defineContentScript({
         } else {
           console.log('[Enveil Content] Received MATCH_UPDATE: No match, unmounting UI');
           unmountUI();
+        }
+      } else if (message.action === 'CLOUD_MATCH_UPDATE') {
+        const cloudAccount = message.cloudAccount as CloudAccount | null;
+        const cloudRoles = message.cloudRoles as CloudRole[] | null;
+        
+        if (cloudAccount || cloudRoles) {
+          console.log('[Enveil Content] Received CLOUD_MATCH_UPDATE: Cloud match found', { 
+            account: cloudAccount?.name, 
+            rolesCount: cloudRoles?.length || 0 
+          });
+          mountCloudUI(cloudAccount, cloudRoles, cloudHighlighter);
+        } else {
+          console.log('[Enveil Content] Received CLOUD_MATCH_UPDATE: No cloud match, unmounting cloud UI');
+          unmountCloudUI(cloudHighlighter);
         }
       }
     });
@@ -158,4 +176,39 @@ function createOverlay(site: SiteConfig): HTMLElement {
   });
 
   return overlay;
+}
+
+/**
+ * Mounts cloud-specific UI elements (account background highlighting and role text highlighting).
+ * Works alongside existing site highlighting without conflicts.
+ * 
+ * @param cloudAccount The cloud account configuration (for background highlighting)
+ * @param cloudRoles Array of cloud roles (for text highlighting)
+ * @param cloudHighlighter The CloudHighlighter instance
+ */
+function mountCloudUI(cloudAccount: CloudAccount | null, cloudRoles: CloudRole[] | null, cloudHighlighter: CloudHighlighter) {
+  // Remove any existing cloud highlighting first
+  cloudHighlighter.removeHighlighting();
+
+  // Apply account-level background highlighting if account is provided
+  if (cloudAccount && cloudAccount.backgroundEnable) {
+    cloudHighlighter.applyAccountHighlighting(cloudAccount);
+  }
+
+  // Apply role-level text highlighting if roles are provided
+  if (cloudRoles && cloudRoles.length > 0) {
+    // Wait a bit for DOM to be ready, then apply role highlighting
+    setTimeout(() => {
+      cloudHighlighter.applyRoleHighlighting(cloudRoles);
+    }, 100);
+  }
+}
+
+/**
+ * Unmounts cloud-specific UI elements.
+ * 
+ * @param cloudHighlighter The CloudHighlighter instance
+ */
+function unmountCloudUI(cloudHighlighter: CloudHighlighter) {
+  cloudHighlighter.removeHighlighting();
 }
