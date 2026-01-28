@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Documentation Update Check",
+  "description": "Automatically checks if documentation needs updating after commits and syncs, especially when new features are added",
+  "version": "1",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Check the recent git commits and changes. If any new features have been added to the codebase, review the docs/ folder and update the relevant documentation files (features.md, api-reference.md, getting-started.md, etc.) to include information about the new features. Make sure the documentation accurately reflects the current state of the project."
+  }
+}
