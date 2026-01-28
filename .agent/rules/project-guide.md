@@ -1,5 +1,5 @@
 ---
-trigger: always_on
+trigger: model_decision
 ---
 
 # Antigravity Agent Rules — enveil (Chrome Extension)

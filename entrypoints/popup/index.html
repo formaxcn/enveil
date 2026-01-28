@@ -1,38 +1,15 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Enveil</title>
-    <meta name="manifest.type" content="browser_action" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  </head>
-  <body>
-    <div id="app">
-      <div class="container">
-        <div class="header" style="margin-bottom: 0.3rem; gap: 0.5rem;">
-          <button id="configure-btn" class="configure-button">
-            <i class="fas fa-cog"></i> Options
-          </button>
-        </div>
 
-        <div style="width: 100%; display: flex; justify-content: center; margin-bottom: 0.3rem;">
-          <button id="add-config-btn" class="add-button">
-            <i class="fas fa-plus"></i> Add Current Site
-          </button>
-        </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enveil</title>
+</head>
 
-        <div style="width: 100%; display: flex; justify-content: center;">
-          <div class="switch-container" id="enable-switch">
-            <label class="switch">
-              <input type="checkbox" id="enable-current-site">
-              <span class="slider"></span>
-            </label>
-            <span class="switch-label">Enable in Current Site</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    <script type="module" src="./main.ts"></script>
-  </body>
+<body>
+  <div id="root"></div>
+  <script type="module" src="./main.tsx"></script>
+</body>
+
 </html>

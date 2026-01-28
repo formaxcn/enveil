@@ -1,6 +1,7 @@
 import { AppConfig, SiteConfig, CloudEnvironment, CloudAccount, CloudRole } from './options/types';
 import { Matcher } from '../utils/matcher';
 import { CloudMatcher } from '../utils/cloudMatcher';
+import { storage } from 'wxt/utils/storage';
 
 export default defineBackground(() => {
   console.log('Enveil: Background service worker started');
@@ -22,14 +23,12 @@ export default defineBackground(() => {
   });
 
   // Listen for configuration changes
-  browser.storage.onChanged.addListener(async (changes, areaName) => {
-    if (areaName === 'sync' && changes.appConfig) {
-      console.log('[Enveil Background] Config changed, re-evaluating all tabs');
-      const tabs = await browser.tabs.query({});
-      for (const tab of tabs) {
-        if (tab.id && tab.url) {
-          await checkAndNotifyTab(tab.id, tab.url);
-        }
+  storage.watch<AppConfig>('sync:appConfig', async (newConfig) => {
+    console.log('[Enveil Background] Config changed via WXT Storage, re-evaluating all tabs');
+    const tabs = await browser.tabs.query({});
+    for (const tab of tabs) {
+      if (tab.id && tab.url) {
+        await checkAndNotifyTab(tab.id, tab.url);
       }
     }
   });
@@ -99,7 +98,7 @@ async function updateTabState(tabId: number, site: SiteConfig | null, cloudAccou
       action: 'MATCH_UPDATE',
       site: site
     });
-    
+
     if (site) {
       console.log(`[Enveil Background] Sent MATCH_UPDATE to tab ${tabId} (site):`, Matcher.getMatchInfo(site));
     } else {
@@ -125,7 +124,7 @@ async function updateTabState(tabId: number, site: SiteConfig | null, cloudAccou
       cloudAccount: cloudAccount,
       cloudRoles: matchingRoles
     });
-    
+
     if (cloudAccount) {
       console.log(`[Enveil Background] Sent CLOUD_MATCH_UPDATE to tab ${tabId} (cloud):`, CloudMatcher.getCloudAccountMatchInfo(cloudAccount));
       if (matchingRoles.length > 0) {
@@ -142,8 +141,7 @@ async function updateTabState(tabId: number, site: SiteConfig | null, cloudAccou
 
 async function loadConfig(): Promise<AppConfig | null> {
   try {
-    const result = await browser.storage.sync.get(['appConfig']);
-    return result.appConfig as AppConfig;
+    return await storage.getItem<AppConfig>('sync:appConfig');
   } catch (error) {
     console.error('Enveil: Failed to load config in background', error);
     return null;
