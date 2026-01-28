@@ -81,30 +81,30 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
             width="lg"
         >
             <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-                    <span className="text-sm font-bold text-gray-700">Status</span>
+                <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800">
+                    <span className="text-sm font-bold text-gray-700 dark:text-slate-300">Status</span>
                     <Switch checked={enabled} onChange={setEnabled} />
                 </div>
 
                 <div className="space-y-4">
                     <div className="form-group font-bold">
-                        <label className="block text-sm text-gray-700 mb-2">Environment Name</label>
+                        <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2">Environment Name</label>
                         <input
                             type="text"
                             required
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                             placeholder="e.g. AWS Production"
                         />
                     </div>
 
                     <div className="form-group font-bold">
-                        <label className="block text-sm text-gray-700 mb-2">Cloud Provider</label>
+                        <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2">Cloud Provider</label>
                         <select
                             value={provider}
                             onChange={(e) => setProvider(e.target.value as CloudProvider)}
-                            className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none border transition-colors"
                         >
                             {Object.entries(providerNames).map(([id, name]) => (
                                 <option key={id} value={id}>{name}</option>
@@ -113,20 +113,20 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
                     </div>
 
                     {provider !== CloudProvider.CUSTOM && (
-                        <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 space-y-3">
-                            <div className="flex items-center gap-2 text-blue-800 font-bold text-xs uppercase tracking-wider">
+                        <div className="p-4 bg-blue-50/50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-900 flex flex-col gap-3">
+                            <div className="flex items-center gap-2 text-blue-800 dark:text-blue-400 font-black text-[10px] uppercase tracking-widest">
                                 <Terminal className="w-4 h-4" /> Template Auto-filled
                             </div>
-                            <div className="grid grid-cols-2 gap-4 text-xs">
+                            <div className="grid grid-cols-2 gap-4 text-[10px] font-bold uppercase tracking-tight">
                                 <div>
-                                    <label className="block text-gray-400 font-medium mb-1">Console Pattern</label>
-                                    <code className="block bg-white/50 p-1 rounded font-mono truncate">
+                                    <label className="block text-gray-400 dark:text-slate-500 mb-1">Console Pattern</label>
+                                    <code className="block bg-white dark:bg-slate-900 p-2 rounded-lg font-mono truncate border dark:border-slate-800 lowercase text-gray-600 dark:text-slate-300">
                                         {getCloudTemplate(provider).consoleDomainPattern}
                                     </code>
                                 </div>
                                 <div>
-                                    <label className="block text-gray-400 font-medium mb-1">Account URL</label>
-                                    <code className="block bg-white/50 p-1 rounded font-mono truncate">
+                                    <label className="block text-gray-400 dark:text-slate-500 mb-1">Account URL</label>
+                                    <code className="block bg-white dark:bg-slate-900 p-2 rounded-lg font-mono truncate border dark:border-slate-800 lowercase text-gray-600 dark:text-slate-300">
                                         {getCloudTemplate(provider).accountSelectionUrl}
                                     </code>
                                 </div>
@@ -135,7 +135,7 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
                     )}
 
                     {provider === CloudProvider.CUSTOM && (
-                        <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100 italic text-sm text-orange-800">
+                        <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-2xl border border-orange-100 dark:border-orange-900 italic text-sm text-orange-800 dark:text-orange-400">
                             Custom configuration is advanced. For standard providers, please use the predefined templates.
                         </div>
                     )}
@@ -145,13 +145,13 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
                     <button
                         type="button"
                         onClick={onClose}
-                        className="flex-1 px-4 py-2.5 text-sm font-bold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+                        className="flex-1 px-4 py-2.5 text-sm font-bold text-gray-600 dark:text-slate-300 bg-gray-100 dark:bg-slate-800 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors border dark:border-slate-700"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
-                        className="flex-[2] px-4 py-2.5 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
+                        className="flex-[2] px-4 py-2.5 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 dark:shadow-none active:scale-95"
                     >
                         {environment ? 'Update Environment' : 'Create Environment'}
                     </button>

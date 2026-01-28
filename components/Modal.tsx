@@ -47,16 +47,16 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
                             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                         >
                             <DialogPanel className={clsx(
-                                "relative transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all sm:my-8 w-full",
+                                "relative transform overflow-hidden rounded-3xl bg-white dark:bg-slate-900 text-left shadow-2xl transition-all sm:my-8 w-full border dark:border-slate-800",
                                 widthClasses[width]
                             )}>
-                                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-                                    <DialogTitle as="h3" className="text-lg font-bold leading-6 text-gray-900">
+                                <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-gray-50/50 dark:bg-slate-800/50">
+                                    <DialogTitle as="h3" className="text-lg font-black uppercase tracking-widest leading-6 text-gray-900 dark:text-slate-100">
                                         {title}
                                     </DialogTitle>
                                     <button
                                         type="button"
-                                        className="rounded-full p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-500 transition-colors"
+                                        className="rounded-full p-1 text-gray-400 dark:text-slate-500 hover:bg-gray-200 dark:hover:bg-slate-700 hover:text-gray-500 dark:hover:text-slate-300 transition-colors"
                                         onClick={onClose}
                                     >
                                         <X className="w-5 h-5" />

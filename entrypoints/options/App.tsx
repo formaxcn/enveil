@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
-import { Settings, Cloud, FileUp, FileDown, Plus, FolderPlus, Info, ChevronRight } from 'lucide-react';
+import { Settings, Cloud, FileUp, FileDown, Plus, FolderPlus, Info, ChevronRight, Zap } from 'lucide-react';
 import { Switch } from '../../components/Switch';
 import { ConfigGroup } from '../../components/ConfigGroup';
 import { CloudEnvironmentItem } from '../../components/CloudEnvironmentItem';
@@ -223,128 +223,145 @@ const App: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex">
+        <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex transition-colors duration-300 selection:bg-blue-100 selection:text-blue-900 dark:selection:bg-blue-900/40 dark:selection:text-blue-200">
             {/* Sidebar */}
-            <aside className="w-80 border-r bg-white p-6 space-y-8 h-screen sticky top-0 overflow-y-auto">
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
-                            <Settings className="w-4 h-4 text-blue-600" /> General
-                        </h2>
+            <aside className="w-80 border-r dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-8 space-y-10 h-screen sticky top-0 overflow-y-auto flex flex-col">
+                <div className="space-y-6">
+                    <div className="flex items-center gap-3 mb-10">
+                        <div className="p-3 bg-blue-600 rounded-2xl shadow-xl shadow-blue-500/20">
+                            <Zap className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                            <h1 className="text-xl font-black text-gray-900 dark:text-white tracking-tighter">ENVEIL</h1>
+                            <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-[0.2em]">Environment Visualizer</p>
+                        </div>
                     </div>
 
-                    <div className="p-4 bg-gray-50 rounded-2xl space-y-4 border border-gray-100">
-                        <Switch
-                            label="Sync enabled"
-                            checked={config.browserSync}
-                            onChange={(checked) => saveConfig({ ...config, browserSync: checked })}
-                        />
-                    </div>
-                </div>
-
-                <div className="space-y-4">
-                    <h2 className="text-sm font-black text-gray-900 uppercase tracking-widest">Colors</h2>
-                    <div className="grid grid-cols-5 gap-2">
-                        {config.defaultColors.map((color, idx) => (
-                            <div key={idx} className="relative aspect-square">
-                                <input
-                                    type="color"
-                                    value={color}
-                                    onChange={(e) => {
-                                        const newColors = [...config.defaultColors];
-                                        newColors[idx] = e.target.value.toUpperCase();
-                                        saveConfig({ ...config, defaultColors: newColors });
-                                    }}
-                                    className="absolute inset-0 w-full h-full rounded-xl cursor-pointer border-2 border-white shadow-sm"
+                    <div className="space-y-6">
+                        <div className="space-y-4">
+                            <h2 className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <Settings className="w-3.5 h-3.5" /> General Settings
+                            </h2>
+                            <div className="p-5 bg-gray-50 dark:bg-slate-800/40 rounded-[2rem] space-y-4 border border-gray-100 dark:border-slate-800 transition-all hover:border-gray-200 dark:hover:border-slate-700">
+                                <Switch
+                                    label="Browser Sync"
+                                    checked={config.browserSync}
+                                    onChange={(checked) => saveConfig({ ...config, browserSync: checked })}
                                 />
                             </div>
-                        ))}
-                        <button
-                            onClick={() => saveConfig({ ...config, defaultColors: [...config.defaultColors, '#4A9EFF'] })}
-                            className="aspect-square border-2 border-dashed border-gray-200 rounded-xl flex items-center justify-center text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-all hover:bg-blue-50"
-                        >
-                            <Plus className="w-5 h-5" />
-                        </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <h2 className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest">Global Palette</h2>
+                            <div className="grid grid-cols-5 gap-3">
+                                {config.defaultColors.map((color, idx) => (
+                                    <div key={idx} className="relative aspect-square group">
+                                        <input
+                                            type="color"
+                                            value={color}
+                                            onChange={(e) => {
+                                                const newColors = [...config.defaultColors];
+                                                newColors[idx] = e.target.value.toUpperCase();
+                                                saveConfig({ ...config, defaultColors: newColors });
+                                            }}
+                                            className="absolute inset-0 w-full h-full rounded-xl cursor-pointer border-2 border-white dark:border-slate-800 shadow-sm transition-transform group-hover:scale-110 z-10"
+                                        />
+                                        <div className="absolute inset-0 bg-blue-500/10 dark:bg-blue-400/10 rounded-xl animate-pulse blur-md opacity-0 group-hover:opacity-100" />
+                                    </div>
+                                ))}
+                                <button
+                                    onClick={() => saveConfig({ ...config, defaultColors: [...config.defaultColors, '#4A9EFF'] })}
+                                    className="aspect-square border-2 border-dashed border-gray-200 dark:border-slate-800 rounded-xl flex items-center justify-center text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-all hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:scale-110"
+                                >
+                                    <Plus className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div className="pt-8 space-y-2">
+                <div className="pt-8 border-t dark:border-slate-800 space-y-3 mt-auto">
                     <button
                         onClick={importConfig}
-                        className="w-full flex items-center justify-between px-4 py-3 text-sm font-bold text-gray-700 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors border border-gray-100"
+                        className="w-full flex items-center justify-between px-5 py-3.5 text-xs font-black uppercase tracking-widest text-gray-600 dark:text-slate-400 bg-gray-50 dark:bg-slate-800/60 rounded-2xl hover:bg-white dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 transition-all border border-gray-100 dark:border-slate-800 shadow-sm hover:shadow-md active:scale-95"
                     >
-                        <div className="flex items-center gap-3"><FileUp className="w-4 h-4 text-orange-500" /> Import</div>
-                        <ChevronRight className="w-4 h-4 text-gray-300" />
+                        <div className="flex items-center gap-3"><FileUp className="w-4 h-4" /> Import</div>
+                        <ChevronRight className="w-4 h-4 opacity-30" />
                     </button>
                     <button
                         onClick={exportConfig}
-                        className="w-full flex items-center justify-between px-4 py-3 text-sm font-bold text-gray-700 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors border border-gray-100"
+                        className="w-full flex items-center justify-between px-5 py-3.5 text-xs font-black uppercase tracking-widest text-gray-600 dark:text-slate-400 bg-gray-50 dark:bg-slate-800/60 rounded-2xl hover:bg-white dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 transition-all border border-gray-100 dark:border-slate-800 shadow-sm hover:shadow-md active:scale-95"
                     >
-                        <div className="flex items-center gap-3"><FileDown className="w-4 h-4 text-green-500" /> Export</div>
-                        <ChevronRight className="w-4 h-4 text-gray-300" />
+                        <div className="flex items-center gap-3"><FileDown className="w-4 h-4" /> Export</div>
+                        <ChevronRight className="w-4 h-4 opacity-30" />
                     </button>
                 </div>
 
-                <div className="mt-auto pt-10 text-center">
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 rounded-full text-[10px] font-black text-gray-400 uppercase tracking-tighter shadow-inner">
-                        Enveil v1.0.0
+                <div className="text-center">
+                    <div className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-gray-100 dark:bg-slate-800/80 rounded-full text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-[0.2em] shadow-inner transition-colors">
+                        Build v1.0.0
                     </div>
                 </div>
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 p-10 max-w-6xl mx-auto w-full">
-                <TabGroup selectedIndex={activeTab} onChange={setActiveTab}>
-                    <div className="flex items-center justify-between mb-10">
-                        <TabList className="flex gap-2 bg-gray-200/40 p-1.5 rounded-2xl backdrop-blur-sm">
-                            <Tab className={({ selected }) => clsx(
-                                'flex items-center gap-2.5 px-8 py-2.5 text-sm font-black uppercase tracking-widest rounded-xl outline-none transition-all',
-                                selected ? 'bg-white text-blue-600 shadow-xl shadow-blue-500/10' : 'text-gray-400 hover:text-gray-600'
-                            )}>
-                                <Settings className="w-4 h-4" /> Configs
-                            </Tab>
-                            <Tab className={({ selected }) => clsx(
-                                'flex items-center gap-2.5 px-8 py-2.5 text-sm font-black uppercase tracking-widest rounded-xl outline-none transition-all',
-                                selected ? 'bg-white text-blue-600 shadow-xl shadow-blue-500/10' : 'text-gray-400 hover:text-gray-600'
-                            )}>
-                                <Cloud className="w-4 h-4" /> Cloud
-                            </Tab>
-                        </TabList>
+            <main className="flex-1 p-12 max-w-7xl mx-auto w-full relative">
+                {/* Background Decoration */}
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/5 dark:bg-blue-400/5 rounded-full blur-[120px] pointer-events-none -z-10" />
+                <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-purple-500/5 dark:bg-purple-400/5 rounded-full blur-[100px] pointer-events-none -z-10" />
 
-                        <div className="flex gap-3">
+                <TabGroup selectedIndex={activeTab} onChange={setActiveTab}>
+                    <div className="flex items-end justify-between mb-12">
+                        <div>
+                            <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter mb-4">
+                                Settings Console
+                            </h2>
+                            <TabList className="flex gap-1.5 bg-gray-200/50 dark:bg-slate-800/50 p-1.5 rounded-2xl backdrop-blur-md border border-white/20 dark:border-slate-800">
+                                <Tab className={({ selected }) => clsx(
+                                    'flex items-center gap-2.5 px-10 py-3 text-xs font-black uppercase tracking-[0.2em] rounded-xl outline-none transition-all',
+                                    selected
+                                        ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-2xl shadow-blue-500/10 ring-1 ring-black/5 dark:ring-white/10'
+                                        : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300'
+                                )}>
+                                    <Settings className="w-4 h-4" /> Configs
+                                </Tab>
+                                <Tab className={({ selected }) => clsx(
+                                    'flex items-center gap-2.5 px-10 py-3 text-xs font-black uppercase tracking-[0.2em] rounded-xl outline-none transition-all',
+                                    selected
+                                        ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-2xl shadow-blue-500/10 ring-1 ring-black/5 dark:ring-white/10'
+                                        : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300'
+                                )}>
+                                    <Cloud className="w-4 h-4" /> Cloud
+                                </Tab>
+                            </TabList>
+                        </div>
+
+                        <div className="flex gap-4">
                             <button
                                 onClick={() => {
                                     if (activeTab === 0) setIsGroupModalOpen(true);
                                     else setIsEnvModalOpen(true);
                                 }}
-                                className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white text-sm font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 transition-all shadow-2xl shadow-blue-600/20 active:scale-95"
+                                className="group flex items-center gap-3 px-8 py-4 bg-blue-600 text-white text-xs font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-blue-700 transition-all shadow-2xl shadow-blue-600/20 active:scale-95 hover:shadow-blue-600/40"
                             >
                                 {activeTab === 0 ? (
-                                    <><FolderPlus className="w-4 h-4" /> Add Group</>
+                                    <><FolderPlus className="w-4 h-4 transition-transform group-hover:scale-125" /> Add Group</>
                                 ) : (
-                                    <><Plus className="w-4 h-4" /> Add Env</>
+                                    <><Plus className="w-4 h-4 transition-transform group-hover:scale-125" /> Add Env</>
                                 )}
                             </button>
-                            {activeTab === 0 && config.settings.length > 0 && (
-                                <button
-                                    onClick={() => setIsSiteModalOpen(true)}
-                                    className="flex items-center gap-2 px-6 py-3 bg-white text-blue-600 border-2 border-blue-50 text-sm font-black uppercase tracking-widest rounded-2xl hover:bg-blue-50 transition-all active:scale-95"
-                                >
-                                    <Plus className="w-4 h-4" /> Add Site
-                                </button>
-                            )}
                         </div>
                     </div>
 
                     <TabPanels>
                         <TabPanel className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                             {config.settings.length === 0 ? (
-                                <div className="text-center py-32 bg-white border-4 border-dashed border-gray-100 rounded-[3rem]">
-                                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-200">
+                                <div className="text-center py-32 bg-white dark:bg-slate-900 border-4 border-dashed border-gray-100 dark:border-slate-800 rounded-[3rem]">
+                                    <div className="w-20 h-20 bg-gray-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-200 dark:text-slate-700">
                                         <FolderPlus className="w-10 h-10" />
                                     </div>
-                                    <h3 className="text-xl font-black text-gray-900 mb-2">No Config Groups</h3>
-                                    <p className="text-gray-400 max-w-xs mx-auto text-sm">Create your first group to start organizing your environment indicators.</p>
+                                    <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">No Config Groups</h3>
+                                    <p className="text-gray-400 dark:text-slate-500 max-w-xs mx-auto text-sm">Create your first group to start organizing your environment indicators.</p>
                                 </div>
                             ) : (
                                 config.settings.map((setting, idx) => (
@@ -382,12 +399,12 @@ const App: React.FC = () => {
 
                         <TabPanel className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                             {(config.cloudEnvironments || []).length === 0 ? (
-                                <div className="text-center py-32 bg-white border-4 border-dashed border-gray-100 rounded-[3rem]">
-                                    <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-200">
+                                <div className="text-center py-32 bg-white dark:bg-slate-900 border-4 border-dashed border-gray-100 dark:border-slate-800 rounded-[3rem]">
+                                    <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-200 dark:text-blue-800">
                                         <Cloud className="w-10 h-10" />
                                     </div>
-                                    <h3 className="text-xl font-black text-gray-900 mb-2">Cloud Highlights</h3>
-                                    <p className="text-gray-400 max-w-xs mx-auto text-sm">Visualize different cloud accounts and roles automatically.</p>
+                                    <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">Cloud Highlights</h3>
+                                    <p className="text-gray-400 dark:text-slate-500 max-w-xs mx-auto text-sm">Visualize different cloud accounts and roles automatically.</p>
                                 </div>
                             ) : (
                                 (config.cloudEnvironments || []).map((env) => (

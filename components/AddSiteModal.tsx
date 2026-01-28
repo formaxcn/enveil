@@ -57,8 +57,8 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
             width="lg"
         >
             <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-                    <span className="text-sm font-bold text-gray-700">Status</span>
+                <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800">
+                    <span className="text-sm font-bold text-gray-700 dark:text-slate-300">Status</span>
                     <Switch
                         checked={formData.enable}
                         onChange={(checked) => setFormData({ ...formData, enable: checked })}
@@ -67,11 +67,11 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
 
                 <div className="grid grid-cols-3 gap-4">
                     <div className="col-span-1">
-                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Match Pattern</label>
+                        <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2">Match Pattern</label>
                         <select
                             value={formData.matchPattern}
                             onChange={(e) => setFormData({ ...formData, matchPattern: e.target.value })}
-                            className="w-full bg-gray-50 border-gray-200 rounded-xl text-sm p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="w-full bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 rounded-xl text-sm p-2 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors border"
                         >
                             <option value="everything">Everything</option>
                             <option value="url">Full URL</option>
@@ -81,13 +81,13 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                         </select>
                     </div>
                     <div className="col-span-2">
-                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Match Value</label>
+                        <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2">Match Value</label>
                         <input
                             type="text"
                             required
                             value={formData.matchValue}
                             onChange={(e) => setFormData({ ...formData, matchValue: e.target.value })}
-                            className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
                             placeholder="e.g. google.com"
                         />
                     </div>
@@ -103,13 +103,13 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="flex-1 px-4 py-2.5 text-sm font-bold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+                        className="flex-1 px-4 py-2.5 text-sm font-bold text-gray-600 dark:text-slate-300 bg-gray-100 dark:bg-slate-800 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors border dark:border-slate-700"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
-                        className="flex-[2] px-4 py-2.5 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
+                        className="flex-[2] px-4 py-2.5 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 dark:shadow-none active:scale-95"
                     >
                         {site ? 'Update Changes' : 'Save Configuration'}
                     </button>

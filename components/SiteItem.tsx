@@ -22,40 +22,51 @@ const patternMap: Record<string, string> = {
 export const SiteItem: React.FC<SiteItemProps> = ({ site, onToggle, onEdit, onDelete }) => {
     return (
         <div className={clsx(
-            "flex items-center gap-4 p-4 rounded-xl border transition-all",
-            site.enable ? "bg-white border-gray-200 shadow-sm" : "bg-gray-50 border-gray-100 opacity-75"
+            "flex items-center gap-4 p-4 rounded-xl border transition-all duration-300",
+            site.enable
+                ? "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 shadow-sm"
+                : "bg-gray-50/50 dark:bg-slate-900/50 border-gray-100 dark:border-slate-800 opacity-75"
         )}>
             <Switch checked={site.enable} onChange={onToggle} />
 
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                     <span
-                        className="px-2 py-0.5 rounded text-xs font-bold text-white shadow-sm"
+                        className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider text-white shadow-sm ring-1 ring-white/20"
                         style={{ backgroundColor: site.color }}
                     >
                         {site.envName}
                     </span>
-                    <span className="text-sm font-medium text-gray-900 truncate">
+                    <span className="text-sm font-bold text-gray-900 dark:text-slate-100 truncate">
                         {patternMap[site.matchPattern] || site.matchPattern}: {site.matchValue}
                     </span>
                 </div>
-                <div className="flex gap-3 text-xs text-gray-500">
-                    <span>Bg: {site.backgroudEnable ? 'On' : 'Off'}</span>
-                    <span>Pos: {site.Position}</span>
-                    <span>Flag: {site.flagEnable ? 'On' : 'Off'}</span>
+                <div className="flex gap-3 text-[10px] font-medium text-gray-500 dark:text-slate-400 uppercase tracking-tight">
+                    <span className="flex items-center gap-1">
+                        <div className={clsx("w-1.5 h-1.5 rounded-full", site.backgroudEnable ? "bg-green-500" : "bg-gray-300 dark:bg-slate-700")} />
+                        BG: {site.backgroudEnable ? 'ON' : 'OFF'}
+                    </span>
+                    <span className="flex items-center gap-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                        POS: {site.Position}
+                    </span>
+                    <span className="flex items-center gap-1">
+                        <div className={clsx("w-1.5 h-1.5 rounded-full", site.flagEnable ? "bg-green-500" : "bg-gray-300 dark:bg-slate-700")} />
+                        FLAG: {site.flagEnable ? 'ON' : 'OFF'}
+                    </span>
                 </div>
             </div>
 
             <div className="flex gap-1">
                 <button
                     onClick={onEdit}
-                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    className="p-2 text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-400/10 rounded-lg transition-colors"
                 >
                     <Edit2 className="w-4 h-4" />
                 </button>
                 <button
                     onClick={onDelete}
-                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-2 text-gray-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-400/10 rounded-lg transition-colors"
                 >
                     <Trash2 className="w-4 h-4" />
                 </button>

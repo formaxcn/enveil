@@ -59,23 +59,23 @@ export const AddGroupModal: React.FC<AddGroupModalProps> = ({
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-4">
                     <div className="form-group font-bold">
-                        <label className="block text-sm text-gray-700 mb-2">Group Name</label>
+                        <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2">Group Name</label>
                         <input
                             type="text"
                             required
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                             placeholder="e.g. Development Environment"
                         />
                     </div>
 
                     <div className="relative pt-4">
                         <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                            <div className="w-full border-t border-gray-100"></div>
+                            <div className="w-full border-t border-gray-100 dark:border-slate-800"></div>
                         </div>
                         <div className="relative flex justify-center">
-                            <span className="bg-white px-3 text-xs font-bold text-gray-400 uppercase tracking-widest">Default Settings</span>
+                            <span className="bg-white dark:bg-slate-900 px-3 text-xs font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest">Default Settings</span>
                         </div>
                     </div>
 
@@ -90,13 +90,13 @@ export const AddGroupModal: React.FC<AddGroupModalProps> = ({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="flex-1 px-4 py-2.5 text-sm font-bold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+                        className="flex-1 px-4 py-2.5 text-sm font-bold text-gray-600 dark:text-slate-300 bg-gray-100 dark:bg-slate-800 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors border dark:border-slate-700"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
-                        className="flex-[2] px-4 py-2.5 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
+                        className="flex-[2] px-4 py-2.5 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 dark:shadow-none active:scale-95"
                     >
                         {group ? 'Update Group' : 'Create Group'}
                     </button>
