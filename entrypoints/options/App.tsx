@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
-import { Settings, Cloud, FileUp, FileDown, Plus, FolderPlus, Info, ChevronRight, Zap } from 'lucide-react';
+import { Settings, Cloud, FileUp, FileDown, Plus, FolderPlus, Info, ChevronRight, Zap, X, Edit3 } from 'lucide-react';
 import { Switch } from '../../components/Switch';
 import { ConfigGroup } from '../../components/ConfigGroup';
 import { CloudEnvironmentItem } from '../../components/CloudEnvironmentItem';
@@ -48,12 +48,31 @@ const App: React.FC = () => {
     const [editingAccount, setEditingAccount] = useState<{ envId: string, account: CloudAccount } | null>(null);
 
     useEffect(() => {
+        const checkInlineView = async () => {
+            // If window width is small (likely in chrome://extensions modal)
+            // or if explicitly requested via search params
+            const isSmall = window.innerWidth < 640;
+            const urlParams = new URLSearchParams(window.location.search);
+            const isForced = urlParams.get('view') === 'inline';
+
+            if (isSmall && !isForced) {
+                // Redirect to full tab
+                await browser.tabs.create({
+                    url: browser.runtime.getURL('/options.html')
+                });
+                // Close the current inline window/modal if possible
+                window.close();
+            }
+        };
+
         const loadConfig = async () => {
             const savedConfig = await storage.getItem<AppConfig>('sync:appConfig');
             if (savedConfig) {
                 setConfig(savedConfig);
             }
         };
+
+        checkInlineView();
         loadConfig();
     }, []);
 
@@ -227,15 +246,8 @@ const App: React.FC = () => {
             {/* Sidebar */}
             <aside className="w-80 border-r dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-8 space-y-12 h-screen sticky top-0 overflow-y-auto flex flex-col scrollbar-thin">
                 <div className="space-y-10">
-                    <div className="flex items-center gap-3 mb-12">
-                        <div className="p-3 bg-blue-600 rounded-2xl shadow-xl shadow-blue-500/20">
-                            <Zap className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-black text-gray-900 dark:text-white tracking-tighter">ENVEIL</h1>
-                            <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-[0.2em]">Visualizer</p>
-                        </div>
-                    </div>
+                    {/* Sidebar Header Removed as per request */}
+                    <div className="h-4" />
 
                     <div className="space-y-10">
                         <div className="space-y-4">
@@ -251,7 +263,7 @@ const App: React.FC = () => {
                         <div className="space-y-4">
                             <div className="grid grid-cols-5 gap-3">
                                 {config.defaultColors.map((color, idx) => (
-                                    <div key={idx} className="relative aspect-square group">
+                                    <div key={idx} className="relative aspect-square group rounded-full border-2 border-white dark:border-slate-800 shadow-sm transition-all hover:ring-4 hover:ring-blue-500/10">
                                         <input
                                             type="color"
                                             value={color}
@@ -260,13 +272,39 @@ const App: React.FC = () => {
                                                 newColors[idx] = e.target.value.toUpperCase();
                                                 saveConfig({ ...config, defaultColors: newColors });
                                             }}
-                                            className="absolute inset-0 w-full h-full rounded-full cursor-pointer border-2 border-white dark:border-slate-800 shadow-sm transition-transform group-hover:scale-110 z-10"
+                                            className="absolute inset-0 w-full h-full cursor-pointer transition-transform group-hover:scale-110 z-10 rounded-full overflow-hidden"
+                                            style={{ backgroundColor: color }}
                                         />
-                                        <div className="absolute inset-0 bg-blue-500/10 dark:bg-blue-400/10 rounded-full animate-pulse blur-md opacity-0 group-hover:opacity-100" />
+
+                                        {/* Edit Icon Overlay */}
+                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Edit3 className="w-4 h-4 text-white drop-shadow-md" />
+                                        </div>
+
+                                        {/* Delete Button */}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (config.defaultColors.length <= 1) return alert("Keep at least one color.");
+                                                const newColors = config.defaultColors.filter((_, i) => i !== idx);
+                                                saveConfig({ ...config, defaultColors: newColors });
+                                            }}
+                                            className="absolute -top-2.5 -right-2.5 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all z-30 hover:bg-red-600 active:scale-95 shadow-md border-2 border-white dark:border-slate-800"
+                                            title="Remove color"
+                                        >
+                                            <X className="w-2.5 h-2.5" />
+                                        </button>
                                     </div>
                                 ))}
                                 <button
-                                    onClick={() => saveConfig({ ...config, defaultColors: [...config.defaultColors, '#4A9EFF'] })}
+                                    onClick={() => {
+                                        const vibrantPool = ['#4a9eff', '#4CAF50', '#ff9800', '#f44336', '#9c27b0', '#00bcd4', '#e91e63', '#607d8b'];
+                                        const currentColors = new Set(config.defaultColors.map(c => c.toLowerCase()));
+                                        const nextColor = vibrantPool.find(c => !currentColors.has(c.toLowerCase())) ||
+                                            `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
+
+                                        saveConfig({ ...config, defaultColors: [...config.defaultColors, nextColor.toUpperCase()] });
+                                    }}
                                     className="aspect-square border-2 border-dashed border-gray-200 dark:border-slate-800 rounded-full flex items-center justify-center text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-all hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:scale-110"
                                 >
                                     <Plus className="w-5 h-5" />
@@ -295,7 +333,7 @@ const App: React.FC = () => {
 
                 <div className="text-center">
                     <div className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-gray-100 dark:bg-slate-800/80 rounded-full text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-[0.2em] shadow-inner transition-colors">
-                        Build v1.0.0
+                        Build v1.{new Date().toISOString().split('T')[0].replace(/-/g, '')}.{new Date().toTimeString().split(' ')[0].replace(/:/g, '')}
                     </div>
                 </div>
             </aside>
@@ -307,10 +345,10 @@ const App: React.FC = () => {
                 <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-500/5 dark:bg-purple-400/5 rounded-full blur-[120px] pointer-events-none -z-10" />
 
                 <TabGroup selectedIndex={activeTab} onChange={setActiveTab}>
-                    <div className="flex items-center justify-between mb-12">
-                        <TabList className="flex gap-2 bg-gray-200/50 dark:bg-slate-800/50 p-2 rounded-2xl backdrop-blur-md border border-white/20 dark:border-slate-800">
+                    <div className="flex items-center gap-8 mb-12">
+                        <TabList className="flex-1 flex gap-2 bg-gray-200/50 dark:bg-slate-800/50 p-2 rounded-2xl backdrop-blur-md border border-white/20 dark:border-slate-800">
                             <Tab className={({ selected }) => clsx(
-                                'flex items-center gap-2.5 px-12 py-3.5 text-xs font-black uppercase tracking-[0.2em] rounded-xl outline-none transition-all',
+                                'flex-1 flex items-center justify-center gap-2.5 px-12 py-3.5 text-xs font-black uppercase tracking-[0.2em] rounded-xl outline-none transition-all',
                                 selected
                                     ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-2xl shadow-blue-500/10 ring-1 ring-black/5 dark:ring-white/10'
                                     : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300'
@@ -318,7 +356,7 @@ const App: React.FC = () => {
                                 <Settings className="w-4 h-4" /> Configs
                             </Tab>
                             <Tab className={({ selected }) => clsx(
-                                'flex items-center gap-2.5 px-12 py-3.5 text-xs font-black uppercase tracking-[0.2em] rounded-xl outline-none transition-all',
+                                'flex-1 flex items-center justify-center gap-2.5 px-12 py-3.5 text-xs font-black uppercase tracking-[0.2em] rounded-xl outline-none transition-all',
                                 selected
                                     ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-2xl shadow-blue-500/10 ring-1 ring-black/5 dark:ring-white/10'
                                     : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300'
@@ -327,21 +365,19 @@ const App: React.FC = () => {
                             </Tab>
                         </TabList>
 
-                        <div className="flex gap-4">
-                            <button
-                                onClick={() => {
-                                    if (activeTab === 0) setIsGroupModalOpen(true);
-                                    else setIsEnvModalOpen(true);
-                                }}
-                                className="group flex items-center gap-3 px-10 py-4 bg-blue-600 text-white text-xs font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-blue-700 transition-all shadow-2xl shadow-blue-600/20 active:scale-95 hover:shadow-blue-600/40"
-                            >
-                                {activeTab === 0 ? (
-                                    <><FolderPlus className="w-4 h-4 transition-transform group-hover:scale-125" /> Add Group</>
-                                ) : (
-                                    <><Plus className="w-4 h-4 transition-transform group-hover:scale-125" /> Add Env</>
-                                )}
-                            </button>
-                        </div>
+                        <button
+                            onClick={() => {
+                                if (activeTab === 0) setIsGroupModalOpen(true);
+                                else setIsEnvModalOpen(true);
+                            }}
+                            className="flex-none w-64 group flex items-center justify-center gap-3 px-8 py-4 bg-blue-600 text-white text-xs font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-blue-700 transition-all shadow-2xl shadow-blue-600/20 active:scale-95 hover:shadow-blue-600/40"
+                        >
+                            {activeTab === 0 ? (
+                                <><FolderPlus className="w-4 h-4 transition-transform group-hover:scale-125" /> Add Group</>
+                            ) : (
+                                <><Plus className="w-4 h-4 transition-transform group-hover:scale-125" /> Add Env</>
+                            )}
+                        </button>
                     </div>
 
                     <TabPanels>

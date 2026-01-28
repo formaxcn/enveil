@@ -36,10 +36,11 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
         if (site) {
             setFormData(site);
         } else {
-            // Pick a random color from defaultColors for new sites
-            const randomColor = defaultColors.length > 0
-                ? defaultColors[Math.floor(Math.random() * defaultColors.length)]
-                : '#4a9eff';
+            // Pick a color from defaultColors for new sites - try to be different from the first one
+            const colorOptions = defaultColors.length > 0 ? defaultColors : ['#4a9eff', '#4CAF50', '#ff9800', '#f44336', '#9c27b0'];
+            // Simple rotation or better random selection logic can be added if we tracked state, 
+            // but for now let's just ensure it's a random pick from the full list.
+            const randomColor = colorOptions[Math.floor(Math.random() * colorOptions.length)];
 
             setFormData({
                 ...INITIAL_SITE,
@@ -59,7 +60,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
             isOpen={isOpen}
             onClose={onClose}
             title={site ? 'Edit Site Configuration' : 'Add New Site Configuration'}
-            width="lg"
+            width="xl"
         >
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800">

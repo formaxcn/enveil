@@ -13,10 +13,35 @@
     color-scheme: dark;
   }
 
-  /* Custom scrollbar for webkit browsers if needed, but scrollbar-color covers most modern cases */
+  /* Force rounding for any system-level color inputs or custom indicators */
+  input[type="color"] {
+    -webkit-appearance: none;
+    border: none;
+    padding: 0;
+  }
+
+  input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
+
+  input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 9999px;
+  }
+
+  /* Standard dropdown visibility in dark mode */
+  select {
+    @apply transition-colors;
+  }
+
+  .dark select option {
+    @apply bg-slate-900 text-slate-100;
+  }
+
+  /* Custom scrollbar for webkit browsers */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track {
@@ -24,7 +49,7 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-gray-200 rounded-full;
+    @apply bg-gray-200 rounded-full border-2 border-transparent bg-clip-padding;
   }
 
   .dark ::-webkit-scrollbar-thumb {

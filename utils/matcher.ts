@@ -8,8 +8,8 @@ export class Matcher {
      * @param currentHost The host to match against (defaults to window.location.host)
      * @returns boolean
      */
-    static isMatch(site: SiteConfig, currentUrl: string, currentHost: string): boolean {
-        if (!site.enable) return false;
+    static isMatch(site: SiteConfig, currentUrl: string, currentHost: string, ignoreEnable: boolean = false): boolean {
+        if (!ignoreEnable && !site.enable) return false;
 
         switch (site.matchPattern) {
             case 'everything':

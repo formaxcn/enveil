@@ -86,14 +86,17 @@ export const PreviewEditor: React.FC<PreviewEditorProps> = ({ config, onChange, 
 
                     <div className={clsx(
                         "bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm p-4 rounded-2xl border border-white/20 dark:border-slate-700 shadow-sm transition-all",
-                        !config.flagEnable && "opacity-50 grayscale-[0.5]"
+                        !config.flagEnable && "bg-white/40 dark:bg-slate-900/40"
                     )}>
                         <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2">Position</label>
                         <select
-                            disabled={!config.flagEnable}
                             value={config.Position}
+                            disabled={!config.flagEnable}
                             onChange={(e) => onChange({ Position: e.target.value })}
-                            className="w-full bg-gray-50/50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700 rounded-lg px-2 py-1 text-sm font-bold text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer disabled:cursor-not-allowed transition-colors"
+                            className={clsx(
+                                "w-full bg-gray-50/50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700 rounded-lg px-2 py-1 text-sm font-bold text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer transition-colors",
+                                !config.flagEnable && "opacity-50 cursor-not-allowed"
+                            )}
                         >
                             <option value="leftTop" className="bg-white dark:bg-slate-900">Top Left</option>
                             <option value="rightTop" className="bg-white dark:bg-slate-900">Top Right</option>

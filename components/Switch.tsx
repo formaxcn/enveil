@@ -12,6 +12,7 @@ interface SwitchProps {
     checked: boolean;
     onChange: (checked: boolean) => void;
     className?: string;
+    color?: string;
 }
 
 export const Switch: React.FC<SwitchProps> = ({
@@ -19,9 +20,16 @@ export const Switch: React.FC<SwitchProps> = ({
     checked,
     onChange,
     className,
+    color,
 }) => {
     return (
         <div className={cn("flex items-center gap-3", className)}>
+            {color && (
+                <div
+                    className="w-2.5 h-2.5 rounded-full shadow-sm ring-1 ring-black/10"
+                    style={{ backgroundColor: color }}
+                />
+            )}
             <HeadlessSwitch
                 checked={checked}
                 onChange={onChange}
