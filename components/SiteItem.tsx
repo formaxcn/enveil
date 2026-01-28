@@ -44,16 +44,18 @@ export const SiteItem: React.FC<SiteItemProps> = ({ site, onToggle, onEdit, onDe
                 <div className="flex gap-3 text-[10px] font-medium text-gray-500 dark:text-slate-400 uppercase tracking-tight">
                     <span className="flex items-center gap-1">
                         <div className={clsx("w-1.5 h-1.5 rounded-full", site.backgroudEnable ? "bg-green-500" : "bg-gray-300 dark:bg-slate-700")} />
-                        BG: {site.backgroudEnable ? 'ON' : 'OFF'}
-                    </span>
-                    <span className="flex items-center gap-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                        POS: {site.Position}
+                        Background: {site.backgroudEnable ? 'ON' : 'OFF'}
                     </span>
                     <span className="flex items-center gap-1">
                         <div className={clsx("w-1.5 h-1.5 rounded-full", site.flagEnable ? "bg-green-500" : "bg-gray-300 dark:bg-slate-700")} />
-                        FLAG: {site.flagEnable ? 'ON' : 'OFF'}
+                        Corner Banner: {site.flagEnable ? 'ON' : 'OFF'}
                     </span>
+                    {site.flagEnable && (
+                        <span className="flex items-center gap-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                            Banner Position: {site.Position}
+                        </span>
+                    )}
                 </div>
             </div>
 
