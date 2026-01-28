@@ -10,7 +10,7 @@ export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
     name: 'AWS China',
     accountSelectionUrl: 'https://signin.amazonaws.cn/saml',
     consoleDomainPattern: '*://*.amazonaws.cn/*',
-    samlUrl: 'https://signin.amazonaws.cn/saml',
+    samlUrl: '',
     selectors: {
       accountSelection: {
         // AWS CN SAML account selection containers
@@ -50,7 +50,7 @@ export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
     name: 'AWS Global',
     accountSelectionUrl: 'https://signin.aws.amazon.com/saml',
     consoleDomainPattern: '*://*.aws.amazon.com/*',
-    samlUrl: 'https://signin.aws.amazon.com/saml',
+    samlUrl: '',
     selectors: {
       accountSelection: {
         accountContainers: [
@@ -80,89 +80,6 @@ export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
         ]
       }
     }
-  },
-  [CloudProvider.AZURE]: {
-    provider: CloudProvider.AZURE,
-    name: 'Microsoft Azure',
-    accountSelectionUrl: 'https://portal.azure.com',
-    consoleDomainPattern: '*://*.azure.com/*',
-    samlUrl: 'https://login.microsoftonline.com',
-    selectors: {
-      accountSelection: {
-        accountContainers: [
-          '.tenant-picker-item',
-          '[data-automation-id="tenant-switcher-item"]',
-          '.directory-item'
-        ],
-        roleElements: [
-          '.tenant-name',
-          '.directory-name',
-          '[data-automation-id="tenant-name"]'
-        ]
-      },
-      console: {
-        accountContainers: [
-          '#meControl',
-          '.fxs-topbar-user',
-          '[data-automation-id="user-menu"]'
-        ],
-        roleElements: [
-          '.fxs-topbar-user-name',
-          '.user-display-name',
-          '[data-automation-id="user-name"]'
-        ]
-      }
-    }
-  },
-  [CloudProvider.GCP]: {
-    provider: CloudProvider.GCP,
-    name: 'Google Cloud Platform',
-    accountSelectionUrl: 'https://console.cloud.google.com',
-    consoleDomainPattern: '*://*.cloud.google.com/*',
-    samlUrl: 'https://accounts.google.com',
-    selectors: {
-      accountSelection: {
-        accountContainers: [
-          '.cfc-project-switcher-item',
-          '[data-value*="project"]',
-          '.p6n-project-switcher-item'
-        ],
-        roleElements: [
-          '.cfc-project-name',
-          '.p6n-project-name',
-          '[data-automation-id="project-name"]'
-        ]
-      },
-      console: {
-        accountContainers: [
-          '.gb_Aa',
-          '.p6n-header-user-menu',
-          '[data-automation-id="user-menu"]'
-        ],
-        roleElements: [
-          '.gb_Ab',
-          '.p6n-user-name',
-          '[data-automation-id="user-display-name"]'
-        ]
-      }
-    }
-  },
-  [CloudProvider.CUSTOM]: {
-    provider: CloudProvider.CUSTOM,
-    name: 'Custom Cloud Provider',
-    accountSelectionUrl: '',
-    consoleDomainPattern: '',
-    samlUrl: '',
-    selectors: {
-      accountSelection: {
-        accountContainers: [],
-        roleElements: []
-      },
-      console: {
-        accountContainers: [],
-        roleElements: []
-      }
-    }
   }
 };
 
@@ -185,10 +102,10 @@ export function getAllCloudTemplates(): CloudTemplate[] {
  */
 export function getCloudTemplateNames(): Record<CloudProvider, string> {
   const names: Record<CloudProvider, string> = {} as Record<CloudProvider, string>;
-  
+
   Object.entries(HARDCODED_CLOUD_TEMPLATES).forEach(([provider, template]) => {
     names[provider as CloudProvider] = template.name;
   });
-  
+
   return names;
 }

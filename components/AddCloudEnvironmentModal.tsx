@@ -21,33 +21,29 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
     const [name, setName] = useState('');
     const [enabled, setEnabled] = useState(true);
     const [provider, setProvider] = useState<CloudProvider>(CloudProvider.AWS_GLOBAL);
-    const [customTemplate, setCustomTemplate] = useState<CloudTemplate | null>(null);
+    const [samlUrl, setSamlUrl] = useState('');
 
     useEffect(() => {
         if (environment) {
             setName(environment.name);
             setEnabled(environment.enable);
             setProvider(environment.provider);
-            if (environment.provider === CloudProvider.CUSTOM) {
-                setCustomTemplate(environment.template);
-            }
+            setSamlUrl(environment.template.samlUrl || '');
         } else {
             setName('');
             setEnabled(true);
             setProvider(CloudProvider.AWS_GLOBAL);
-            setCustomTemplate(null);
+            setSamlUrl('');
         }
     }, [environment, isOpen]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        let template: CloudTemplate;
-        if (provider === CloudProvider.CUSTOM && customTemplate) {
-            template = customTemplate;
-        } else {
-            template = getCloudTemplate(provider);
-        }
+        const template: CloudTemplate = {
+            ...getCloudTemplate(provider),
+            samlUrl
+        };
 
         const env: CloudEnvironment = environment ? {
             ...environment,
@@ -112,33 +108,36 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
                         </select>
                     </div>
 
-                    {provider !== CloudProvider.CUSTOM && (
-                        <div className="p-4 bg-blue-50/50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-900 flex flex-col gap-3">
-                            <div className="flex items-center gap-2 text-blue-800 dark:text-blue-400 font-black text-[10px] uppercase tracking-widest">
-                                <Terminal className="w-4 h-4" /> Template Auto-filled
+                    <div className="p-4 bg-blue-50/50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-900 flex flex-col gap-3">
+                        <div className="flex items-center gap-2 text-blue-800 dark:text-blue-400 font-black text-[10px] uppercase tracking-widest">
+                            <Terminal className="w-4 h-4" /> Template Auto-filled
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-[10px] font-bold uppercase tracking-tight">
+                            <div>
+                                <label className="block text-gray-400 dark:text-slate-500 mb-1">Console Pattern</label>
+                                <code className="block bg-white dark:bg-slate-900 p-2 rounded-lg font-mono truncate border dark:border-slate-800 lowercase text-gray-600 dark:text-slate-300">
+                                    {getCloudTemplate(provider).consoleDomainPattern}
+                                </code>
                             </div>
-                            <div className="grid grid-cols-2 gap-4 text-[10px] font-bold uppercase tracking-tight">
-                                <div>
-                                    <label className="block text-gray-400 dark:text-slate-500 mb-1">Console Pattern</label>
-                                    <code className="block bg-white dark:bg-slate-900 p-2 rounded-lg font-mono truncate border dark:border-slate-800 lowercase text-gray-600 dark:text-slate-300">
-                                        {getCloudTemplate(provider).consoleDomainPattern}
-                                    </code>
-                                </div>
-                                <div>
-                                    <label className="block text-gray-400 dark:text-slate-500 mb-1">Account URL</label>
-                                    <code className="block bg-white dark:bg-slate-900 p-2 rounded-lg font-mono truncate border dark:border-slate-800 lowercase text-gray-600 dark:text-slate-300">
-                                        {getCloudTemplate(provider).accountSelectionUrl}
-                                    </code>
-                                </div>
+                            <div>
+                                <label className="block text-gray-400 dark:text-slate-500 mb-1">Account URL</label>
+                                <code className="block bg-white dark:bg-slate-900 p-2 rounded-lg font-mono truncate border dark:border-slate-800 lowercase text-gray-600 dark:text-slate-300">
+                                    {getCloudTemplate(provider).accountSelectionUrl}
+                                </code>
                             </div>
                         </div>
-                    )}
+                    </div>
 
-                    {provider === CloudProvider.CUSTOM && (
-                        <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-2xl border border-orange-100 dark:border-orange-900 italic text-sm text-orange-800 dark:text-orange-400">
-                            Custom configuration is advanced. For standard providers, please use the predefined templates.
-                        </div>
-                    )}
+                    <div className="form-group font-bold">
+                        <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2">SAML URL</label>
+                        <input
+                            type="url"
+                            value={samlUrl}
+                            onChange={(e) => setSamlUrl(e.target.value)}
+                            className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            placeholder="https://..."
+                        />
+                    </div>
                 </div>
 
                 <div className="flex gap-3 pt-4">

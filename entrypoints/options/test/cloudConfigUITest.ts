@@ -17,7 +17,7 @@ export class CloudConfigUITest {
    */
   public static testCloudConfigurationUI(): boolean {
     console.log('🧪 Testing cloud configuration UI functionality...');
-    
+
     try {
       // Check if cloud roles tab exists
       const cloudRolesTab = document.getElementById('cloud-roles-tab');
@@ -53,11 +53,11 @@ export class CloudConfigUITest {
    */
   public static testSelectorConfigurationSystem(): boolean {
     console.log('🧪 Testing selector configuration system...');
-    
+
     try {
       // Test AWS CN template has selectors
       const awsCnTemplate = getCloudTemplate(CloudProvider.AWS_CN);
-      
+
       if (!awsCnTemplate.selectors) {
         this.testMessages['selectors'] = 'AWS CN template missing selectors';
         return false;
@@ -105,7 +105,7 @@ export class CloudConfigUITest {
    */
   public static testLayoutChanges(): boolean {
     console.log('🧪 Testing layout changes...');
-    
+
     try {
       // Create a test environment to check layout
       const testEnv = createCloudEnvironment('Test Layout Environment', CloudProvider.AWS_CN);
@@ -121,7 +121,7 @@ export class CloudConfigUITest {
 
       const cloudConfigManager = appController.getCloudConfigurationManager();
       const addResult = cloudConfigManager.addCloudEnvironment(testEnv);
-      
+
       if (!addResult.isValid) {
         this.testMessages['layout'] = `Failed to add test environment: ${addResult.errors.join(', ')}`;
         return false;
@@ -185,17 +185,14 @@ export class CloudConfigUITest {
    */
   public static testEnhancedCloudTemplate(): boolean {
     console.log('🧪 Testing enhanced CloudTemplate with DOM selectors...');
-    
+
     try {
       // Test all cloud providers have enhanced templates
-      const providers = [CloudProvider.AWS_CN, CloudProvider.AWS_GLOBAL, CloudProvider.AZURE, CloudProvider.GCP];
-      
+      const providers = [CloudProvider.AWS_CN, CloudProvider.AWS_GLOBAL];
+
       for (const provider of providers) {
         const template = getCloudTemplate(provider);
-        
-        // Skip custom provider as it has empty selectors by design
-        if (provider === CloudProvider.CUSTOM) continue;
-        
+
         if (!template.selectors) {
           this.testMessages['enhancedTemplate'] = `${provider} template missing selectors`;
           return false;
@@ -207,14 +204,14 @@ export class CloudConfigUITest {
           return false;
         }
 
-        if (!Array.isArray(template.selectors.accountSelection.accountContainers) || 
-            template.selectors.accountSelection.accountContainers.length === 0) {
+        if (!Array.isArray(template.selectors.accountSelection.accountContainers) ||
+          template.selectors.accountSelection.accountContainers.length === 0) {
           this.testMessages['enhancedTemplate'] = `${provider} template has invalid accountContainers`;
           return false;
         }
 
-        if (!Array.isArray(template.selectors.accountSelection.roleElements) || 
-            template.selectors.accountSelection.roleElements.length === 0) {
+        if (!Array.isArray(template.selectors.accountSelection.roleElements) ||
+          template.selectors.accountSelection.roleElements.length === 0) {
           this.testMessages['enhancedTemplate'] = `${provider} template has invalid roleElements`;
           return false;
         }
@@ -225,14 +222,14 @@ export class CloudConfigUITest {
           return false;
         }
 
-        if (!Array.isArray(template.selectors.console.accountContainers) || 
-            template.selectors.console.accountContainers.length === 0) {
+        if (!Array.isArray(template.selectors.console.accountContainers) ||
+          template.selectors.console.accountContainers.length === 0) {
           this.testMessages['enhancedTemplate'] = `${provider} template has invalid console accountContainers`;
           return false;
         }
 
-        if (!Array.isArray(template.selectors.console.roleElements) || 
-            template.selectors.console.roleElements.length === 0) {
+        if (!Array.isArray(template.selectors.console.roleElements) ||
+          template.selectors.console.roleElements.length === 0) {
           this.testMessages['enhancedTemplate'] = `${provider} template has invalid console roleElements`;
           return false;
         }
@@ -251,11 +248,11 @@ export class CloudConfigUITest {
    */
   public static testRoleManagementTable(): boolean {
     console.log('🧪 Testing role management table functionality...');
-    
+
     try {
       // Test role creation and validation
       const testRole = createCloudRole('Test Role', ['admin', 'developer'], '#ff0000');
-      
+
       if (!testRole.id || !testRole.name || !testRole.keywords || !testRole.highlightColor) {
         this.testMessages['roleTable'] = 'Role creation failed - missing required fields';
         return false;
@@ -291,7 +288,7 @@ export class CloudConfigUITest {
    */
   public static testConfigurationPersistence(): boolean {
     console.log('🧪 Testing configuration persistence and validation...');
-    
+
     try {
       // Get the app controller
       const appController = (window as any).enveilApp?.getController();
@@ -301,10 +298,10 @@ export class CloudConfigUITest {
       }
 
       const cloudConfigManager = appController.getCloudConfigurationManager();
-      
+
       // Test configuration validation
       const validationResult = cloudConfigManager.validateCloudConfiguration();
-      
+
       if (!validationResult) {
         this.testMessages['persistence'] = 'Configuration validation method not available';
         return false;
@@ -312,10 +309,10 @@ export class CloudConfigUITest {
 
       // Test configuration statistics
       const stats = cloudConfigManager.getCloudConfigStats();
-      
-      if (typeof stats.environmentCount !== 'number' || 
-          typeof stats.accountCount !== 'number' || 
-          typeof stats.roleCount !== 'number') {
+
+      if (typeof stats.environmentCount !== 'number' ||
+        typeof stats.accountCount !== 'number' ||
+        typeof stats.roleCount !== 'number') {
         this.testMessages['persistence'] = 'Configuration statistics are not properly calculated';
         return false;
       }
@@ -333,7 +330,7 @@ export class CloudConfigUITest {
    */
   public static runCheckpointTests(): { passed: number; total: number; results: { [key: string]: { passed: boolean; message: string } } } {
     console.log('🚀 Running Cloud Configuration UI Checkpoint Tests...');
-    
+
     const tests = [
       { name: 'cloudUI', test: this.testCloudConfigurationUI },
       { name: 'selectors', test: this.testSelectorConfigurationSystem },
@@ -350,12 +347,12 @@ export class CloudConfigUITest {
       try {
         const result = test.call(this);
         this.testResults[name] = result;
-        
+
         results[name] = {
           passed: result,
           message: this.testMessages[name] || 'No message'
         };
-        
+
         if (result) {
           passed++;
           console.log(`✅ ${name}: PASSED - ${this.testMessages[name]}`);
@@ -374,7 +371,7 @@ export class CloudConfigUITest {
 
     const total = tests.length;
     console.log(`\n📊 Test Results: ${passed}/${total} tests passed`);
-    
+
     if (passed === total) {
       console.log('🎉 All checkpoint tests passed! Configuration UI is functional.');
     } else {
@@ -389,18 +386,18 @@ export class CloudConfigUITest {
    */
   public static generateTestReport(): string {
     const testResults = this.runCheckpointTests();
-    
+
     let report = '# Cloud Configuration UI Checkpoint Test Report\n\n';
     report += `**Overall Result:** ${testResults.passed}/${testResults.total} tests passed\n\n`;
-    
+
     report += '## Test Details\n\n';
-    
+
     Object.entries(testResults.results).forEach(([testName, result]) => {
       const status = result.passed ? '✅ PASSED' : '❌ FAILED';
       report += `### ${testName}: ${status}\n`;
       report += `${result.message}\n\n`;
     });
-    
+
     report += '## Summary\n\n';
     if (testResults.passed === testResults.total) {
       report += '🎉 **All tests passed!** The cloud configuration UI is fully functional and meets all checkpoint requirements.\n\n';
@@ -414,7 +411,7 @@ export class CloudConfigUITest {
     } else {
       report += '⚠️ **Some tests failed.** Please review the failed tests and address the issues before proceeding.\n';
     }
-    
+
     return report;
   }
 }
