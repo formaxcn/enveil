@@ -353,7 +353,7 @@ const App: React.FC = () => {
                                     ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-2xl shadow-blue-500/10 ring-1 ring-black/5 dark:ring-white/10'
                                     : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300'
                             )}>
-                                <Settings className="w-4 h-4" /> Configs
+                                <Settings className="w-4 h-4" /> Sites
                             </Tab>
                             <Tab className={({ selected }) => clsx(
                                 'flex-1 flex items-center justify-center gap-2.5 px-12 py-3.5 text-xs font-black uppercase tracking-[0.2em] rounded-xl outline-none transition-all',
@@ -361,7 +361,7 @@ const App: React.FC = () => {
                                     ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-2xl shadow-blue-500/10 ring-1 ring-black/5 dark:ring-white/10'
                                     : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300'
                             )}>
-                                <Cloud className="w-4 h-4" /> Cloud
+                                <Cloud className="w-4 h-4" /> Clouds
                             </Tab>
                         </TabList>
 
@@ -375,7 +375,7 @@ const App: React.FC = () => {
                             {activeTab === 0 ? (
                                 <><FolderPlus className="w-4 h-4 transition-transform group-hover:scale-125" /> Add Group</>
                             ) : (
-                                <><Plus className="w-4 h-4 transition-transform group-hover:scale-125" /> Add Env</>
+                                <><Plus className="w-4 h-4 transition-transform group-hover:scale-125" /> Add Provider</>
                             )}
                         </button>
                     </div>
