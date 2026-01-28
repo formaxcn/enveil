@@ -612,6 +612,17 @@ button:focus-visible {
   padding: 15px;
 }
 
+#cloud-roles-container .header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+#cloud-roles-container .header-row h3 {
+  margin: 0;
+}
+
 .cloud-environment {
   margin-bottom: 30px;
   background-color: var(--panel-bg);
