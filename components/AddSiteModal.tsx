@@ -36,9 +36,14 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
         if (site) {
             setFormData(site);
         } else {
+            // Pick a random color from defaultColors for new sites
+            const randomColor = defaultColors.length > 0
+                ? defaultColors[Math.floor(Math.random() * defaultColors.length)]
+                : '#4a9eff';
+
             setFormData({
                 ...INITIAL_SITE,
-                color: defaultColors[0] || '#4a9eff'
+                color: randomColor
             });
         }
     }, [site, isOpen, defaultColors]);
@@ -73,11 +78,11 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                             onChange={(e) => setFormData({ ...formData, matchPattern: e.target.value })}
                             className="w-full bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 rounded-xl text-sm p-2 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors border"
                         >
-                            <option value="everything">Everything</option>
-                            <option value="url">Full URL</option>
-                            <option value="urlPrefix">Starts with</option>
-                            <option value="domain">Domain</option>
-                            <option value="regex">Regex Match</option>
+                            <option value="everything" className="bg-white dark:bg-slate-900">Everything</option>
+                            <option value="url" className="bg-white dark:bg-slate-900">Full URL</option>
+                            <option value="urlPrefix" className="bg-white dark:bg-slate-900">Starts with</option>
+                            <option value="domain" className="bg-white dark:bg-slate-900">Domain</option>
+                            <option value="regex" className="bg-white dark:bg-slate-900">Regex Match</option>
                         </select>
                     </div>
                     <div className="col-span-2">

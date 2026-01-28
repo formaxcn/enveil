@@ -32,7 +32,7 @@ export const SiteItem: React.FC<SiteItemProps> = ({ site, onToggle, onEdit, onDe
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                     <span
-                        className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider text-white shadow-sm ring-1 ring-white/20"
+                        className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white shadow-sm ring-1 ring-white/20"
                         style={{ backgroundColor: site.color }}
                     >
                         {site.envName}

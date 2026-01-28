@@ -107,7 +107,7 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
                             className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none border transition-colors"
                         >
                             {Object.entries(providerNames).map(([id, name]) => (
-                                <option key={id} value={id}>{name}</option>
+                                <option key={id} value={id} className="bg-white dark:bg-slate-900">{name}</option>
                             ))}
                         </select>
                     </div>

@@ -225,23 +225,20 @@ const App: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex transition-colors duration-300 selection:bg-blue-100 selection:text-blue-900 dark:selection:bg-blue-900/40 dark:selection:text-blue-200">
             {/* Sidebar */}
-            <aside className="w-80 border-r dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-8 space-y-10 h-screen sticky top-0 overflow-y-auto flex flex-col">
-                <div className="space-y-6">
-                    <div className="flex items-center gap-3 mb-10">
+            <aside className="w-80 border-r dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-8 space-y-12 h-screen sticky top-0 overflow-y-auto flex flex-col scrollbar-thin">
+                <div className="space-y-10">
+                    <div className="flex items-center gap-3 mb-12">
                         <div className="p-3 bg-blue-600 rounded-2xl shadow-xl shadow-blue-500/20">
                             <Zap className="w-6 h-6 text-white" />
                         </div>
                         <div>
                             <h1 className="text-xl font-black text-gray-900 dark:text-white tracking-tighter">ENVEIL</h1>
-                            <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-[0.2em]">Environment Visualizer</p>
+                            <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-[0.2em]">Visualizer</p>
                         </div>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="space-y-10">
                         <div className="space-y-4">
-                            <h2 className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                                <Settings className="w-3.5 h-3.5" /> General Settings
-                            </h2>
                             <div className="p-5 bg-gray-50 dark:bg-slate-800/40 rounded-[2rem] space-y-4 border border-gray-100 dark:border-slate-800 transition-all hover:border-gray-200 dark:hover:border-slate-700">
                                 <Switch
                                     label="Browser Sync"
@@ -252,7 +249,6 @@ const App: React.FC = () => {
                         </div>
 
                         <div className="space-y-4">
-                            <h2 className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest">Global Palette</h2>
                             <div className="grid grid-cols-5 gap-3">
                                 {config.defaultColors.map((color, idx) => (
                                     <div key={idx} className="relative aspect-square group">
@@ -264,14 +260,14 @@ const App: React.FC = () => {
                                                 newColors[idx] = e.target.value.toUpperCase();
                                                 saveConfig({ ...config, defaultColors: newColors });
                                             }}
-                                            className="absolute inset-0 w-full h-full rounded-xl cursor-pointer border-2 border-white dark:border-slate-800 shadow-sm transition-transform group-hover:scale-110 z-10"
+                                            className="absolute inset-0 w-full h-full rounded-full cursor-pointer border-2 border-white dark:border-slate-800 shadow-sm transition-transform group-hover:scale-110 z-10"
                                         />
-                                        <div className="absolute inset-0 bg-blue-500/10 dark:bg-blue-400/10 rounded-xl animate-pulse blur-md opacity-0 group-hover:opacity-100" />
+                                        <div className="absolute inset-0 bg-blue-500/10 dark:bg-blue-400/10 rounded-full animate-pulse blur-md opacity-0 group-hover:opacity-100" />
                                     </div>
                                 ))}
                                 <button
                                     onClick={() => saveConfig({ ...config, defaultColors: [...config.defaultColors, '#4A9EFF'] })}
-                                    className="aspect-square border-2 border-dashed border-gray-200 dark:border-slate-800 rounded-xl flex items-center justify-center text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-all hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:scale-110"
+                                    className="aspect-square border-2 border-dashed border-gray-200 dark:border-slate-800 rounded-full flex items-center justify-center text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-all hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:scale-110"
                                 >
                                     <Plus className="w-5 h-5" />
                                 </button>
@@ -305,36 +301,31 @@ const App: React.FC = () => {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 p-12 max-w-7xl mx-auto w-full relative">
+            <main className="flex-1 p-12 lg:p-16 max-w-[1400px] mx-auto w-full relative h-screen overflow-y-auto scrollbar-thin">
                 {/* Background Decoration */}
-                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/5 dark:bg-blue-400/5 rounded-full blur-[120px] pointer-events-none -z-10" />
-                <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-purple-500/5 dark:bg-purple-400/5 rounded-full blur-[100px] pointer-events-none -z-10" />
+                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-500/5 dark:bg-blue-400/5 rounded-full blur-[150px] pointer-events-none -z-10" />
+                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-500/5 dark:bg-purple-400/5 rounded-full blur-[120px] pointer-events-none -z-10" />
 
                 <TabGroup selectedIndex={activeTab} onChange={setActiveTab}>
-                    <div className="flex items-end justify-between mb-12">
-                        <div>
-                            <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter mb-4">
-                                Settings Console
-                            </h2>
-                            <TabList className="flex gap-1.5 bg-gray-200/50 dark:bg-slate-800/50 p-1.5 rounded-2xl backdrop-blur-md border border-white/20 dark:border-slate-800">
-                                <Tab className={({ selected }) => clsx(
-                                    'flex items-center gap-2.5 px-10 py-3 text-xs font-black uppercase tracking-[0.2em] rounded-xl outline-none transition-all',
-                                    selected
-                                        ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-2xl shadow-blue-500/10 ring-1 ring-black/5 dark:ring-white/10'
-                                        : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300'
-                                )}>
-                                    <Settings className="w-4 h-4" /> Configs
-                                </Tab>
-                                <Tab className={({ selected }) => clsx(
-                                    'flex items-center gap-2.5 px-10 py-3 text-xs font-black uppercase tracking-[0.2em] rounded-xl outline-none transition-all',
-                                    selected
-                                        ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-2xl shadow-blue-500/10 ring-1 ring-black/5 dark:ring-white/10'
-                                        : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300'
-                                )}>
-                                    <Cloud className="w-4 h-4" /> Cloud
-                                </Tab>
-                            </TabList>
-                        </div>
+                    <div className="flex items-center justify-between mb-12">
+                        <TabList className="flex gap-2 bg-gray-200/50 dark:bg-slate-800/50 p-2 rounded-2xl backdrop-blur-md border border-white/20 dark:border-slate-800">
+                            <Tab className={({ selected }) => clsx(
+                                'flex items-center gap-2.5 px-12 py-3.5 text-xs font-black uppercase tracking-[0.2em] rounded-xl outline-none transition-all',
+                                selected
+                                    ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-2xl shadow-blue-500/10 ring-1 ring-black/5 dark:ring-white/10'
+                                    : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300'
+                            )}>
+                                <Settings className="w-4 h-4" /> Configs
+                            </Tab>
+                            <Tab className={({ selected }) => clsx(
+                                'flex items-center gap-2.5 px-12 py-3.5 text-xs font-black uppercase tracking-[0.2em] rounded-xl outline-none transition-all',
+                                selected
+                                    ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-2xl shadow-blue-500/10 ring-1 ring-black/5 dark:ring-white/10'
+                                    : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300'
+                            )}>
+                                <Cloud className="w-4 h-4" /> Cloud
+                            </Tab>
+                        </TabList>
 
                         <div className="flex gap-4">
                             <button
@@ -342,7 +333,7 @@ const App: React.FC = () => {
                                     if (activeTab === 0) setIsGroupModalOpen(true);
                                     else setIsEnvModalOpen(true);
                                 }}
-                                className="group flex items-center gap-3 px-8 py-4 bg-blue-600 text-white text-xs font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-blue-700 transition-all shadow-2xl shadow-blue-600/20 active:scale-95 hover:shadow-blue-600/40"
+                                className="group flex items-center gap-3 px-10 py-4 bg-blue-600 text-white text-xs font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-blue-700 transition-all shadow-2xl shadow-blue-600/20 active:scale-95 hover:shadow-blue-600/40"
                             >
                                 {activeTab === 0 ? (
                                     <><FolderPlus className="w-4 h-4 transition-transform group-hover:scale-125" /> Add Group</>

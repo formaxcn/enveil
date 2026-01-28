@@ -1,7 +1,41 @@
 @import "tailwindcss";
 
 @layer base {
-  body {
+  :root {
     @apply bg-gray-50 text-gray-900;
+    scrollbar-color: #d1d5db transparent;
+    scrollbar-width: thin;
+  }
+
+  .dark {
+    @apply bg-slate-950 text-slate-100;
+    scrollbar-color: #334155 transparent;
+    color-scheme: dark;
+  }
+
+  /* Custom scrollbar for webkit browsers if needed, but scrollbar-color covers most modern cases */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-200 rounded-full;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-slate-800;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-300;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-700;
   }
 }

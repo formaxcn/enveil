@@ -40,12 +40,17 @@ export const AddCloudAccountModal: React.FC<AddCloudAccountModalProps> = ({
         if (account) {
             setFormData(account);
         } else {
+            // Pick a random color from defaultColors for new accounts
+            const randomColor = defaultColors.length > 0
+                ? defaultColors[Math.floor(Math.random() * defaultColors.length)]
+                : '#4a9eff';
+
             setFormData({
                 ...INITIAL_ACCOUNT,
                 id: crypto.randomUUID(),
                 created: Date.now(),
                 modified: Date.now(),
-                color: defaultColors[0] || '#4a9eff'
+                color: randomColor
             } as CloudAccount);
         }
     }, [account, isOpen, defaultColors]);
@@ -224,7 +229,7 @@ export const AddCloudAccountModal: React.FC<AddCloudAccountModalProps> = ({
                                                         value={role.highlightColor}
                                                         onChange={(e) => updateRole(idx, { highlightColor: e.target.value, highlightStyle: { ...role.highlightStyle, backgroundColor: e.target.value } })}
                                                         disabled={editingRoleIndex !== idx}
-                                                        className="w-8 h-8 rounded-lg cursor-pointer disabled:opacity-50 ring-1 ring-black/5 dark:ring-white/10"
+                                                        className="w-8 h-8 rounded-full cursor-pointer disabled:opacity-50 ring-1 ring-black/5 dark:ring-white/10"
                                                     />
                                                 </div>
                                             </td>

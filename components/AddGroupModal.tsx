@@ -33,10 +33,15 @@ export const AddGroupModal: React.FC<AddGroupModalProps> = ({
             setName(group.name);
             setDefaults(group.defaults || DEFAULT_DEFAULTS);
         } else {
+            // Pick a random color from defaultColors for new groups
+            const randomColor = defaultColors.length > 0
+                ? defaultColors[Math.floor(Math.random() * defaultColors.length)]
+                : '#4a9eff';
+
             setName('');
             setDefaults({
                 ...DEFAULT_DEFAULTS,
-                color: defaultColors[0] || '#4a9eff'
+                color: randomColor
             });
         }
     }, [group, isOpen, defaultColors]);
