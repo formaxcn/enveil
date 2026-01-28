@@ -1,9 +1,20 @@
 {
-  "name": "wxt-starter",
-  "description": "manifest.json description",
+  "name": "enveil",
+  "description": "Environment Visual Identifier for Chrome - Visual indicators for different environments",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "keywords": ["chrome-extension", "environment", "development", "devops", "visual-indicator"],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/formaxcn/enveil.git"
+  },
+  "homepage": "https://formaxcn.github.io/enveil/",
+  "bugs": {
+    "url": "https://github.com/formaxcn/enveil/issues"
+  },
   "scripts": {
     "dev": "wxt",
     "dev:firefox": "wxt -b firefox",
@@ -12,7 +23,9 @@
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
     "compile": "tsc --noEmit",
-    "postinstall": "wxt prepare"
+    "postinstall": "wxt prepare",
+    "docs:serve": "cd docs && bundle exec jekyll serve",
+    "docs:build": "cd docs && bundle exec jekyll build"
   },
   "devDependencies": {
     "sharp": "^0.34.5",

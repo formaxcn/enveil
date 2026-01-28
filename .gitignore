@@ -24,3 +24,8 @@ web-ext.config.ts
 *.njsproj
 *.sln
 *.sw?
+
+# Extension packaging
+extension-key.pem
+*.crx
+*.zip
