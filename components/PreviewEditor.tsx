@@ -61,7 +61,7 @@ export const PreviewEditor: React.FC<PreviewEditorProps> = ({ config, onChange, 
                 {config.flagEnable && (
                     <div
                         className={clsx(
-                            "absolute w-32 py-1 text-[10px] font-black uppercase tracking-widest text-center text-white shadow-lg pointer-events-none ring-1 ring-white/20",
+                            "absolute w-32 py-1 text-[10px] font-black tracking-widest text-center text-white shadow-lg pointer-events-none ring-1 ring-white/20",
                             ribbonClasses[config.Position as keyof typeof ribbonClasses] || ribbonClasses.leftTop
                         )}
                         style={{ backgroundColor: config.color }}

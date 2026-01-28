@@ -19,6 +19,13 @@ const patternMap: Record<string, string> = {
     'regex': 'Regex Match'
 };
 
+const positionMap: Record<string, string> = {
+    'leftTop': 'Top Left',
+    'rightTop': 'Top Right',
+    'leftBottom': 'Bottom Left',
+    'rightBottom': 'Bottom Right',
+};
+
 export const SiteItem: React.FC<SiteItemProps> = ({ site, onToggle, onEdit, onDelete }) => {
     return (
         <div className={clsx(
@@ -32,7 +39,7 @@ export const SiteItem: React.FC<SiteItemProps> = ({ site, onToggle, onEdit, onDe
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                     <span
-                        className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white shadow-sm ring-1 ring-white/20"
+                        className="px-3 py-1 rounded-full text-[10px] font-black tracking-wider text-white shadow-sm ring-1 ring-white/20"
                         style={{ backgroundColor: site.color }}
                     >
                         {site.envName}
@@ -41,21 +48,15 @@ export const SiteItem: React.FC<SiteItemProps> = ({ site, onToggle, onEdit, onDe
                         {patternMap[site.matchPattern] || site.matchPattern}: {site.matchValue}
                     </span>
                 </div>
-                <div className="flex gap-3 text-[10px] font-medium text-gray-500 dark:text-slate-400 uppercase tracking-tight">
+                <div className="flex gap-3 text-[10px] font-medium text-gray-500 dark:text-slate-400 tracking-tight">
                     <span className="flex items-center gap-1">
                         <div className={clsx("w-1.5 h-1.5 rounded-full", site.backgroudEnable ? "bg-green-500" : "bg-gray-300 dark:bg-slate-700")} />
-                        Background: {site.backgroudEnable ? 'ON' : 'OFF'}
+                        Background Effect: {site.backgroudEnable ? 'On' : 'Off'}
                     </span>
                     <span className="flex items-center gap-1">
                         <div className={clsx("w-1.5 h-1.5 rounded-full", site.flagEnable ? "bg-green-500" : "bg-gray-300 dark:bg-slate-700")} />
-                        Corner Banner: {site.flagEnable ? 'ON' : 'OFF'}
+                        Corner Banner: {site.flagEnable ? 'On: ' + positionMap[site.Position] : 'Off'}
                     </span>
-                    {site.flagEnable && (
-                        <span className="flex items-center gap-1">
-                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                            Banner Position: {site.Position}
-                        </span>
-                    )}
                 </div>
             </div>
 
