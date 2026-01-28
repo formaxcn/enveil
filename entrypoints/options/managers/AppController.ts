@@ -300,6 +300,7 @@ export class AppController {
       colorGroup.appendChild(removeBtn);
       container.appendChild(colorGroup);
     });
+    
     // Always show add button - no limit on colors
     const addBtn = document.createElement('button');
     addBtn.className = 'add-color-btn';

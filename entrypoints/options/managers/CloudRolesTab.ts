@@ -126,12 +126,12 @@ export class CloudRolesTab {
       <div class="environment-header-left">
         <div class="environment-toggle"></div>
         <div>
-          <div class="environment-title">${this.escapeHtml(environment.name)}</div>
+          <h3 class="environment-title">${this.escapeHtml(environment.name)}</h3>
           <div class="environment-provider">${environment.provider} • ${environment.accounts.length} accounts</div>
         </div>
       </div>
       <div class="environment-header-actions">
-        <button class="add-account-btn btn btn-secondary btn-sm" title="Add Account">
+        <button class="add-account-btn" title="Add Account">
           <i class="fas fa-plus"></i> Add Account
         </button>
         <button class="group-edit-btn" title="Edit Environment">

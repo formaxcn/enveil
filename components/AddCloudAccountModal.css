@@ -407,7 +407,7 @@
     position: relative;
 }
 
-.unified-color-picker {
+.color-picker-wrapper .unified-color-picker {
     position: absolute;
     opacity: 0;
     pointer-events: none;
