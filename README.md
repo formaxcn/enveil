@@ -1,6 +1,7 @@
 # Enveil - Environment Visual Identifier
 
-> **Status**: Beta / Active Development
+> **Status**: Beta / Active Development  
+> **Installation**: Download from [GitHub Releases](https://github.com/formaxcn/enveil/releases) (Chrome Web Store coming soon)
 
 A powerful Chrome extension for developers, DevOps engineers, and QA teams to visually distinguish different environments (Development, Staging, Production) through configurable banners, overlays, and intelligent URL matching.
 
@@ -40,7 +41,22 @@ A powerful Chrome extension for developers, DevOps engineers, and QA teams to vi
 
 ## 🎯 Quick Start
 
-### Installation (Development)
+### Installation
+
+**📦 Download from GitHub Releases (Recommended)**
+
+Since Enveil is not yet available on the Chrome Web Store, you can download pre-built packages from GitHub Releases:
+
+1. **Download**: Go to [GitHub Releases](https://github.com/formaxcn/enveil/releases) and download the latest `enveil-chrome-v*.zip`
+2. **Extract**: Unzip the downloaded file to a local folder
+3. **Install**: 
+   - Open `chrome://extensions/`
+   - Enable "Developer mode" (toggle in top-right)
+   - Click "Load unpacked"
+   - Select the extracted folder
+4. **Verify**: Extension icon should appear in your Chrome toolbar
+
+**🛠️ Build from Source (Development)**
 ```bash
 # Clone and build
 git clone https://github.com/formaxcn/enveil.git
@@ -56,6 +72,7 @@ bun run build
 ```
 
 ### Basic Configuration
+
 1. Click the Enveil icon → **Options**
 2. Create a configuration group (e.g., "Work Projects")
 3. Add a site rule:
@@ -67,6 +84,14 @@ bun run build
    Position: Top Right
    ```
 4. Visit `http://localhost:3000` and see your banner!
+
+**📸 Screenshots:**
+
+![Configuration Interface](./docs/assets/images/config.jpeg)
+*Configuration interface showing group management and site rules*
+
+![Example Usage](./docs/assets/images/example.jpeg)
+*Example of environment banner displayed on a webpage*
 
 ## 🎨 Common Use Cases
 
@@ -167,6 +192,8 @@ URL Matching → Content Script → Visual Indicators
 | **Firefox** | ✅ Compatible | Build with `bun run build:firefox` |
 | **Edge** | 🔄 Planned | Chromium-based, should work |
 
+> **Note**: Enveil is currently distributed via GitHub Releases. Chrome Web Store listing is planned for future releases.
+
 ## 📋 Roadmap
 
 ### **Current (v1.0)**
@@ -215,4 +242,4 @@ MIT License - see [LICENSE](./LICENSE) for details.
 
 **Never work on the wrong environment again!** 🎯
 
-[📖 Read the Docs](https://formaxcn.github.io/enveil/) | [🚀 Get Started](https://formaxcn.github.io/enveil/getting-started.html) | [⚙️ Configuration Guide](https://formaxcn.github.io/enveil/configuration.html)
+**📦 [Download from GitHub Releases](https://github.com/formaxcn/enveil/releases)** | [📖 Read the Docs](https://formaxcn.github.io/enveil/) | [🚀 Get Started](https://formaxcn.github.io/enveil/getting-started.html) | [⚙️ Configuration Guide](https://formaxcn.github.io/enveil/configuration.html)
