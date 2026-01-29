@@ -51,7 +51,8 @@ export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
 export enum CloudProvider {
   AWS_CN = 'aws-cn',
-  AWS_GLOBAL = 'aws-global'
+  AWS_GLOBAL = 'aws-global',
+  CUSTOM = 'custom'
 }
 
 export interface CloudTemplate {

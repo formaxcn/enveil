@@ -5,6 +5,23 @@ import { CloudProvider, CloudTemplate } from '../entrypoints/options/types';
  * These templates provide pre-configured settings for common cloud providers
  */
 export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
+  [CloudProvider.CUSTOM]: {
+    provider: CloudProvider.CUSTOM,
+    name: 'Custom',
+    accountSelectionUrl: '',
+    consoleDomainPattern: '',
+    samlUrl: '',
+    selectors: {
+      accountSelection: {
+        accountContainers: [],
+        roleElements: []
+      },
+      console: {
+        accountContainers: [],
+        roleElements: []
+      }
+    }
+  },
   [CloudProvider.AWS_CN]: {
     provider: CloudProvider.AWS_CN,
     name: 'AWS China',
