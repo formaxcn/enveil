@@ -6,17 +6,27 @@ import { Matcher } from '../../utils/matcher';
 import { AppConfig, SiteConfig } from '../options/types';
 import { clsx } from 'clsx';
 
+const patternMap: Record<string, string> = {
+    'everything': 'Everything',
+    'url': 'Full URL',
+    'urlPrefix': 'Starts with',
+    'domain': 'Domain',
+    'regex': 'Regex Match'
+};
+
+const positionMap: Record<string, string> = {
+    'leftTop': 'Top Left',
+    'rightTop': 'Top Right',
+    'leftBottom': 'Bottom Left',
+    'rightBottom': 'Bottom Right',
+};
+
 const App: React.FC = () => {
-    const [isEnabled, setIsEnabled] = useState(true);
     const [matchingSites, setMatchingSites] = useState<{ site: SiteConfig, groupIdx: number, siteIdx: number }[]>([]);
     const [currentHost, setCurrentHost] = useState('');
 
     useEffect(() => {
         const init = async () => {
-            // Load global enable state
-            const enabled = await storage.getItem<boolean>('local:isEnabled');
-            setIsEnabled(enabled ?? true);
-
             // Get current tab URL
             const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
             if (tab?.url) {
@@ -54,11 +64,6 @@ const App: React.FC = () => {
         }
     };
 
-    const toggleEnable = async (val: boolean) => {
-        setIsEnabled(val);
-        await storage.setItem('local:isEnabled', val);
-    };
-
     const toggleSite = async (groupIdx: number, siteIdx: number, enabled: boolean) => {
         const config = await storage.getItem<AppConfig>('sync:appConfig');
         if (config) {
@@ -84,15 +89,6 @@ const App: React.FC = () => {
 
     return (
         <div className="w-80 bg-white dark:bg-slate-900 p-5 space-y-5 transition-colors duration-300">
-            {/* Global Switch */}
-            <div className="p-4 bg-gray-50 dark:bg-slate-800/50 rounded-2xl border border-gray-100 dark:border-slate-800">
-                <Switch
-                    label="Enable Enveil"
-                    checked={isEnabled}
-                    onChange={toggleEnable}
-                />
-            </div>
-
             {/* Matching Sites */}
             {matchingSites.length > 0 && (
                 <div className="space-y-3">
@@ -104,14 +100,41 @@ const App: React.FC = () => {
                         {matchingSites.map(({ site, groupIdx, siteIdx }, idx) => (
                             <div
                                 key={idx}
-                                className="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm transition-all hover:border-blue-500/30"
+                                className={clsx(
+                                    "flex items-center gap-3 p-3 rounded-xl border transition-all duration-300",
+                                    site.enable
+                                        ? "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 shadow-sm"
+                                        : "bg-gray-50/50 dark:bg-slate-900/50 border-gray-100 dark:border-slate-800 opacity-75"
+                                )}
                             >
                                 <Switch
-                                    label={site.envName || "Untitled Config"}
                                     checked={site.enable}
                                     onChange={(val) => toggleSite(groupIdx, siteIdx, val)}
-                                    color={site.color}
                                 />
+
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span
+                                            className="px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider text-white shadow-sm ring-1 ring-white/20"
+                                            style={{ backgroundColor: site.color }}
+                                        >
+                                            {site.envName}
+                                        </span>
+                                        <span className="text-xs font-bold text-gray-900 dark:text-slate-100 truncate">
+                                            {patternMap[site.matchPattern] || site.matchPattern}: {site.matchValue}
+                                        </span>
+                                    </div>
+                                    <div className="flex gap-2 text-[10px] font-medium text-gray-500 dark:text-slate-400 tracking-tight">
+                                        <span className="flex items-center gap-1">
+                                            <div className={clsx("w-1.5 h-1.5 rounded-full", site.backgroudEnable ? "bg-green-500" : "bg-gray-300 dark:bg-slate-700")} />
+                                            Background: {site.backgroudEnable ? 'On' : 'Off'}
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                            <div className={clsx("w-1.5 h-1.5 rounded-full", site.flagEnable ? "bg-green-500" : "bg-gray-300 dark:bg-slate-700")} />
+                                            Banner: {site.flagEnable ? 'On' : 'Off'}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -135,9 +158,6 @@ const App: React.FC = () => {
                 </button>
             </div>
 
-            <div className="pt-2 text-center">
-                <p className="text-[10px] font-black text-gray-300 dark:text-slate-600 uppercase tracking-[0.2em]">Environment Discovery</p>
-            </div>
         </div>
     );
 };
