@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
-import { Settings, Cloud, FileUp, FileDown, Plus, FolderPlus, Info, ChevronRight, Zap, X, Edit3 } from 'lucide-react';
+import { Globe, Cloudy, Cloud, FileUp, FileDown, Plus, FolderPlus, Info, ChevronRight, Zap, X, Edit3 } from 'lucide-react';
 import { Switch } from '../../components/Switch';
 import { ConfigGroup } from '../../components/ConfigGroup';
 import { CloudEnvironmentItem } from '../../components/CloudEnvironmentItem';
@@ -230,7 +230,35 @@ const App: React.FC = () => {
                 reader.onload = (event) => {
                     try {
                         const imported = JSON.parse(event.target?.result as string);
-                        saveConfig({ ...DEFAULT_CONFIG, ...imported });
+
+                        // Check if it's a full config (has browserSync or both settings and cloudEnvironments)
+                        const isFullConfig = imported.browserSync !== undefined ||
+                            (imported.settings && imported.cloudEnvironments);
+
+                        // Check if it's a config group export (only has settings)
+                        const isGroupExport = imported.settings && !imported.cloudEnvironments && !imported.browserSync;
+
+                        // Check if it's a cloud provider export (only has cloudEnvironments)
+                        const isCloudExport = imported.cloudEnvironments && !imported.settings && !imported.browserSync;
+
+                        if (isFullConfig) {
+                            // Full config import - require confirmation
+                            if (confirm("This will overwrite all your current settings. Continue?")) {
+                                saveConfig({ ...DEFAULT_CONFIG, ...imported });
+                            }
+                        } else if (isGroupExport) {
+                            // Config group export - append to existing settings
+                            const newSettings = [...config.settings, ...imported.settings];
+                            saveConfig({ ...config, settings: newSettings });
+                            alert(`Imported ${imported.settings.length} config group(s).`);
+                        } else if (isCloudExport) {
+                            // Cloud provider export - append to existing cloudEnvironments
+                            const newEnvs = [...(config.cloudEnvironments || []), ...imported.cloudEnvironments];
+                            saveConfig({ ...config, cloudEnvironments: newEnvs });
+                            alert(`Imported ${imported.cloudEnvironments.length} cloud provider(s).`);
+                        } else {
+                            alert("Invalid config file format.");
+                        }
                     } catch (err) {
                         alert("Invalid config file.");
                     }
@@ -353,7 +381,7 @@ const App: React.FC = () => {
                                     ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-2xl shadow-blue-500/10 ring-1 ring-black/5 dark:ring-white/10'
                                     : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300'
                             )}>
-                                <Settings className="w-4 h-4" /> Sites
+                                <Globe className="w-4 h-4" /> Site Configurations
                             </Tab>
                             <Tab className={({ selected }) => clsx(
                                 'flex-1 flex items-center justify-center gap-2.5 px-12 py-3.5 text-xs font-black uppercase tracking-[0.2em] rounded-xl outline-none transition-all',
@@ -361,7 +389,7 @@ const App: React.FC = () => {
                                     ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-2xl shadow-blue-500/10 ring-1 ring-black/5 dark:ring-white/10'
                                     : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300'
                             )}>
-                                <Cloud className="w-4 h-4" /> Clouds
+                                <Cloudy className="w-4 h-4" /> Cloud Environments
                             </Tab>
                         </TabList>
 
@@ -448,6 +476,14 @@ const App: React.FC = () => {
                                             setIsEnvModalOpen(true);
                                         }}
                                         onDelete={() => handleDeleteEnv(env.id)}
+                                        onExport={() => {
+                                            const data = JSON.stringify({ cloudEnvironments: [env] }, null, 2);
+                                            const blob = new Blob([data], { type: 'application/json' });
+                                            const a = document.createElement('a');
+                                            a.href = URL.createObjectURL(blob);
+                                            a.download = `enveil-cloud-${env.name}.json`;
+                                            a.click();
+                                        }}
                                         onToggleAccount={(accId, enabled) => handleToggleAccount(env.id, accId, enabled)}
                                         onEditAccount={(acc) => {
                                             setEditingAccount({ envId: env.id, account: acc });

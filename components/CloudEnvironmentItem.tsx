@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Edit3, Trash2, Cloud, ChevronRight, ChevronDown } from 'lucide-react';
+import { Plus, Edit3, Trash2, Cloud, Download } from 'lucide-react';
 import { Switch } from './Switch';
 import { CloudEnvironment, CloudAccount } from '../entrypoints/options/types';
 import { clsx } from 'clsx';
@@ -10,6 +10,7 @@ interface CloudEnvironmentProps {
     onAddAccount: () => void;
     onEdit: () => void;
     onDelete: () => void;
+    onExport: () => void;
     onToggleAccount: (accountId: string, enabled: boolean) => void;
     onEditAccount: (account: CloudAccount) => void;
     onDeleteAccount: (accountId: string) => void;
@@ -21,6 +22,7 @@ export const CloudEnvironmentItem: React.FC<CloudEnvironmentProps> = ({
     onAddAccount,
     onEdit,
     onDelete,
+    onExport,
     onToggleAccount,
     onEditAccount,
     onDeleteAccount
@@ -35,16 +37,12 @@ export const CloudEnvironmentItem: React.FC<CloudEnvironmentProps> = ({
             <div className="bg-gray-50/50 dark:bg-slate-800/50 px-6 py-4 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <Switch checked={environment.enable} onChange={onToggle} />
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl">
-                            <Cloud className="w-5 h-5" />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-gray-900 dark:text-slate-100 leading-tight">{environment.name}</h3>
-                            <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
-                                {environment.provider} • {environment.accounts.length} accounts
-                            </p>
-                        </div>
+                    <div className="flex items-center gap-2">
+                        <Cloud className="w-5 h-5 text-gray-400 dark:text-slate-500" />
+                        <h3 className="font-bold text-gray-900 dark:text-slate-100">{environment.name}</h3>
+                        <span className="text-xs font-medium text-gray-400 dark:text-slate-500 bg-gray-200/50 dark:bg-slate-800 px-2 py-0.5 rounded-full border dark:border-slate-700">
+                            {environment.accounts.length} accounts
+                        </span>
                     </div>
                 </div>
 
@@ -56,10 +54,13 @@ export const CloudEnvironmentItem: React.FC<CloudEnvironmentProps> = ({
                         <Plus className="w-4 h-4" /> Add Account
                     </button>
                     <div className="w-px h-4 bg-gray-200 dark:bg-slate-800 mx-1" />
-                    <button onClick={onEdit} className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 rounded-md transition-colors">
+                    <button onClick={onEdit} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 rounded-md transition-colors" title="Edit Provider">
                         <Edit3 className="w-4 h-4" />
                     </button>
-                    <button onClick={onDelete} className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 rounded-md transition-colors">
+                    <button onClick={onExport} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 rounded-md transition-colors" title="Export Provider">
+                        <Download className="w-4 h-4" />
+                    </button>
+                    <button onClick={onDelete} className="p-1.5 text-gray-400 hover:text-red-600 rounded-md transition-colors" title="Delete Provider">
                         <Trash2 className="w-4 h-4" />
                     </button>
                 </div>
