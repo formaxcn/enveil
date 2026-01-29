@@ -4,9 +4,9 @@ title: Enveil Documentation
 nav_order: 1
 ---
 
-# Enveil - Environment Visual Identifier
+# Enveil - Environment Veil
 
-**Enveil** is a powerful Chrome browser extension designed for developers, DevOps engineers, and QA teams to visually distinguish between different environments (Development, Staging, Production) through configurable visual indicators.
+> **Enveil** = **En**vironment + **Veil** — A Chrome extension that drapes a visual veil over your web environments, helping developers instantly identify whether they're on DEV, STAGING, or PRODUCTION.
 
 ## 🚀 Core Features
 
@@ -99,5 +99,7 @@ Enveil is open source and welcomes contributions! Whether you're fixing bugs, ad
 
 **Ready to eliminate environment confusion?** Install Enveil and never accidentally work on the wrong environment again!
 
-[Get Started](./getting-started/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[🌐 Install from Chrome Web Store](https://chromewebstore.google.com/detail/enveil/mnejdnnkcdilfcfkplekhelfelkbjiia){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[📦 Download from GitHub Releases](https://github.com/formaxcn/enveil/releases){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Get Started](./getting-started/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [View on GitHub](https://github.com/formaxcn/enveil){: .btn .fs-5 .mb-4 .mb-md-0 }

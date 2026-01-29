@@ -1,7 +1,7 @@
 # Enveil - Environment Visual Identifier
 
 > **Status**: Beta / Active Development  
-> **Installation**: Download from [GitHub Releases](https://github.com/formaxcn/enveil/releases) (Chrome Web Store coming soon)
+> **Installation**: [Chrome Web Store](https://chromewebstore.google.com/detail/enveil/mnejdnnkcdilfcfkplekhelfelkbjiia) | [GitHub Releases](https://github.com/formaxcn/enveil/releases)
 
 A powerful Chrome extension for developers, DevOps engineers, and QA teams to visually distinguish different environments (Development, Staging, Production) through configurable banners, overlays, and intelligent URL matching.
 
@@ -43,9 +43,18 @@ A powerful Chrome extension for developers, DevOps engineers, and QA teams to vi
 
 ### Installation
 
-**📦 Download from GitHub Releases (Recommended)**
+**🌐 Install from Chrome Web Store (Recommended)**
 
-Since Enveil is not yet available on the Chrome Web Store, you can download pre-built packages from GitHub Releases:
+The easiest way to install Enveil is from the Chrome Web Store:
+
+1. **Visit**: Go to [Chrome Web Store - Enveil](https://chromewebstore.google.com/detail/enveil/mnejdnnkcdilfcfkplekhelfelkbjiia)
+2. **Install**: Click "Add to Chrome" button
+3. **Confirm**: Accept the permission request
+4. **Verify**: Extension icon should appear in your Chrome toolbar
+
+**📦 Download from GitHub Releases**
+
+Alternatively, you can download pre-built packages from GitHub Releases:
 
 1. **Download**: Go to [GitHub Releases](https://github.com/formaxcn/enveil/releases) and download the latest `enveil-chrome-v*.zip`
 2. **Extract**: Unzip the downloaded file to a local folder
@@ -192,7 +201,7 @@ URL Matching → Content Script → Visual Indicators
 | **Firefox** | ✅ Compatible | Build with `bun run build:firefox` |
 | **Edge** | 🔄 Planned | Chromium-based, should work |
 
-> **Note**: Enveil is currently distributed via GitHub Releases. Chrome Web Store listing is planned for future releases.
+> **Note**: Enveil is available on both Chrome Web Store and GitHub Releases.
 
 ## 📋 Roadmap
 
@@ -242,4 +251,4 @@ MIT License - see [LICENSE](./LICENSE) for details.
 
 **Never work on the wrong environment again!** 🎯
 
-**📦 [Download from GitHub Releases](https://github.com/formaxcn/enveil/releases)** | [📖 Read the Docs](https://formaxcn.github.io/enveil/) | [🚀 Get Started](https://formaxcn.github.io/enveil/getting-started.html) | [⚙️ Configuration Guide](https://formaxcn.github.io/enveil/configuration.html)
+**🌐 [Install from Chrome Web Store](https://chromewebstore.google.com/detail/enveil/mnejdnnkcdilfcfkplekhelfelkbjiia)** | **📦 [Download from GitHub Releases](https://github.com/formaxcn/enveil/releases)** | [📖 Read the Docs](https://formaxcn.github.io/enveil/) | [🚀 Get Started](https://formaxcn.github.io/enveil/getting-started.html) | [⚙️ Configuration Guide](https://formaxcn.github.io/enveil/configuration.html)

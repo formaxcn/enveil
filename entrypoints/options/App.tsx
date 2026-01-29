@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
-import { Globe, Cloudy, Cloud, FileUp, FileDown, Plus, FolderPlus, Info, ChevronRight, Zap, X, Edit3 } from 'lucide-react';
+import { Globe, Cloudy, Cloud, FileUp, FileDown, Plus, FolderPlus, Info, ChevronRight, Zap, X, Edit3, Github, BookOpen } from 'lucide-react';
 import { Switch } from '../../components/Switch';
 import { ConfigGroup } from '../../components/ConfigGroup';
 import { CloudEnvironmentItem } from '../../components/CloudEnvironmentItem';
@@ -360,8 +360,28 @@ const App: React.FC = () => {
                 </div>
 
                 <div className="text-center">
-                    <div className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-gray-100 dark:bg-slate-800/80 rounded-full text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-[0.2em] shadow-inner transition-colors">
-                        Build v1.{new Date().toISOString().split('T')[0].replace(/-/g, '')}.{new Date().toTimeString().split(' ')[0].replace(/:/g, '')}
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-gray-100 dark:bg-slate-800/80 rounded-full text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-[0.2em] shadow-inner transition-colors">
+                        <span>Build v1.{new Date().toISOString().split('T')[0].replace(/-/g, '')}.{new Date().toTimeString().split(' ')[0].replace(/:/g, '')}</span>
+                        <div className="flex items-center gap-1.5 ml-1 border-l border-gray-300 dark:border-slate-600 pl-2">
+                            <a
+                                href="https://github.com/formaxcn/enveil"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                title="GitHub"
+                            >
+                                <Github className="w-3.5 h-3.5" />
+                            </a>
+                            <a
+                                href="https://formaxcn.github.io/enveil/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                title="Documentation"
+                            >
+                                <BookOpen className="w-3.5 h-3.5" />
+                            </a>
+                        </div>
                     </div>
                 </div>
             </aside>

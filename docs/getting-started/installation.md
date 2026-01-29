@@ -7,7 +7,7 @@ nav_order: 1
 
 # Installation Guide
 
-Enveil is currently in development and needs to be installed by loading an unpacked extension. This guide provides detailed installation instructions.
+This guide provides detailed installation instructions for Enveil. You can install it from Chrome Web Store (easiest) or download from GitHub Releases.
 
 ## System Requirements
 
@@ -19,7 +19,26 @@ Enveil is currently in development and needs to be installed by loading an unpac
 
 ## Installation Methods
 
-### Method 1: Download from GitHub Releases (Recommended)
+### Method 1: Install from Chrome Web Store (Recommended)
+
+The easiest way to install Enveil is directly from the Chrome Web Store:
+
+1. **Visit Chrome Web Store**
+   - Go to [Chrome Web Store - Enveil](https://chromewebstore.google.com/detail/enveil/mnejdnnkcdilfcfkplekhelfelkbjiia)
+   - Or search "Enveil" in the Chrome Web Store
+
+2. **Install Extension**
+   - Click the "Add to Chrome" button
+   - Review the permission request
+   - Click "Add extension" to confirm
+
+3. **Verify Installation**
+   - Extension icon should appear in your Chrome toolbar
+   - Enveil will be automatically updated when new versions are released
+
+### Method 2: Download from GitHub Releases
+
+If you prefer manual installation or want to use a specific version:
 
 1. **Download Build Package**
    - Visit [GitHub Releases page](https://github.com/formaxcn/enveil/releases)
@@ -33,7 +52,7 @@ Enveil is currently in development and needs to be installed by loading an unpac
    - Click "Load unpacked"
    - Select the extracted folder
 
-### Method 2: Build from Source
+### Method 3: Build from Source
 
 1. **Clone Repository**
    ```bash

@@ -199,7 +199,7 @@ export default defineConfig({
   manifest: {
     name: "Enveil",
     version: "1.0.0",
-    description: "Environment Visual Identifier for Chrome",
+    description: "Environment Veil - Visual environment identifier for Chrome",
     icons: {
       "16": "icon/16.png",
       "32": "icon/32.png", 
