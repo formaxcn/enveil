@@ -3,15 +3,21 @@
 > **Status**: Beta / Active Development  
 > **Installation**: [Chrome Web Store](https://chromewebstore.google.com/detail/enveil/mnejdnnkcdilfcfkplekhelfelkbjiia) | [GitHub Releases](https://github.com/formaxcn/enveil/releases)
 
-A powerful Chrome extension for developers, DevOps engineers, and QA teams to visually distinguish different environments (Development, Staging, Production) through configurable banners, overlays, and intelligent URL matching.
+A powerful Chrome extension for developers, DevOps engineers, and QA teams to visually distinguish different environments (Development, Staging, Production) and cloud accounts through configurable banners, overlays, and intelligent URL matching.
 
 ## 🚀 Features
 
 ### **Visual Environment Identification**
 - **Corner Banners**: Rotated ribbons in 4 positions with custom colors and text
-- **Background Overlays**: Subtle full-page tinting (5% opacity) for critical environments
+- **Background Overlays**: Subtle full-page tinting for critical environments
 - **Shadow DOM Isolation**: UI elements don't interfere with page functionality
 - **Real-time Updates**: Changes apply immediately without page refresh
+
+### **Cloud Environment Highlighting** ⭐ NEW
+- **AWS Support**: Pre-configured templates for AWS China and AWS Global
+- **Account Highlighting**: Visual distinction between different cloud accounts
+- **Role Highlighting**: Keyword-based text emphasis for role names
+- **Account Selection Pages**: Enhanced indicators on SAML login pages
 
 ### **Intelligent URL Matching**
 - **5 Matching Strategies**: Domain, URL Prefix, Exact URL, Regex, and smart "Everything" mode
@@ -20,11 +26,33 @@ A powerful Chrome extension for developers, DevOps engineers, and QA teams to vi
 - **Regex Power**: Advanced pattern matching for complex scenarios
 
 ### **Advanced Configuration Management**
+- **Dual-Tab Interface**: Separate tabs for Site Configurations and Cloud Environments
 - **Configuration Groups**: Organize rules by project, team, or environment type
 - **Group Defaults**: Set default colors, positions, and settings for new sites
-- **Import/Export**: Share configurations as JSON files (full or individual groups)
+- **Import/Export**: Share configurations as JSON files (full, groups, or cloud)
 - **Browser Sync**: Cross-device synchronization with conflict resolution
 - **10 Default Colors**: Carefully chosen palette optimized for different environments
+
+## 📸 Screenshots
+
+### Configuration Interface
+
+![Cloud Portal](./docs/assets/images/clouds-portal.png)
+*Cloud environments portal with AWS provider configuration*
+
+![Site Configuration](./docs/assets/images/sites-config-portal.png)
+*Site configuration portal showing group management*
+
+![Cloud Environment Configuration](./docs/assets/images/clouds-env-config.png)
+*Cloud environment configuration with provider selection*
+
+### Visual Indicators
+
+![Site Example](./docs/assets/images/sites-example.png)
+*Example of environment banner displayed on a webpage*
+
+![AWS Account Selection](./docs/assets/images/clouds-example-aws.png)
+*AWS account selection page with account highlighting and role keyword emphasis*
 
 ## 📖 Documentation
 
@@ -94,13 +122,18 @@ bun run build
    ```
 4. Visit `http://localhost:3000` and see your banner!
 
-**📸 Screenshots:**
+### Cloud Environment Setup
 
-![Configuration Interface](./docs/assets/images/config.jpeg)
-*Configuration interface showing group management and site rules*
-
-![Example Usage](./docs/assets/images/example.jpeg)
-*Example of environment banner displayed on a webpage*
+1. Switch to the **"Cloud Environments"** tab
+2. Click **"Add Provider"** and select AWS China or AWS Global
+3. Add a cloud account:
+   ```
+   Name: prod-main
+   Background Color: Red (#f44336)
+   Account Pattern: domain: 123456789012
+   ```
+4. Add role keywords to highlight (e.g., "Administrator", "ReadOnly")
+5. Visit your AWS SAML sign-in page to see the highlighting!
 
 ## 🎨 Common Use Cases
 
@@ -123,6 +156,15 @@ bun run build
 🔵 CLIENT-A (client-a.app.com) - Blue banner
 🟢 CLIENT-B (client-b.app.com) - Green banner
 🟠 CLIENT-C (client-c.app.com) - Orange banner
+```
+
+### Cloud Environment Management
+```
+☁️ AWS-Production
+├── Account: prod-main (123456789012) - Red background
+│   └── Roles: Admin, ReadOnly (yellow highlight)
+└── Account: dev-sandbox (987654321098) - Blue background
+    └── Roles: Developer, Tester (yellow highlight)
 ```
 
 ## 🛠️ Development
@@ -157,9 +199,13 @@ enveil/
 │   ├── background.ts     # Service worker
 │   ├── content.ts        # Content script
 │   ├── popup/           # Extension popup
-│   └── options/         # Configuration interface
+│   └── options/         # Configuration interface (React + TypeScript)
 ├── components/          # Reusable UI components
+│   ├── CloudHighlighter.ts
+│   └── AccountSelectionHighlighter.ts
 ├── utils/              # Utility functions
+│   ├── cloudMatcher.ts
+│   └── cloudTemplates.ts
 ├── docs/               # Documentation (GitHub Pages)
 └── public/             # Static assets
 ```
@@ -169,8 +215,9 @@ enveil/
 ### Core Components
 - **Background Service Worker**: Handles tab events, configuration sync, and URL matching
 - **Content Script**: Injects visual indicators using Shadow DOM
-- **Options Page**: Comprehensive configuration interface with manager pattern
+- **Options Page**: Comprehensive configuration interface with dual-tab layout
 - **Popup**: Quick access and status indicator
+- **Cloud Highlighter**: Handles cloud account and role highlighting
 
 ### Data Flow
 ```
@@ -181,8 +228,8 @@ URL Matching → Content Script → Visual Indicators
 ### Key Technologies
 - **Framework**: WXT (Web Extension Tools) with Manifest V3
 - **Language**: TypeScript with full type safety
+- **UI**: React with Tailwind CSS
 - **Storage**: Chrome Storage API (sync for cross-device)
-- **UI**: Vanilla HTML/CSS/JS with modular components
 - **Build**: Bun with TypeScript compilation
 
 ## 🔒 Privacy & Security
@@ -211,6 +258,9 @@ URL Matching → Content Script → Visual Indicators
 - ✅ Configuration groups with defaults
 - ✅ Import/export system
 - ✅ Browser synchronization
+- ✅ Cloud environment highlighting (AWS)
+- ✅ Account selection page highlighting
+- ✅ Role keyword highlighting
 
 ### **Near Term (v1.1)**
 - 🔄 Complete Shadow DOM implementation
@@ -219,6 +269,7 @@ URL Matching → Content Script → Visual Indicators
 - 🔄 Rule testing tools
 
 ### **Future (v2.0+)**
+- 📋 Azure and GCP support
 - 📋 Drag & drop rule reordering
 - 📋 Conditional logic (AND/OR)
 - 📋 Time-based rules

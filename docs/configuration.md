@@ -6,9 +6,23 @@ nav_order: 3
 
 # Configuration Guide
 
-Enveil uses a hierarchical configuration system with **Configuration Groups** containing multiple **Site Rules**. This allows you to organize rules logically (e.g., "Work Projects", "Personal Sites") and apply group-level defaults.
+Enveil uses a hierarchical configuration system with support for both traditional **Site Configurations** and **Cloud Environments**. This guide covers both configuration types in detail.
 
 ## Configuration Structure
+
+### Dual-Tab Interface
+
+The Options page is organized into two main tabs:
+
+1. **Site Configurations**: Traditional URL-based environment identification
+2. **Cloud Environments**: Cloud provider account and role highlighting
+
+![Cloud Portal](./assets/images/clouds-portal.png)
+*Configuration interface with Site and Cloud Environment tabs*
+
+---
+
+## Site Configuration
 
 ### Configuration Groups
 Each group contains:
@@ -16,6 +30,9 @@ Each group contains:
 - **Enable/Disable**: Toggle entire group on/off
 - **Site Rules**: List of URL matching rules
 - **Group Defaults**: Default settings for new sites in this group
+
+![Site Portal Group](./assets/images/sites-portal-group.png)
+*Site configuration groups with multiple environment rules*
 
 ### Site Rules
 Each site rule defines:
@@ -131,6 +148,152 @@ When `Background Enable` is checked:
 - **Z-index**: Below banners but above page content
 - **Use Case**: Dangerous environments (Production) warning
 
+---
+
+## Cloud Environment Configuration
+
+### Overview
+
+Cloud Environment configuration allows you to visually distinguish between different cloud provider accounts and roles. Currently supported providers:
+
+- **AWS China**: `*.amazonaws.cn` domains
+- **AWS Global**: `*.aws.amazon.com` domains
+- **Custom**: User-defined providers
+
+![Cloud Environment Configuration](./assets/images/clouds-env-config.png)
+*Cloud environment configuration with provider selection*
+
+### Cloud Environment Structure
+
+```
+Cloud Environment
+├── Provider: AWS China / AWS Global / Custom
+├── Name: "Production AWS"
+├── Enable/Disable: Toggle
+└── Accounts: List of cloud accounts
+    ├── Account 1: "prod-main"
+    │   ├── Background Color: #f44336 (Red)
+    │   ├── Account Patterns: URL matching patterns
+    │   └── Roles: Keyword highlighting rules
+    └── Account 2: "dev-sandbox"
+        ├── Background Color: #4a9eff (Blue)
+        ├── Account Patterns: URL matching patterns
+        └── Roles: Keyword highlighting rules
+```
+
+### Cloud Account Configuration
+
+Each cloud account defines:
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| **Name** | Account identifier | `prod-main` |
+| **Enable** | Toggle account highlighting | ✓ |
+| **Background Enable** | Show background overlay | ✓ |
+| **Background Color** | Account highlight color | `#f44336` |
+| **Account Patterns** | URL patterns to match account | `domain: 123456789012` |
+| **Roles** | Role keyword highlighting rules | `Admin`, `ReadOnly` |
+
+### Account Patterns
+
+Account patterns use the same matching strategies as site configurations:
+
+- **Domain**: Match account by account ID in domain
+- **URL Prefix**: Match by URL path
+- **Regex**: Complex pattern matching
+- **Everything**: Auto-detection
+
+**AWS Account Pattern Examples**:
+```
+# Match by account ID (12 digits)
+Pattern: domain
+Value: 123456789012
+
+# Match by account name in URL
+Pattern: urlPrefix
+Value: https://123456789012.signin.aws.amazon.com
+
+# Match multiple accounts with regex
+Pattern: regex
+Value: (123456789012|987654321098)
+```
+
+### Role Highlighting
+
+Roles define keywords to highlight within cloud pages:
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| **Enable** | Toggle role highlighting | ✓ |
+| **Match Pattern** | Matching strategy | `contains` or `regex` |
+| **Match Value** | Keyword to highlight | `Administrator` |
+
+**Role Configuration Examples**:
+```
+# Highlight Administrator roles
+Match Pattern: contains
+Match Value: Administrator
+
+# Highlight multiple role patterns
+Match Pattern: regex
+Match Value: (Admin|PowerUser|FullAccess)
+
+# Highlight specific role names
+Match Pattern: contains
+Match Value: ReadOnlyAccess
+```
+
+### Visual Effects
+
+#### Account Background Highlighting
+- **Opacity**: 25% (0.25) with border
+- **Border**: 2px solid with glow effect
+- **Coverage**: Account containers on selection pages
+- **Transition**: Smooth 0.3s ease animation
+
+#### Role Text Highlighting
+- **Background**: Yellow (`#ffeb3b`)
+- **Text Color**: Black (`#000000`)
+- **Font Weight**: Bold
+- **Padding**: 1px 3px
+- **Border Radius**: 2px
+
+![AWS Account Selection Page](./assets/images/clouds-example-aws.png)
+*AWS account selection page with account highlighting and role keyword emphasis*
+
+### Cloud Provider Templates
+
+#### AWS China Template
+```typescript
+{
+  provider: 'aws-cn',
+  accountSelectionUrl: 'https://signin.amazonaws.cn/saml',
+  consoleDomainPattern: '*://*.amazonaws.cn/*',
+  selectors: {
+    accountSelection: {
+      accountContainers: ['fieldset > div.saml-account:has(> .expandable-container .saml-account-name)'],
+      roleElements: ['.saml-role-name', '.saml-role-description', 'label.saml-role']
+    },
+    console: {
+      accountContainers: ['#nav-usernav-popover', '.awsc-username-display'],
+      roleElements: ['.awsc-username-display .awsc-username', '.awsc-role-display-name']
+    }
+  }
+}
+```
+
+#### AWS Global Template
+```typescript
+{
+  provider: 'aws-global',
+  accountSelectionUrl: 'https://signin.aws.amazon.com/saml',
+  consoleDomainPattern: '*://*.aws.amazon.com/*',
+  // Same selectors as AWS China
+}
+```
+
+---
+
 ## Configuration Groups
 
 ### Group Management
@@ -149,6 +312,8 @@ Each group can define defaults for new sites:
   color: "#f44336"          // Default red for production
 }
 ```
+
+---
 
 ## Color System
 
@@ -170,19 +335,26 @@ Enveil includes 10 predefined colors:
 - **Hex Input**: Direct hex code entry
 - **Validation**: Automatic color format validation
 
+---
+
 ## Import/Export System
 
 ### Export Options
 
 #### **Full Configuration Export**
-- **Filename**: `enveil.json`
-- **Contents**: Complete configuration including all groups and default colors
+- **Filename**: `enveil-config-YYYY-MM-DD.json`
+- **Contents**: Complete configuration including all groups and cloud environments
 - **Use Case**: Backup, sharing complete setups
 
 #### **Individual Group Export**
-- **Filename**: `enveil.group.json`
+- **Filename**: `enveil-group-{name}.json`
 - **Contents**: Single configuration group with its sites
 - **Use Case**: Sharing specific project configurations
+
+#### **Cloud Environment Export**
+- **Filename**: `enveil-cloud-{name}.json`
+- **Contents**: Single cloud environment with accounts and roles
+- **Use Case**: Sharing cloud provider configurations
 
 ### Import Options
 
@@ -192,9 +364,14 @@ Enveil includes 10 predefined colors:
 - **Validation**: Checks configuration structure and compatibility
 
 #### **Group Import**
-- **Behavior**: Adds group to existing configuration
+- **Behavior**: Adds groups to existing configuration
 - **Conflict Handling**: Renames if group name exists
 - **Validation**: Ensures group structure integrity
+
+#### **Cloud Import**
+- **Behavior**: Adds cloud environments to existing configuration
+- **Conflict Handling**: Renames if environment name exists
+- **Validation**: Ensures cloud configuration integrity
 
 ### Configuration Validation
 The system validates:
@@ -203,6 +380,8 @@ The system validates:
 - **Pattern Validity**: Tests regex patterns for syntax errors
 - **Color Formats**: Validates hex color codes
 - **Version Compatibility**: Checks for schema version compatibility
+
+---
 
 ## Browser Synchronization
 
@@ -223,12 +402,15 @@ When conflicts occur:
 ### Sync Data Structure
 ```typescript
 interface CloudSyncData {
-  configs: Setting[];        // Configuration groups
-  defaultColors: string[];   // Color palette
-  lastModified: number;      // Timestamp
-  version: string;           // Schema version
+  configs: Setting[];              // Configuration groups
+  cloudEnvironments: CloudEnvironment[];  // Cloud environments
+  defaultColors: string[];         // Color palette
+  lastModified: number;            // Timestamp
+  version: string;                 // Schema version
 }
 ```
+
+---
 
 ## Advanced Configuration
 
@@ -248,6 +430,8 @@ chrome-extension://[id]/options.html?action=addSite&domain=example.com&pattern=d
 - **Group Organization**: Disable unused groups for better performance
 - **Pattern Efficiency**: Use specific patterns over broad regex when possible
 
+---
+
 ## Best Practices
 
 ### Rule Organization
@@ -255,6 +439,13 @@ chrome-extension://[id]/options.html?action=addSite&domain=example.com&pattern=d
 2. **Specific to General**: Order rules from most specific to most general
 3. **Color Coding**: Use consistent colors for similar environments
 4. **Descriptive Names**: Use clear environment names (DEV, STAGING, PROD)
+
+### Cloud Configuration
+1. **Use Templates**: Start with built-in templates for quick setup
+2. **Account Patterns**: Use account IDs for precise matching
+3. **Role Keywords**: Use specific keywords (e.g., "Administrator" not "Admin")
+4. **Color Safety**: Use red/orange for production accounts as warning
+5. **Test First**: Verify highlighting on account selection pages
 
 ### Pattern Selection
 1. **Domain**: Best for entire sites and subdomains

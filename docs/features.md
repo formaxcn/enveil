@@ -10,24 +10,27 @@ Enveil provides comprehensive environment identification through visual indicato
 
 ## Core Features
 
-### ☁️ Cloud Role Highlighting
+### ☁️ Cloud Environment Highlighting
 **Advanced cloud platform environment and role identification**
 
+Enveil now supports intelligent cloud environment visualization for AWS, with support for other cloud providers coming soon.
+
 #### Three-Tier Cloud Configuration
-- **Cloud Environments**: Top-level grouping for cloud providers (AWS, Azure, GCP)
-- **Cloud Accounts**: Account-level configuration with background highlighting
+- **Cloud Providers**: Top-level grouping for cloud platforms (AWS China, AWS Global)
+- **Cloud Accounts**: Account-level configuration with background highlighting and role management
 - **Cloud Roles**: Role-specific keyword-based text highlighting
 
 #### Dual-Layer Visual System
-- **Account Background Highlighting**: Subtle full-page overlay for account identification
-- **Role Text Highlighting**: Keyword-based text emphasis for role names and descriptions
+- **Account Background Highlighting**: Subtle full-page overlay for account identification (25% opacity with border)
+- **Role Text Highlighting**: Keyword-based text emphasis for role names and descriptions (yellow highlight)
 - **Visual Hierarchy**: Account background as base layer, role text as overlay layer
+
+![Cloud Environment Configuration](./assets/images/clouds-env-config.png)
+*Cloud environment configuration interface showing provider selection and account management*
 
 #### Cloud Provider Templates
 - **AWS China (CN)**: Pre-configured for `https://signin.amazonaws.cn/saml` and `*.amazonaws.cn/*`
-- **AWS Global**: Support for global AWS environments
-- **Azure**: Microsoft Azure cloud platform support
-- **Google Cloud Platform**: GCP environment configuration
+- **AWS Global**: Support for global AWS environments with `https://signin.aws.amazon.com/saml`
 - **Custom Providers**: Flexible configuration for any cloud platform
 
 #### Smart Cloud Detection
@@ -35,6 +38,9 @@ Enveil provides comprehensive environment identification through visual indicato
 - **Console Interfaces**: Persistent highlighting in cloud provider consoles
 - **Dynamic Content**: Mutation observer handles dynamically loaded content
 - **Cross-Page Consistency**: Maintains highlighting across navigation
+
+![AWS Account Selection Page](./assets/images/clouds-example-aws.png)
+*AWS account selection page with account highlighting and role keyword emphasis*
 
 ### 🎯 Intelligent URL Matching
 **Five sophisticated matching strategies for maximum flexibility**
@@ -54,14 +60,29 @@ Enveil provides comprehensive environment identification through visual indicato
 - **Rotated Design**: 45-degree angled ribbons for visibility
 - **Shadow DOM**: Isolated from page styles to prevent conflicts
 
+![Site Configuration Portal](./assets/images/sites-config-portal.png)
+*Site configuration portal showing group management and site rules*
+
 #### Background Overlays
-- **Subtle Tinting**: 5% opacity full-page color overlay
+- **Subtle Tinting**: 5% opacity full-page color overlay for sites, 25% for cloud accounts
 - **Non-intrusive**: Doesn't interfere with page functionality
 - **Configurable**: Enable/disable per rule
 - **Perfect for Production**: Subtle warning for dangerous environments
 
+![Site Example with Banner](./assets/images/sites-example.png)
+*Example of environment banner displayed on a webpage*
+
 ### 📁 Configuration Management
 **Organize rules logically for better management**
+
+#### Dual-Tab Interface
+The configuration page features two main tabs:
+
+1. **Site Configurations**: Traditional URL-based environment identification
+2. **Cloud Environments**: Cloud provider account and role highlighting
+
+![Cloud Portal](./assets/images/clouds-portal.png)
+*Cloud environments portal showing configured cloud providers*
 
 #### Traditional Site Configuration
 - **Hierarchical Structure**: Groups contain multiple site rules
@@ -69,11 +90,20 @@ Enveil provides comprehensive environment identification through visual indicato
 - **Bulk Operations**: Enable/disable entire groups at once
 - **Export Individual Groups**: Share specific project configurations
 
+![Site Group Item](./assets/images/sites-group-item.png)
+*Site group item showing multiple environment rules*
+
 #### Cloud Configuration System
 - **Cloud Environments**: Organize by cloud provider and environment type
 - **Account Management**: Configure cloud accounts with URL patterns and background colors
 - **Role Management**: Define keyword-based role highlighting within accounts
 - **Template Integration**: Quick setup using pre-configured cloud provider templates
+
+![Cloud Portal with Environment](./assets/images/clouds-portal-env.png)
+*Cloud portal showing environment details and account list*
+
+![Site Portal Group](./assets/images/sites-portal-group.png)
+*Site configuration showing grouped environment rules*
 
 ### 🎨 Advanced Color System
 **Comprehensive color management**
@@ -98,10 +128,10 @@ Enveil provides comprehensive environment identification through visual indicato
 **Flexible configuration sharing and backup**
 
 #### Export Options
-- **Full Configuration**: Complete setup with all groups and cloud environments (`enveil.json`)
-- **Individual Groups**: Single group export (`enveil.group.json`)
-- **Cloud Environments**: Export cloud configurations separately
-- **Automatic Naming**: Intelligent filename generation
+- **Full Configuration**: Complete setup with all groups and cloud environments (`enveil-config-YYYY-MM-DD.json`)
+- **Individual Groups**: Single group export (`enveil-group-{name}.json`)
+- **Cloud Environments**: Export cloud configurations separately (`enveil-cloud-{name}.json`)
+- **Automatic Naming**: Intelligent filename generation with timestamps
 
 #### Import Options
 - **Full Import**: Replace entire configuration including cloud environments (with confirmation)
@@ -250,6 +280,38 @@ Quick actions via URL parameters:
 - **macOS**: Native support
 - **Linux**: Complete functionality
 
+## Cloud Environment Use Cases
+
+### AWS Multi-Account Setup
+```
+☁️ AWS-Production
+├── Account: prod-main (123456789012) - Red background
+│   └── Roles: Admin, ReadOnly
+├── Account: prod-security (123456789013) - Orange background
+│   └── Roles: SecurityAdmin, Auditor
+└── Account: prod-logging (123456789014) - Yellow background
+    └── Roles: LogAdmin
+
+☁️ AWS-Development  
+├── Account: dev-sandbox (987654321098) - Blue background
+│   └── Roles: Developer, Tester
+└── Account: dev-shared (987654321099) - Green background
+    └── Roles: DevOps, Admin
+```
+
+### Account Selection Page Highlighting
+When on AWS SAML sign-in pages:
+- **Account Containers**: Highlighted with configured background color
+- **Role Names**: Keywords highlighted in yellow (e.g., "Admin", "ReadOnly")
+- **Visual Distinction**: Different accounts have different background colors
+- **Quick Identification**: Instantly find the right account/role combination
+
+### Console Page Highlighting
+When in AWS Console:
+- **Background Overlay**: Subtle color tint based on account
+- **Role Text**: Keywords highlighted in navigation and headers
+- **Persistent**: Maintains highlighting across page navigation
+
 ## Planned Features
 
 ### 🚀 Upcoming Enhancements
@@ -277,6 +339,12 @@ Quick actions via URL parameters:
 - **User Agent Matching**: Match based on browser or device type
 - **Cookie-based Rules**: Match based on cookie presence/values
 
+#### More Cloud Providers
+- **Azure**: Microsoft Azure cloud platform support
+- **Google Cloud Platform**: GCP environment configuration
+- **Alibaba Cloud**: Aliyun support
+- **Custom Providers**: User-defined provider templates
+
 ## Feature Comparison
 
 | Feature | Basic Use | Advanced Use | Power User |
@@ -286,6 +354,7 @@ Quick actions via URL parameters:
 | Configuration | Single Rules | Groups | + Defaults, Sync |
 | Management | Manual Setup | Import/Export | + Browser Sync |
 | Customization | Basic Colors | Custom Colors | + Unlimited Palette |
+| Cloud Support | - | AWS | + Multi-Provider |
 
 ## Getting the Most from Enveil
 
@@ -295,6 +364,8 @@ Quick actions via URL parameters:
 3. **Color Code Consistently**: Use the same colors for similar environments across projects
 4. **Test Patterns**: Use the preview feature to test complex regex patterns
 5. **Export Regularly**: Create backups of your configuration
+6. **Cloud Setup**: Use templates for quick cloud provider configuration
+7. **Role Keywords**: Use specific keywords for role highlighting (e.g., "Administrator" not "Admin")
 
 ### Common Use Cases
 - **Development Teams**: Separate dev/staging/prod environments
@@ -302,5 +373,7 @@ Quick actions via URL parameters:
 - **Client Work**: Distinguish between different client projects
 - **API Development**: Identify different API versions or endpoints
 - **Multi-tenant Applications**: Distinguish between different tenants or instances
+- **Cloud Management**: Visual distinction between AWS accounts and roles
+- **Security Compliance**: Highlight production accounts with warning colors
 
 Enveil is designed to grow with your needs, from simple domain matching to complex multi-environment setups with advanced synchronization and management features.
