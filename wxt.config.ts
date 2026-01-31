@@ -1,13 +1,25 @@
 import { defineConfig } from 'wxt';
 import tailwindcss from '@tailwindcss/vite';
 
+function generateVersion(): string {
+  const main_version = 2.1;
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  return `${main_version}.${year}${month}${day}.${hours}${minutes}${seconds}`;
+}
+
 export default defineConfig({
   vite: () => ({
     plugins: [tailwindcss()],
   }),
   manifest: {
     name: "Enveil",
-    version: "1.0.0",
+    version: generateVersion(),
     description:
       "A extension for Devops to help you identify your differences between your environments.",
     icons: {

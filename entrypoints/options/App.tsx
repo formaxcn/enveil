@@ -361,7 +361,7 @@ const App: React.FC = () => {
 
                 <div className="text-center">
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-gray-100 dark:bg-slate-800/80 rounded-full text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-[0.2em] shadow-inner transition-colors">
-                        <span>Build v1.{new Date().toISOString().split('T')[0].replace(/-/g, '')}.{new Date().toTimeString().split(' ')[0].replace(/:/g, '')}</span>
+                        <span>Build v{chrome.runtime.getManifest().version}</span>
                         <div className="flex items-center gap-1.5 ml-1 border-l border-gray-300 dark:border-slate-600 pl-2">
                             <a
                                 href="https://github.com/formaxcn/enveil"
