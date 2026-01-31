@@ -38,7 +38,7 @@ async function checkAndNotifyTab(tabId: number, url: string) {
   // 1. Get Config
   const config = await loadConfig();
   if (!config || !config.settings) {
-    await updateTabState(tabId, null, null, null, false);
+    await updateTabState(tabId, null, [], null, false);
     return;
   }
 
@@ -47,7 +47,7 @@ async function checkAndNotifyTab(tabId: number, url: string) {
   try {
     host = new URL(url).host;
   } catch (e) {
-    await updateTabState(tabId, null, null, null, false);
+    await updateTabState(tabId, null, [], null, false);
     return;
   }
 
@@ -66,8 +66,8 @@ async function checkAndNotifyTab(tabId: number, url: string) {
     if (matchedSite) break;
   }
 
-  // 4. Find Cloud Account Match (new functionality)
-  let matchedCloudAccount: CloudAccount | null = null;
+  // 4. Find Cloud Account Matches (new functionality)
+  let matchedCloudAccounts: CloudAccount[] = [];
   let matchedCloudEnvironment: CloudEnvironment | null = null;
   let isAccountSelectionPage = false;
 
@@ -77,8 +77,8 @@ async function checkAndNotifyTab(tabId: number, url: string) {
 
       const matchingAccounts = CloudMatcher.findMatchingAccounts(environment, url, host);
       if (matchingAccounts.length > 0) {
-        // Use the first matching account (could be enhanced to handle multiple matches)
-        matchedCloudAccount = matchingAccounts[0];
+        // Collect all matching accounts from this environment
+        matchedCloudAccounts = matchingAccounts;
         matchedCloudEnvironment = environment;
         
         // Check if this is an account selection page
@@ -86,7 +86,8 @@ async function checkAndNotifyTab(tabId: number, url: string) {
                                  environment.template?.accountSelectionUrl && 
                                  url.includes(environment.template.accountSelectionUrl));
         
-        console.log(`[Enveil Background] Found cloud account match:`, CloudMatcher.getCloudAccountMatchInfo(matchedCloudAccount));
+        console.log(`[Enveil Background] Found ${matchingAccounts.length} cloud account matches:`, 
+          matchingAccounts.map(acc => CloudMatcher.getCloudAccountMatchInfo(acc)).join(', '));
         console.log(`[Enveil Background] Is account selection page:`, isAccountSelectionPage);
         break;
       }
@@ -94,18 +95,18 @@ async function checkAndNotifyTab(tabId: number, url: string) {
   }
 
   // 5. Update State
-  await updateTabState(tabId, matchedSite, matchedCloudAccount, matchedCloudEnvironment, isAccountSelectionPage);
+  await updateTabState(tabId, matchedSite, matchedCloudAccounts, matchedCloudEnvironment, isAccountSelectionPage);
 }
 
 async function updateTabState(
-  tabId: number, 
-  site: SiteConfig | null, 
-  cloudAccount: CloudAccount | null,
+  tabId: number,
+  site: SiteConfig | null,
+  cloudAccounts: CloudAccount[],
   cloudEnvironment: CloudEnvironment | null,
   isAccountSelectionPage: boolean
 ) {
   // Update Icon - prioritize site match over cloud account match
-  const hasMatch = !!site || !!cloudAccount;
+  const hasMatch = !!site || cloudAccounts.length > 0;
   await setIconForTab(tabId, hasMatch);
 
   // Notify Content Script for site matches (existing functionality)
@@ -127,26 +128,27 @@ async function updateTabState(
 
   // Notify Content Script for cloud matches (new functionality)
   try {
-    // Find matching roles for the cloud account if we have one
-    let matchingRoles: CloudRole[] = [];
-    if (cloudAccount && cloudAccount.roles && cloudAccount.roles.length > 0) {
-      // Get page content to match against roles - we'll let the content script handle this
-      // For now, just send all enabled roles and let content script do the keyword matching
-      matchingRoles = cloudAccount.roles.filter(role => role.enable);
+    // Collect all roles from all matching accounts
+    let allMatchingRoles: CloudRole[] = [];
+    for (const account of cloudAccounts) {
+      if (account.roles && account.roles.length > 0) {
+        allMatchingRoles = allMatchingRoles.concat(account.roles.filter(role => role.enable));
+      }
     }
 
     await browser.tabs.sendMessage(tabId, {
       action: 'CLOUD_MATCH_UPDATE',
-      cloudAccount: cloudAccount,
-      cloudRoles: matchingRoles,
+      cloudAccounts: cloudAccounts,
+      cloudRoles: allMatchingRoles,
       cloudEnvironment: cloudEnvironment,
       isAccountSelectionPage: isAccountSelectionPage
     });
 
-    if (cloudAccount) {
-      console.log(`[Enveil Background] Sent CLOUD_MATCH_UPDATE to tab ${tabId} (cloud):`, CloudMatcher.getCloudAccountMatchInfo(cloudAccount));
-      if (matchingRoles.length > 0) {
-        console.log(`[Enveil Background] Sent ${matchingRoles.length} cloud roles for keyword matching`);
+    if (cloudAccounts.length > 0) {
+      console.log(`[Enveil Background] Sent CLOUD_MATCH_UPDATE to tab ${tabId} with ${cloudAccounts.length} accounts (cloud):`,
+        cloudAccounts.map(acc => CloudMatcher.getCloudAccountMatchInfo(acc)).join(', '));
+      if (allMatchingRoles.length > 0) {
+        console.log(`[Enveil Background] Sent ${allMatchingRoles.length} cloud roles for keyword matching`);
       }
     } else {
       console.log(`[Enveil Background] Sent CLOUD_MATCH_UPDATE to tab ${tabId}: No cloud match`);

@@ -27,24 +27,24 @@ export default defineContentScript({
           unmountUI();
         }
       } else if (message.action === 'CLOUD_MATCH_UPDATE') {
-        const cloudAccount = message.cloudAccount as CloudAccount | null;
+        const cloudAccounts = message.cloudAccounts as CloudAccount[] | null;
         const cloudRoles = message.cloudRoles as CloudRole[] | null;
         const cloudEnvironment = message.cloudEnvironment as CloudEnvironment | null;
         const isAccountSelectionPage = message.isAccountSelectionPage as boolean;
 
-        if (cloudAccount || cloudRoles) {
-          console.log('[Enveil Content] Received CLOUD_MATCH_UPDATE: Cloud match found', {
-            account: cloudAccount?.name,
+        if (cloudAccounts && cloudAccounts.length > 0) {
+          console.log('[Enveil Content] Received CLOUD_MATCH_UPDATE: Cloud matches found', {
+            accounts: cloudAccounts.map(acc => acc.name),
             rolesCount: cloudRoles?.length || 0,
             isAccountSelectionPage
           });
 
           // Use AccountSelectionHighlighter for account selection pages
           if (isAccountSelectionPage && cloudEnvironment) {
-            mountAccountSelectionUI(cloudEnvironment, cloudAccount, cloudRoles, accountSelectionHighlighter);
+            mountAccountSelectionUI(cloudEnvironment, cloudAccounts, cloudRoles, accountSelectionHighlighter);
           } else {
-            // Use CloudHighlighter for console pages
-            mountCloudUI(cloudAccount, cloudRoles, cloudHighlighter);
+            // Use CloudHighlighter for console pages - pass all matching accounts
+            mountCloudUI(cloudAccounts, cloudRoles, cloudHighlighter);
           }
         } else {
           console.log('[Enveil Content] Received CLOUD_MATCH_UPDATE: No cloud match, unmounting cloud UI');
@@ -195,18 +195,22 @@ function createOverlay(site: SiteConfig): HTMLElement {
 /**
  * Mounts cloud-specific UI elements (account background highlighting and role text highlighting).
  * Works alongside existing site highlighting without conflicts.
- * 
- * @param cloudAccount The cloud account configuration (for background highlighting)
+ * Supports multiple matching accounts.
+ *
+ * @param cloudAccounts Array of cloud account configurations (for background highlighting)
  * @param cloudRoles Array of cloud roles (for text highlighting)
  * @param cloudHighlighter The CloudHighlighter instance
  */
-function mountCloudUI(cloudAccount: CloudAccount | null, cloudRoles: CloudRole[] | null, cloudHighlighter: CloudHighlighter) {
+function mountCloudUI(cloudAccounts: CloudAccount[], cloudRoles: CloudRole[] | null, cloudHighlighter: CloudHighlighter) {
   // Remove any existing cloud highlighting first
   cloudHighlighter.removeHighlighting();
 
-  // Apply account-level background highlighting if account is provided
-  if (cloudAccount && cloudAccount.backgroundEnable) {
-    cloudHighlighter.applyAccountHighlighting(cloudAccount);
+  // Apply account-level background highlighting for all matching accounts
+  // Use the first account's background color as the primary highlight
+  for (const cloudAccount of cloudAccounts) {
+    if (cloudAccount.backgroundEnable) {
+      cloudHighlighter.applyAccountHighlighting(cloudAccount);
+    }
   }
 
   // Apply role-level text highlighting if roles are provided
@@ -229,28 +233,27 @@ function unmountCloudUI(cloudHighlighter: CloudHighlighter) {
 
 /**
  * Mounts account selection page highlighting.
- * 
+ * Supports multiple matching accounts.
+ *
  * @param environment The cloud environment configuration
- * @param account The matched cloud account
+ * @param accounts Array of matched cloud accounts
  * @param roles Array of cloud roles
  * @param highlighter The AccountSelectionHighlighter instance
  */
 function mountAccountSelectionUI(
   environment: CloudEnvironment,
-  account: CloudAccount | null,
+  accounts: CloudAccount[],
   roles: CloudRole[] | null,
   highlighter: AccountSelectionHighlighter
 ) {
   // Remove existing highlighting first
   highlighter.removeHighlighting();
 
-  // Get all enabled accounts in this environment for highlighting
-  const accountsToHighlight = environment.accounts?.filter(acc => acc.enable) || [];
-
-  if (accountsToHighlight.length > 0) {
+  // Highlight all matching accounts (not just all enabled accounts in environment)
+  if (accounts.length > 0) {
     // Wait for DOM to be ready, then apply highlighting
     setTimeout(() => {
-      highlighter.applyHighlighting(environment, accountsToHighlight);
+      highlighter.applyHighlighting(environment, accounts);
     }, 100);
   }
 }
