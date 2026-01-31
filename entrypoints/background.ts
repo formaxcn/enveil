@@ -38,7 +38,7 @@ async function checkAndNotifyTab(tabId: number, url: string) {
   // 1. Get Config
   const config = await loadConfig();
   if (!config || !config.settings) {
-    await updateTabState(tabId, null, null);
+    await updateTabState(tabId, null, null, null, false);
     return;
   }
 
@@ -47,7 +47,7 @@ async function checkAndNotifyTab(tabId: number, url: string) {
   try {
     host = new URL(url).host;
   } catch (e) {
-    await updateTabState(tabId, null, null);
+    await updateTabState(tabId, null, null, null, false);
     return;
   }
 
@@ -68,6 +68,8 @@ async function checkAndNotifyTab(tabId: number, url: string) {
 
   // 4. Find Cloud Account Match (new functionality)
   let matchedCloudAccount: CloudAccount | null = null;
+  let matchedCloudEnvironment: CloudEnvironment | null = null;
+  let isAccountSelectionPage = false;
 
   if (config.cloudEnvironments) {
     for (const environment of config.cloudEnvironments) {
@@ -77,17 +79,31 @@ async function checkAndNotifyTab(tabId: number, url: string) {
       if (matchingAccounts.length > 0) {
         // Use the first matching account (could be enhanced to handle multiple matches)
         matchedCloudAccount = matchingAccounts[0];
+        matchedCloudEnvironment = environment;
+        
+        // Check if this is an account selection page
+        isAccountSelectionPage = !!(CloudMatcher.isEnvironmentTemplateMatch(environment, url) && 
+                                 environment.template?.accountSelectionUrl && 
+                                 url.includes(environment.template.accountSelectionUrl));
+        
         console.log(`[Enveil Background] Found cloud account match:`, CloudMatcher.getCloudAccountMatchInfo(matchedCloudAccount));
+        console.log(`[Enveil Background] Is account selection page:`, isAccountSelectionPage);
         break;
       }
     }
   }
 
   // 5. Update State
-  await updateTabState(tabId, matchedSite, matchedCloudAccount);
+  await updateTabState(tabId, matchedSite, matchedCloudAccount, matchedCloudEnvironment, isAccountSelectionPage);
 }
 
-async function updateTabState(tabId: number, site: SiteConfig | null, cloudAccount: CloudAccount | null) {
+async function updateTabState(
+  tabId: number, 
+  site: SiteConfig | null, 
+  cloudAccount: CloudAccount | null,
+  cloudEnvironment: CloudEnvironment | null,
+  isAccountSelectionPage: boolean
+) {
   // Update Icon - prioritize site match over cloud account match
   const hasMatch = !!site || !!cloudAccount;
   await setIconForTab(tabId, hasMatch);
@@ -122,7 +138,9 @@ async function updateTabState(tabId: number, site: SiteConfig | null, cloudAccou
     await browser.tabs.sendMessage(tabId, {
       action: 'CLOUD_MATCH_UPDATE',
       cloudAccount: cloudAccount,
-      cloudRoles: matchingRoles
+      cloudRoles: matchingRoles,
+      cloudEnvironment: cloudEnvironment,
+      isAccountSelectionPage: isAccountSelectionPage
     });
 
     if (cloudAccount) {

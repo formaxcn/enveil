@@ -31,17 +31,17 @@ export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
     selectors: {
       accountSelection: {
         // AWS CN SAML account selection containers
+        // Match div.saml-account that:
+        // 1. Is a direct child of fieldset
+        // 2. Contains a .saml-account-name child (to exclude nested role containers)
         accountContainers: [
-          'fieldset > div.saml-account',
-          '.saml-account-name',
-          '[data-testid="account-list-item"]'
+          'fieldset > div.saml-account:has(> .expandable-container .saml-account-name)'
         ],
         // Role text elements for keyword matching
         roleElements: [
           '.saml-role-name',
           '.saml-role-description',
-          'fieldset > div.saml-account .saml-role-name',
-          '[data-testid="role-name"]'
+          'label.saml-role'
         ]
       },
       console: {
@@ -70,16 +70,16 @@ export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
     samlUrl: '',
     selectors: {
       accountSelection: {
+        // Match div.saml-account that:
+        // 1. Is a direct child of fieldset
+        // 2. Contains a .saml-account-name child (to exclude nested role containers)
         accountContainers: [
-          'fieldset > div.saml-account',
-          '.saml-account-name',
-          '[data-testid="account-list-item"]'
+          'fieldset > div.saml-account:has(> .expandable-container .saml-account-name)'
         ],
         roleElements: [
           '.saml-role-name',
           '.saml-role-description',
-          'fieldset > div.saml-account .saml-role-name',
-          '[data-testid="role-name"]'
+          'label.saml-role'
         ]
       },
       console: {

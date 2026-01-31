@@ -1,13 +1,16 @@
-import { AppConfig, SiteConfig, CloudAccount, CloudRole } from './options/types';
+import { AppConfig, SiteConfig, CloudAccount, CloudRole, CloudEnvironment } from './options/types';
 import { CloudHighlighter } from '../components/CloudHighlighter';
+import { AccountSelectionHighlighter } from '../components/AccountSelectionHighlighter';
+import { CloudMatcher } from '../utils/cloudMatcher';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
   async main() {
     console.log('Enveil: Content script loaded');
 
-    // Initialize cloud highlighter
+    // Initialize cloud highlighters
     const cloudHighlighter = new CloudHighlighter();
+    const accountSelectionHighlighter = new AccountSelectionHighlighter();
 
     // Initial check (in case background script doesn't send update immediately on reload/install)
     // However, usually background script handles updates.
@@ -26,16 +29,27 @@ export default defineContentScript({
       } else if (message.action === 'CLOUD_MATCH_UPDATE') {
         const cloudAccount = message.cloudAccount as CloudAccount | null;
         const cloudRoles = message.cloudRoles as CloudRole[] | null;
-        
+        const cloudEnvironment = message.cloudEnvironment as CloudEnvironment | null;
+        const isAccountSelectionPage = message.isAccountSelectionPage as boolean;
+
         if (cloudAccount || cloudRoles) {
-          console.log('[Enveil Content] Received CLOUD_MATCH_UPDATE: Cloud match found', { 
-            account: cloudAccount?.name, 
-            rolesCount: cloudRoles?.length || 0 
+          console.log('[Enveil Content] Received CLOUD_MATCH_UPDATE: Cloud match found', {
+            account: cloudAccount?.name,
+            rolesCount: cloudRoles?.length || 0,
+            isAccountSelectionPage
           });
-          mountCloudUI(cloudAccount, cloudRoles, cloudHighlighter);
+
+          // Use AccountSelectionHighlighter for account selection pages
+          if (isAccountSelectionPage && cloudEnvironment) {
+            mountAccountSelectionUI(cloudEnvironment, cloudAccount, cloudRoles, accountSelectionHighlighter);
+          } else {
+            // Use CloudHighlighter for console pages
+            mountCloudUI(cloudAccount, cloudRoles, cloudHighlighter);
+          }
         } else {
           console.log('[Enveil Content] Received CLOUD_MATCH_UPDATE: No cloud match, unmounting cloud UI');
           unmountCloudUI(cloudHighlighter);
+          unmountAccountSelectionUI(accountSelectionHighlighter);
         }
       }
     });
@@ -211,4 +225,41 @@ function mountCloudUI(cloudAccount: CloudAccount | null, cloudRoles: CloudRole[]
  */
 function unmountCloudUI(cloudHighlighter: CloudHighlighter) {
   cloudHighlighter.removeHighlighting();
+}
+
+/**
+ * Mounts account selection page highlighting.
+ * 
+ * @param environment The cloud environment configuration
+ * @param account The matched cloud account
+ * @param roles Array of cloud roles
+ * @param highlighter The AccountSelectionHighlighter instance
+ */
+function mountAccountSelectionUI(
+  environment: CloudEnvironment,
+  account: CloudAccount | null,
+  roles: CloudRole[] | null,
+  highlighter: AccountSelectionHighlighter
+) {
+  // Remove existing highlighting first
+  highlighter.removeHighlighting();
+
+  // Get all enabled accounts in this environment for highlighting
+  const accountsToHighlight = environment.accounts?.filter(acc => acc.enable) || [];
+
+  if (accountsToHighlight.length > 0) {
+    // Wait for DOM to be ready, then apply highlighting
+    setTimeout(() => {
+      highlighter.applyHighlighting(environment, accountsToHighlight);
+    }, 100);
+  }
+}
+
+/**
+ * Unmounts account selection page highlighting.
+ * 
+ * @param highlighter The AccountSelectionHighlighter instance
+ */
+function unmountAccountSelectionUI(highlighter: AccountSelectionHighlighter) {
+  highlighter.removeHighlighting();
 }
