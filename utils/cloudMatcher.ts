@@ -112,7 +112,50 @@ export class CloudMatcher extends Matcher {
     }
 
     /**
+     * Checks if a URL matches the environment's template patterns (accountSelectionUrl or consoleDomainPattern).
+     * 
+     * @param environment The cloud environment to check
+     * @param currentUrl The URL to match against
+     * @returns boolean indicating if the URL matches the environment template
+     */
+    static isEnvironmentTemplateMatch(environment: CloudEnvironment, currentUrl: string): boolean {
+        if (!environment.template) return false;
+
+        const template = environment.template;
+
+        // Check account selection URL
+        if (template.accountSelectionUrl && currentUrl.includes(template.accountSelectionUrl)) {
+            return true;
+        }
+
+        // Check console domain pattern
+        if (template.consoleDomainPattern) {
+            // Convert simple wildcard pattern to regex-like matching
+            // Handle patterns like "*://*.amazonaws.cn/*"
+            let pattern = template.consoleDomainPattern;
+
+            // First escape dots that are not part of wildcards
+            pattern = pattern.replace(/\./g, '\\.');
+            // Then handle wildcards
+            pattern = pattern.replace(/\*:/g, 'https?:');  // Replace *: with https?:
+            pattern = pattern.replace(/\*\\\./g, '.*\\.');   // Replace *\. with .*\. (matches any subdomain)
+            pattern = pattern.replace(/\*/g, '.*');        // Replace remaining * with .*
+
+            try {
+                const regex = new RegExp('^' + pattern + '$');
+                return regex.test(currentUrl);
+            } catch (e) {
+                // Fallback to simple string matching if regex fails
+                return currentUrl.includes(template.consoleDomainPattern.replace(/\*/g, ''));
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Finds all cloud accounts within an environment that match the current URL.
+     * Also returns all accounts if the URL matches the environment's template patterns.
      * 
      * @param environment The cloud environment to search within
      * @param currentUrl The URL to match against
@@ -124,7 +167,14 @@ export class CloudMatcher extends Matcher {
             return [];
         }
 
-        return environment.accounts.filter(account => 
+        // First check if URL matches environment template patterns
+        // If so, return all enabled accounts in this environment
+        if (this.isEnvironmentTemplateMatch(environment, currentUrl)) {
+            return environment.accounts.filter(account => account.enable);
+        }
+
+        // Otherwise, check individual account match patterns
+        return environment.accounts.filter(account =>
             this.isCloudAccountMatch(account, currentUrl, currentHost)
         );
     }
