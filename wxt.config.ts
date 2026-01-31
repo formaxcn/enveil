@@ -2,15 +2,24 @@ import { defineConfig } from 'wxt';
 import tailwindcss from '@tailwindcss/vite';
 
 function generateVersion(): string {
-  const main_version = 2.1;
+  const mainVersion1 = 2;
+  const mainVersion2 = 1;
   const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-  const seconds = String(now.getSeconds()).padStart(2, '0');
-  return `${main_version}.${year}${month}${day}.${hours}${minutes}${seconds}`;
+  const year = now.getFullYear() % 100; // 0-99
+  const month = now.getMonth() + 1; // 1-12
+  const day = now.getDate(); // 1-31
+  const hour = now.getHours(); // 0-23
+  const minute = now.getMinutes(); // 0-59
+  const second = now.getSeconds(); // 0-59
+
+  // part3: 年月日编码 (最大 37231)
+  const part3 = year * 372 + month * 31 + day;
+
+  // part4: 当天时间片 (0-65535)，每个时间片约 1.318 秒
+  const daySeconds = hour * 3600 + minute * 60 + second;
+  const part4 = Math.floor(daySeconds * 65536 / 86400);
+
+  return `${mainVersion1}.${mainVersion2}.${part3}.${part4}`;
 }
 
 export default defineConfig({
