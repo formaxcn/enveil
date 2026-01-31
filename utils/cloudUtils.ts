@@ -1,4 +1,4 @@
-import { CloudEnvironment, CloudAccount, CloudRole, CloudProvider, RoleHighlightStyle } from '../entrypoints/options/types';
+import { CloudEnvironment, CloudAccount, CloudRole, CloudAccountPattern, CloudProvider } from '../entrypoints/options/types';
 import { getCloudTemplate } from './cloudTemplates';
 
 /**
@@ -35,9 +35,8 @@ export function createCloudEnvironment(
  */
 export function createCloudAccount(
   name: string,
-  matchPattern: string = 'domain',
-  matchValue: string = '',
-  color: string = '#4a9eff'
+  backgroundColor: string = '#4a9eff',
+  highlightColor: string = '#ffeb3b'
 ): CloudAccount {
   const now = Date.now();
   
@@ -45,10 +44,11 @@ export function createCloudAccount(
     id: generateCloudId(),
     name,
     enable: true,
-    matchPattern,
-    matchValue,
-    color,
     backgroundEnable: true,
+    backgroundColor,
+    highlightEnable: true,
+    highlightColor,
+    accountPatterns: [],
     roles: [],
     created: now,
     modified: now
@@ -59,27 +59,35 @@ export function createCloudAccount(
  * Create a new cloud role with default values
  */
 export function createCloudRole(
-  name: string,
-  keywords: string[] = [],
-  highlightColor: string = '#ffeb3b'
+  matchPattern: string = 'keyword',
+  matchValue: string = ''
 ): CloudRole {
   const now = Date.now();
   
-  const defaultStyle: RoleHighlightStyle = {
-    textColor: '#000000',
-    backgroundColor: highlightColor,
-    fontWeight: 'bold',
-    textDecoration: 'none',
-    border: '1px solid transparent'
+  return {
+    id: generateCloudId(),
+    enable: true,
+    matchPattern,
+    matchValue,
+    created: now,
+    modified: now
   };
+}
+
+/**
+ * Create a new cloud account pattern with default values
+ */
+export function createCloudAccountPattern(
+  matchPattern: string = 'keyword',
+  matchValue: string = ''
+): CloudAccountPattern {
+  const now = Date.now();
   
   return {
     id: generateCloudId(),
-    name,
     enable: true,
-    keywords,
-    highlightColor,
-    highlightStyle: defaultStyle,
+    matchPattern,
+    matchValue,
     created: now,
     modified: now
   };
@@ -129,39 +137,11 @@ export function validateCloudAccount(account: CloudAccount): { isValid: boolean;
     errors.push('Account name is required');
   }
   
-  if (!account.matchPattern) {
-    errors.push('Match pattern is required');
+  if (!account.backgroundColor) {
+    errors.push('Background color is required');
   }
   
-  if (!account.matchValue || account.matchValue.trim().length === 0) {
-    errors.push('Match value is required');
-  }
-  
-  if (!account.color || account.color.trim().length === 0) {
-    errors.push('Color is required');
-  }
-  
-  return {
-    isValid: errors.length === 0,
-    errors
-  };
-}
-
-/**
- * Validate cloud role configuration
- */
-export function validateCloudRole(role: CloudRole): { isValid: boolean; errors: string[] } {
-  const errors: string[] = [];
-  
-  if (!role.name || role.name.trim().length === 0) {
-    errors.push('Role name is required');
-  }
-  
-  if (!role.keywords || role.keywords.length === 0) {
-    errors.push('At least one keyword is required');
-  }
-  
-  if (!role.highlightColor || role.highlightColor.trim().length === 0) {
+  if (!account.highlightColor) {
     errors.push('Highlight color is required');
   }
   
@@ -172,64 +152,108 @@ export function validateCloudRole(role: CloudRole): { isValid: boolean; errors: 
 }
 
 /**
+ * Export cloud configuration to JSON string
+ */
+export function exportCloudConfig(environments: CloudEnvironment[]): string {
+  return JSON.stringify(environments, null, 2);
+}
+
+/**
+ * Import cloud configuration from JSON string
+ */
+export function importCloudConfig(jsonString: string): CloudEnvironment[] | null {
+  try {
+    const parsed = JSON.parse(jsonString);
+    if (Array.isArray(parsed)) {
+      return parsed as CloudEnvironment[];
+    }
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * Get all unique colors used in cloud accounts
+ */
+export function getUniqueColors(environments: CloudEnvironment[]): string[] {
+  const colors = new Set<string>();
+  
+  environments.forEach(env => {
+    env.accounts.forEach(account => {
+      colors.add(account.backgroundColor);
+      colors.add(account.highlightColor);
+    });
+  });
+  
+  return Array.from(colors);
+}
+
+/**
+ * Find a cloud account by ID across all environments
+ */
+export function findAccountById(
+  environments: CloudEnvironment[], 
+  accountId: string
+): CloudAccount | null {
+  for (const env of environments) {
+    const account = env.accounts.find(acc => acc.id === accountId);
+    if (account) {
+      return account;
+    }
+  }
+  return null;
+}
+
+/**
  * Find a cloud environment by ID
  */
-export function findCloudEnvironmentById(environments: CloudEnvironment[], id: string): CloudEnvironment | undefined {
-  return environments.find(env => env.id === id);
+export function findEnvironmentById(
+  environments: CloudEnvironment[], 
+  environmentId: string
+): CloudEnvironment | null {
+  return environments.find(env => env.id === environmentId) || null;
 }
 
 /**
- * Find a cloud account by ID within an environment
+ * Duplicate a cloud account
  */
-export function findCloudAccountById(environment: CloudEnvironment, accountId: string): CloudAccount | undefined {
-  return environment.accounts.find(account => account.id === accountId);
+export function duplicateCloudAccount(account: CloudAccount): CloudAccount {
+  const now = Date.now();
+  
+  return {
+    ...account,
+    id: generateCloudId(),
+    name: `${account.name} (Copy)`,
+    accountPatterns: account.accountPatterns.map(pattern => ({
+      ...pattern,
+      id: generateCloudId(),
+      created: now,
+      modified: now
+    })),
+    roles: account.roles.map(role => ({
+      ...role,
+      id: generateCloudId(),
+      created: now,
+      modified: now
+    })),
+    created: now,
+    modified: now
+  };
 }
 
 /**
- * Find a cloud role by ID within an account
+ * Duplicate a cloud environment with all its accounts
  */
-export function findCloudRoleById(account: CloudAccount, roleId: string): CloudRole | undefined {
-  return account.roles.find(role => role.id === roleId);
-}
-
-/**
- * Get all enabled cloud accounts from all environments
- */
-export function getAllEnabledCloudAccounts(environments: CloudEnvironment[]): CloudAccount[] {
-  const accounts: CloudAccount[] = [];
+export function duplicateCloudEnvironment(env: CloudEnvironment): CloudEnvironment {
+  const now = Date.now();
   
-  environments.forEach(env => {
-    if (env.enable) {
-      env.accounts.forEach(account => {
-        if (account.enable) {
-          accounts.push(account);
-        }
-      });
-    }
-  });
-  
-  return accounts;
-}
-
-/**
- * Get all enabled cloud roles from all accounts
- */
-export function getAllEnabledCloudRoles(environments: CloudEnvironment[]): CloudRole[] {
-  const roles: CloudRole[] = [];
-  
-  environments.forEach(env => {
-    if (env.enable) {
-      env.accounts.forEach(account => {
-        if (account.enable) {
-          account.roles.forEach(role => {
-            if (role.enable) {
-              roles.push(role);
-            }
-          });
-        }
-      });
-    }
-  });
-  
-  return roles;
+  return {
+    ...env,
+    id: generateCloudId(),
+    name: `${env.name} (Copy)`,
+    accounts: env.accounts.map(account => duplicateCloudAccount(account)),
+    created: now,
+    modified: now
+  };
 }

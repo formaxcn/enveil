@@ -50,9 +50,9 @@ const createTestAccount = (): CloudAccount => ({
 
 const createTestRole = (): CloudRole => ({
     id: 'test-role-1',
-    name: 'Admin Role',
     enable: true,
-    keywords: ['admin', 'administrator'],
+    matchPattern: 'keyword',
+    matchValue: 'admin',
     highlightColor: '#4ecdc4',
     highlightStyle: {
         textColor: '#ffffff',
@@ -143,9 +143,9 @@ describe('CloudHighlighter', () => {
             expect(status.roleHighlighting).toBe(false);
         });
 
-        test('should not apply highlighting for roles without keywords', () => {
+        test('should not apply highlighting for roles without match value', () => {
             const role = createTestRole();
-            role.keywords = [];
+            role.matchValue = '';
             
             highlighter.applyRoleHighlighting([role]);
             
@@ -153,9 +153,9 @@ describe('CloudHighlighter', () => {
             expect(status.roleHighlighting).toBe(false);
         });
 
-        test('should handle multiple roles with different keywords', () => {
+        test('should handle multiple roles with different patterns', () => {
             const role1 = createTestRole();
-            const role2 = { ...createTestRole(), id: 'test-role-2', keywords: ['developer', 'dev'] };
+            const role2 = { ...createTestRole(), id: 'test-role-2', matchPattern: 'regex', matchValue: 'dev|developer' };
             
             highlighter.applyRoleHighlighting([role1, role2]);
             
@@ -187,7 +187,7 @@ describe('CloudHighlighter', () => {
         test('should maintain account highlighting when role highlighting is updated', () => {
             const account = createTestAccount();
             const roles1 = [createTestRole()];
-            const roles2 = [{ ...createTestRole(), id: 'test-role-2', keywords: ['manager'] }];
+            const roles2 = [{ ...createTestRole(), id: 'test-role-2', matchValue: 'manager' }];
             
             highlighter.applyAccountHighlighting(account);
             highlighter.applyRoleHighlighting(roles1);

@@ -27,6 +27,8 @@ export const CloudEnvironmentItem: React.FC<CloudEnvironmentProps> = ({
     onEditAccount,
     onDeleteAccount
 }) => {
+    const totalAccountCount = environment.accounts.length;
+
     return (
         <div className={clsx(
             "bg-white dark:bg-slate-900 rounded-2xl border transition-all overflow-hidden shadow-sm",
@@ -41,7 +43,7 @@ export const CloudEnvironmentItem: React.FC<CloudEnvironmentProps> = ({
                         <Cloud className="w-5 h-5 text-gray-400 dark:text-slate-500" />
                         <h3 className="font-bold text-gray-900 dark:text-slate-100">{environment.name}</h3>
                         <span className="text-xs font-medium text-gray-400 dark:text-slate-500 bg-gray-200/50 dark:bg-slate-800 px-2 py-0.5 rounded-full border dark:border-slate-700">
-                            {environment.accounts.length} accounts
+                            {totalAccountCount} accounts
                         </span>
                     </div>
                 </div>
@@ -51,7 +53,7 @@ export const CloudEnvironmentItem: React.FC<CloudEnvironmentProps> = ({
                         onClick={onAddAccount}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-400/10 rounded-lg transition-colors"
                     >
-                        <Plus className="w-4 h-4" /> Add Account
+                        <Plus className="w-4 h-4" /> Add Config
                     </button>
                     <div className="w-px h-4 bg-gray-200 dark:bg-slate-800 mx-1" />
                     <button onClick={onEdit} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 rounded-md transition-colors" title="Edit Provider">
@@ -88,16 +90,19 @@ export const CloudEnvironmentItem: React.FC<CloudEnvironmentProps> = ({
                                 <div className="flex items-center gap-2 mb-1">
                                     <div
                                         className="w-3 h-3 rounded-full shadow-sm ring-1 ring-white/20"
-                                        style={{ backgroundColor: account.color }}
+                                        style={{ backgroundColor: account.backgroundColor }}
                                     />
                                     <span className="text-sm font-bold text-gray-900 dark:text-slate-100 truncate">
                                         {account.name}
                                     </span>
                                 </div>
                                 <div className="flex gap-3 text-xs text-gray-500 dark:text-slate-400 font-medium">
-                                    <span className="bg-gray-100 dark:bg-slate-700 px-1.5 py-0.5 rounded leading-none text-[10px] font-bold uppercase tracking-tight dark:text-slate-300">{account.matchValue}</span>
                                     <span className="text-[10px] uppercase tracking-tight flex items-center gap-1">
                                         <div className="w-1 h-1 rounded-full bg-blue-500" />
+                                        {account.accountPatterns.length} patterns
+                                    </span>
+                                    <span className="text-[10px] uppercase tracking-tight flex items-center gap-1">
+                                        <div className="w-1 h-1 rounded-full bg-green-500" />
                                         {account.roles.length} roles
                                     </span>
                                 </div>

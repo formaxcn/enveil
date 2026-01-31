@@ -24,7 +24,7 @@ export class CloudHighlighter {
      * @param account The cloud account configuration
      */
     public applyAccountHighlighting(account: CloudAccount): void {
-        if (!account || !account.backgroundEnable || !account.color) {
+        if (!account || !account.backgroundEnable || !account.backgroundColor) {
             return;
         }
 
@@ -32,7 +32,7 @@ export class CloudHighlighter {
         this.removeAccountHighlighting();
 
         // Create new account overlay
-        this.currentAccountOverlay = this.createAccountOverlay(account.color);
+        this.currentAccountOverlay = this.createAccountOverlay(account.backgroundColor);
         
         // Add to shadow root if available, otherwise to document
         const shadowRoot = this.getShadowRoot();
@@ -42,7 +42,7 @@ export class CloudHighlighter {
             document.body.appendChild(this.currentAccountOverlay);
         }
 
-        console.log(`[CloudHighlighter] Applied account background highlighting for: ${account.name} (${account.color})`);
+        console.log(`[CloudHighlighter] Applied account background highlighting for: ${account.name} (${account.backgroundColor})`);
     }
 
     /**
@@ -57,30 +57,23 @@ export class CloudHighlighter {
             return;
         }
 
-        // Remove existing role highlighting
         this.removeRoleHighlighting();
 
-        // Check if any roles are enabled and have keywords
-        const enabledRoles = roles.filter(role => role.enable && role.keywords && role.keywords.length > 0);
+        const enabledRoles = roles.filter(role => role.enable && role.matchValue && role.matchValue.trim().length > 0);
         if (enabledRoles.length === 0) {
             return;
         }
 
-        // Store current roles for dynamic updates
         this.currentRoles = enabledRoles;
 
-        // Create styles for all roles
         this.createRoleStyles(enabledRoles);
 
-        // Apply highlighting for each enabled role
         for (const role of enabledRoles) {
             this.highlightRoleText(role);
         }
 
-        // Set up mutation observer for dynamic content
         this.setupMutationObserver();
 
-        // Mark role highlighting as active
         this.roleHighlightingActive = true;
 
         console.log(`[CloudHighlighter] Applied role text highlighting for ${enabledRoles.length} roles`);
@@ -181,15 +174,14 @@ export class CloudHighlighter {
             if (!role.enable) return;
             
             const className = `${CloudHighlighter.CLOUD_ROLE_HIGHLIGHT_CLASS}-${role.id}`;
-            const style = role.highlightStyle;
             
             cssRules += `
                 .${className} {
-                    color: ${style.textColor} !important;
-                    background-color: ${style.backgroundColor} !important;
-                    font-weight: ${style.fontWeight} !important;
-                    text-decoration: ${style.textDecoration} !important;
-                    border: ${style.border} !important;
+                    color: #000000 !important;
+                    background-color: #ffeb3b !important;
+                    font-weight: bold !important;
+                    text-decoration: none !important;
+                    border: none !important;
                     padding: 1px 2px !important;
                     border-radius: 2px !important;
                     display: inline !important;
@@ -204,30 +196,43 @@ export class CloudHighlighter {
     }
 
     /**
-     * Highlights text content for a specific role's keywords.
+     * Highlights text content for a specific role's pattern.
      * 
      * @param role The cloud role configuration
      */
     private highlightRoleText(role: CloudRole): void {
-        if (!role.keywords || role.keywords.length === 0) {
+        if (!role.matchValue || role.matchValue.trim().length === 0) {
             return;
         }
 
-        // Check if we're in a browser environment
         if (typeof document === 'undefined' || typeof NodeFilter === 'undefined') {
             console.warn('[CloudHighlighter] DOM APIs not available, skipping role text highlighting');
             return;
         }
 
+        const matchValue = role.matchValue.trim();
+        let regex: RegExp | null = null;
+
+        if (role.matchPattern === 'regex') {
+            try {
+                regex = new RegExp(`(${matchValue})`, 'gi');
+            } catch (e) {
+                console.error('[CloudHighlighter] Invalid role regex:', matchValue);
+                return;
+            }
+        } else {
+            regex = new RegExp(`(${this.escapeRegExp(matchValue)})`, 'gi');
+        }
+
+        if (!regex) return;
+
         const className = `${CloudHighlighter.CLOUD_ROLE_HIGHLIGHT_CLASS}-${role.id}`;
         
-        // Find all text nodes in the document
         const walker = document.createTreeWalker(
             document.body,
             NodeFilter.SHOW_TEXT,
             {
                 acceptNode: (node) => {
-                    // Skip nodes that are already highlighted or in script/style tags
                     const parent = node.parentElement;
                     if (!parent) return NodeFilter.FILTER_REJECT;
                     
@@ -236,7 +241,6 @@ export class CloudHighlighter {
                         return NodeFilter.FILTER_REJECT;
                     }
                     
-                    // Skip if already highlighted
                     if (parent.classList.contains(CloudHighlighter.CLOUD_ROLE_HIGHLIGHT_CLASS) ||
                         parent.closest(`.${CloudHighlighter.CLOUD_ROLE_HIGHLIGHT_CLASS}`)) {
                         return NodeFilter.FILTER_REJECT;
@@ -253,33 +257,19 @@ export class CloudHighlighter {
             textNodes.push(node as Text);
         }
 
-        // Process each text node for keyword matches
         textNodes.forEach(textNode => {
             const originalText = textNode.textContent || '';
-            let modifiedText = originalText;
-            let hasMatches = false;
+            
+            if (!regex.test(originalText)) return;
 
-            // Check each keyword
-            role.keywords.forEach(keyword => {
-                if (!keyword || keyword.trim() === '') return;
-                
-                const trimmedKeyword = keyword.trim();
-                const regex = new RegExp(`(${this.escapeRegExp(trimmedKeyword)})`, 'gi');
-                
-                if (regex.test(originalText)) {
-                    hasMatches = true;
-                    modifiedText = modifiedText.replace(regex, `<span class="${className}" data-role-id="${role.id}">$1</span>`);
-                }
-            });
+            const modifiedText = originalText.replace(regex, `<span class="${className}" data-role-id="${role.id}">$1</span>`);
 
-            // Replace text node with highlighted content if matches found
-            if (hasMatches && textNode.parentNode) {
+            if (modifiedText !== originalText && textNode.parentNode) {
                 const wrapper = document.createElement('span');
                 wrapper.innerHTML = modifiedText;
                 wrapper.setAttribute('data-original-text', originalText);
                 wrapper.setAttribute('data-enveil-processed', 'true');
                 
-                // Track highlighted elements for cleanup
                 const highlightedElements = wrapper.querySelectorAll(`.${className}`);
                 highlightedElements.forEach(el => {
                     this.currentRoleHighlights.push(el as HTMLElement);
@@ -287,7 +277,6 @@ export class CloudHighlighter {
                 
                 textNode.parentNode.replaceChild(wrapper, textNode);
             } else if (textNode.parentElement) {
-                // Mark as processed even if no matches to avoid re-processing
                 textNode.parentElement.setAttribute('data-enveil-processed', 'true');
             }
         });
@@ -411,24 +400,38 @@ export class CloudHighlighter {
     }
 
     /**
-     * Highlights text content for a specific role's keywords in newly added content only.
+     * Highlights text content for a specific role's pattern in newly added content only.
      * More efficient than full DOM scan for dynamic updates.
      * 
      * @param role The cloud role configuration
      */
     private highlightNewRoleText(role: CloudRole): void {
-        if (!role.keywords || role.keywords.length === 0) {
+        if (!role.matchValue || role.matchValue.trim().length === 0) {
             return;
         }
 
-        // Check if we're in a browser environment
         if (typeof document === 'undefined' || typeof NodeFilter === 'undefined') {
             return;
         }
 
+        const matchValue = role.matchValue.trim();
+        let regex: RegExp | null = null;
+
+        if (role.matchPattern === 'regex') {
+            try {
+                regex = new RegExp(`(${matchValue})`, 'gi');
+            } catch (e) {
+                console.error('[CloudHighlighter] Invalid role regex:', matchValue);
+                return;
+            }
+        } else {
+            regex = new RegExp(`(${this.escapeRegExp(matchValue)})`, 'gi');
+        }
+
+        if (!regex) return;
+
         const className = `${CloudHighlighter.CLOUD_ROLE_HIGHLIGHT_CLASS}-${role.id}`;
         
-        // Find text nodes that haven't been processed yet
         const walker = document.createTreeWalker(
             document.body,
             NodeFilter.SHOW_TEXT,
@@ -442,7 +445,6 @@ export class CloudHighlighter {
                         return NodeFilter.FILTER_REJECT;
                     }
                     
-                    // Skip if already highlighted
                     if (parent.classList.contains(CloudHighlighter.CLOUD_ROLE_HIGHLIGHT_CLASS) ||
                         parent.closest(`.${CloudHighlighter.CLOUD_ROLE_HIGHLIGHT_CLASS}`) ||
                         parent.hasAttribute('data-enveil-processed')) {
@@ -460,33 +462,19 @@ export class CloudHighlighter {
             textNodes.push(node as Text);
         }
 
-        // Process each new text node
         textNodes.forEach(textNode => {
             const originalText = textNode.textContent || '';
-            let modifiedText = originalText;
-            let hasMatches = false;
+            
+            if (!regex.test(originalText)) return;
 
-            // Check each keyword
-            role.keywords.forEach(keyword => {
-                if (!keyword || keyword.trim() === '') return;
-                
-                const trimmedKeyword = keyword.trim();
-                const regex = new RegExp(`(${this.escapeRegExp(trimmedKeyword)})`, 'gi');
-                
-                if (regex.test(originalText)) {
-                    hasMatches = true;
-                    modifiedText = modifiedText.replace(regex, `<span class="${className}" data-role-id="${role.id}">$1</span>`);
-                }
-            });
+            const modifiedText = originalText.replace(regex, `<span class="${className}" data-role-id="${role.id}">$1</span>`);
 
-            // Replace text node with highlighted content if matches found
-            if (hasMatches && textNode.parentNode) {
+            if (modifiedText !== originalText && textNode.parentNode) {
                 const wrapper = document.createElement('span');
                 wrapper.innerHTML = modifiedText;
                 wrapper.setAttribute('data-original-text', originalText);
                 wrapper.setAttribute('data-enveil-processed', 'true');
                 
-                // Track highlighted elements for cleanup
                 const highlightedElements = wrapper.querySelectorAll(`.${className}`);
                 highlightedElements.forEach(el => {
                     this.currentRoleHighlights.push(el as HTMLElement);
@@ -494,7 +482,6 @@ export class CloudHighlighter {
                 
                 textNode.parentNode.replaceChild(wrapper, textNode);
             } else if (textNode.parentElement) {
-                // Mark as processed even if no matches to avoid re-processing
                 textNode.parentElement.setAttribute('data-enveil-processed', 'true');
             }
         });

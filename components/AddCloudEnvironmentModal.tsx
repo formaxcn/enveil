@@ -3,7 +3,8 @@ import { Modal } from './Modal';
 import { CloudEnvironment, CloudProvider, CloudTemplate } from '../entrypoints/options/types';
 import { getCloudTemplate, getCloudTemplateNames } from '../utils/cloudTemplates';
 import { Switch } from './Switch';
-import { Terminal, ChevronDown, ChevronUp } from 'lucide-react';
+import { Terminal, ChevronDown, ChevronUp, Plus, Trash2, Edit2, Check } from 'lucide-react';
+import { clsx } from 'clsx';
 
 interface AddCloudEnvironmentModalProps {
     isOpen: boolean;
@@ -30,7 +31,6 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
     const [consoleRoleElements, setConsoleRoleElements] = useState<string[]>([]);
     const [showAdvanced, setShowAdvanced] = useState(false);
 
-    // Track if values were auto-filled from template
     const [isAutoFilled, setIsAutoFilled] = useState(false);
 
     useEffect(() => {
@@ -62,7 +62,6 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
         }
     }, [environment, isOpen]);
 
-    // Auto-fill template values when provider changes (only for non-custom providers)
     useEffect(() => {
         if (provider !== CloudProvider.CUSTOM && isAutoFilled) {
             const template = getCloudTemplate(provider);
@@ -85,7 +84,6 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
         value: string
     ) => {
         setter(value);
-        // Switch to custom provider when user modifies template values
         if (provider !== CloudProvider.CUSTOM) {
             setProvider(CloudProvider.CUSTOM);
         }
@@ -177,7 +175,7 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
             isOpen={isOpen}
             onClose={onClose}
             title={environment ? 'Edit Cloud Environment' : 'Add New Cloud Environment'}
-            width="lg"
+            width="2xl"
         >
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800">
@@ -186,7 +184,6 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
                 </div>
 
                 <div className="space-y-4">
-                    {/* Row 1: Cloud Provider + Environment Name */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="form-group font-bold">
                             <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2">Cloud Provider</label>
@@ -214,7 +211,6 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
                         </div>
                     </div>
 
-                    {/* Row 2: SAML URL */}
                     <div className="form-group font-bold">
                         <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2">SAML URL</label>
                         <input
@@ -226,13 +222,11 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
                         />
                     </div>
 
-                    {/* Template Values Section */}
                     <div className="p-4 bg-blue-50/50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-900 flex flex-col gap-3">
                         <div className="flex items-center gap-2 text-blue-800 dark:text-blue-400 font-black text-[10px] uppercase tracking-widest">
                             <Terminal className="w-4 h-4" /> Template Values
                         </div>
                         
-                        {/* Console Pattern + Account URL */}
                         <div className="grid grid-cols-2 gap-4 text-[10px] font-bold uppercase tracking-tight">
                             <div>
                                 <label className="block text-gray-400 dark:text-slate-500 mb-1">Console Pattern</label>
@@ -256,7 +250,6 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
                             </div>
                         </div>
 
-                        {/* Advanced Settings Toggle */}
                         <button
                             type="button"
                             onClick={() => setShowAdvanced(!showAdvanced)}
@@ -266,10 +259,8 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
                             Advanced Settings
                         </button>
 
-                        {/* Advanced Settings Content */}
                         {showAdvanced && (
                             <div className="space-y-4 mt-2 pt-4 border-t border-blue-200 dark:border-blue-800">
-                                {/* Account Selection Selectors */}
                                 <div>
                                     <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2">
                                         Account Selection Selectors
@@ -336,7 +327,6 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
                                     </div>
                                 </div>
 
-                                {/* Console Selectors */}
                                 <div>
                                     <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2">
                                         Console Selectors

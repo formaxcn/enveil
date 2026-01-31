@@ -1,4 +1,4 @@
-import { CloudEnvironment, CloudAccount, CloudRole, AppConfig } from '../entrypoints/options/types';
+import { CloudEnvironment, CloudAccount, CloudRole, CloudAccountPattern, AppConfig } from '../entrypoints/options/types';
 
 export interface ValidationResult {
   isValid: boolean;
@@ -142,26 +142,32 @@ export class CloudConfigValidator {
       errors.push('Account enable flag must be a boolean');
     }
 
-    if (!account.matchPattern || typeof account.matchPattern !== 'string') {
-      errors.push('Match pattern is required');
+    if (typeof account.backgroundEnable !== 'boolean') {
+      errors.push('Background enable flag must be a boolean');
     }
 
-    if (!account.matchValue || typeof account.matchValue !== 'string' || account.matchValue.trim().length === 0) {
-      errors.push('Match value is required and must be a non-empty string');
-    }
-
-    if (!account.color || typeof account.color !== 'string' || account.color.trim().length === 0) {
-      errors.push('Color is required and must be a non-empty string');
+    if (!account.backgroundColor || typeof account.backgroundColor !== 'string' || account.backgroundColor.trim().length === 0) {
+      errors.push('Background color is required and must be a non-empty string');
     } else {
       // Validate color format (hex color)
       const colorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-      if (!colorRegex.test(account.color)) {
-        errors.push('Color must be a valid hex color (e.g., #FF0000 or #F00)');
+      if (!colorRegex.test(account.backgroundColor)) {
+        errors.push('Background color must be a valid hex color (e.g., #FF0000 or #F00)');
       }
     }
 
-    if (typeof account.backgroundEnable !== 'boolean') {
-      errors.push('Background enable flag must be a boolean');
+    if (typeof account.highlightEnable !== 'boolean') {
+      errors.push('Highlight enable flag must be a boolean');
+    }
+
+    if (!account.highlightColor || typeof account.highlightColor !== 'string' || account.highlightColor.trim().length === 0) {
+      errors.push('Highlight color is required and must be a non-empty string');
+    } else {
+      // Validate color format (hex color)
+      const colorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+      if (!colorRegex.test(account.highlightColor)) {
+        errors.push('Highlight color must be a valid hex color (e.g., #FF0000 or #F00)');
+      }
     }
 
     // Validate timestamps
@@ -186,9 +192,22 @@ export class CloudConfigValidator {
       });
     }
 
+    // Validate account patterns array
+    if (account.accountPatterns && !Array.isArray(account.accountPatterns)) {
+      errors.push('Account patterns must be an array');
+    } else if (account.accountPatterns) {
+      account.accountPatterns.forEach((pattern, index) => {
+        const patternResult = this.validateAccountPattern(pattern);
+        if (!patternResult.isValid) {
+          errors.push(...patternResult.errors.map(err => `Account Pattern ${index + 1}: ${err}`));
+        }
+        warnings.push(...patternResult.warnings.map(warn => `Account Pattern ${index + 1}: ${warn}`));
+      });
+    }
+
     // Warnings
-    if (account.roles && account.roles.length === 0) {
-      warnings.push('Account has no roles configured');
+    if (account.roles && account.roles.length === 0 && (!account.accountPatterns || account.accountPatterns.length === 0)) {
+      warnings.push('Account has no roles or account patterns configured');
     }
 
     return {
@@ -210,46 +229,27 @@ export class CloudConfigValidator {
       errors.push('Role ID is required and must be a non-empty string');
     }
 
-    if (!role.name || typeof role.name !== 'string' || role.name.trim().length === 0) {
-      errors.push('Role name is required and must be a non-empty string');
-    }
-
     if (typeof role.enable !== 'boolean') {
       errors.push('Role enable flag must be a boolean');
     }
 
-    if (!role.keywords || !Array.isArray(role.keywords)) {
-      errors.push('Keywords must be an array');
-    } else if (role.keywords.length === 0) {
-      errors.push('At least one keyword is required');
+    if (!role.matchPattern || typeof role.matchPattern !== 'string' || role.matchPattern.trim().length === 0) {
+      errors.push('Match pattern is required and must be a non-empty string');
     } else {
-      // Validate each keyword
-      role.keywords.forEach((keyword, index) => {
-        if (typeof keyword !== 'string' || keyword.trim().length === 0) {
-          errors.push(`Keyword ${index + 1} must be a non-empty string`);
-        }
-      });
-    }
-
-    if (!role.highlightColor || typeof role.highlightColor !== 'string' || role.highlightColor.trim().length === 0) {
-      errors.push('Highlight color is required and must be a non-empty string');
-    } else {
-      // Validate color format (hex color)
-      const colorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-      if (!colorRegex.test(role.highlightColor)) {
-        errors.push('Highlight color must be a valid hex color (e.g., #FF0000 or #F00)');
+      const validPatterns = ['keyword', 'regex'];
+      if (!validPatterns.includes(role.matchPattern)) {
+        errors.push(`Match pattern must be one of: ${validPatterns.join(', ')}`);
       }
     }
 
-    // Validate highlight style
-    if (!role.highlightStyle || typeof role.highlightStyle !== 'object') {
-      errors.push('Highlight style is required and must be an object');
-    } else {
-      const styleResult = this.validateHighlightStyle(role.highlightStyle);
-      if (!styleResult.isValid) {
-        errors.push(...styleResult.errors.map(err => `Highlight style: ${err}`));
+    if (!role.matchValue || typeof role.matchValue !== 'string' || role.matchValue.trim().length === 0) {
+      errors.push('Match value is required and must be a non-empty string');
+    } else if (role.matchPattern === 'regex') {
+      try {
+        new RegExp(role.matchValue);
+      } catch (e) {
+        errors.push('Match value must be a valid regular expression when pattern is "regex"');
       }
-      warnings.push(...styleResult.warnings.map(warn => `Highlight style: ${warn}`));
     }
 
     // Validate timestamps
@@ -258,6 +258,55 @@ export class CloudConfigValidator {
     }
 
     if (typeof role.modified !== 'number' || role.modified <= 0) {
+      errors.push('Modified timestamp must be a positive number');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings
+    };
+  }
+
+  /**
+   * Validate cloud account pattern configuration
+   */
+  public static validateAccountPattern(pattern: CloudAccountPattern): ValidationResult {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    if (!pattern.id || typeof pattern.id !== 'string' || pattern.id.trim().length === 0) {
+      errors.push('Pattern ID is required and must be a non-empty string');
+    }
+
+    if (typeof pattern.enable !== 'boolean') {
+      errors.push('Pattern enable flag must be a boolean');
+    }
+
+    if (!pattern.matchPattern || typeof pattern.matchPattern !== 'string' || pattern.matchPattern.trim().length === 0) {
+      errors.push('Match pattern is required and must be a non-empty string');
+    } else {
+      const validPatterns = ['keyword', 'regex'];
+      if (!validPatterns.includes(pattern.matchPattern)) {
+        errors.push(`Match pattern must be one of: ${validPatterns.join(', ')}`);
+      }
+    }
+
+    if (!pattern.matchValue || typeof pattern.matchValue !== 'string' || pattern.matchValue.trim().length === 0) {
+      errors.push('Match value is required and must be a non-empty string');
+    } else if (pattern.matchPattern === 'regex') {
+      try {
+        new RegExp(pattern.matchValue);
+      } catch (e) {
+        errors.push('Match value must be a valid regular expression when pattern is "regex"');
+      }
+    }
+
+    if (typeof pattern.created !== 'number' || pattern.created <= 0) {
+      errors.push('Created timestamp must be a positive number');
+    }
+
+    if (typeof pattern.modified !== 'number' || pattern.modified <= 0) {
       errors.push('Modified timestamp must be a positive number');
     }
 
@@ -400,6 +449,16 @@ export class CloudConfigValidator {
             roleIds.add(role.id);
           }
         });
+
+        // Check account pattern ID uniqueness within account
+        const patternIds = new Set<string>();
+        account.accountPatterns?.forEach((pattern, patternIndex) => {
+          if (patternIds.has(pattern.id)) {
+            errors.push(`Duplicate account pattern ID "${pattern.id}" in account "${account.name}" at position ${patternIndex + 1}`);
+          } else {
+            patternIds.add(pattern.id);
+          }
+        });
       });
     });
 
@@ -430,15 +489,21 @@ export class CloudConfigValidator {
         ...account,
         name: account.name?.trim() || 'Unnamed Account',
         enable: typeof account.enable === 'boolean' ? account.enable : true,
-        matchValue: account.matchValue?.trim() || '',
-        color: account.color?.match(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/) ? account.color : '#4a9eff',
         backgroundEnable: typeof account.backgroundEnable === 'boolean' ? account.backgroundEnable : true,
+        backgroundColor: account.backgroundColor?.match(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/) ? account.backgroundColor : '#4a9eff',
+        highlightEnable: typeof account.highlightEnable === 'boolean' ? account.highlightEnable : true,
+        highlightColor: account.highlightColor?.match(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/) ? account.highlightColor : '#ffeb3b',
         roles: account.roles?.map(role => ({
           ...role,
-          name: role.name?.trim() || 'Unnamed Role',
           enable: typeof role.enable === 'boolean' ? role.enable : true,
-          keywords: Array.isArray(role.keywords) ? role.keywords.filter(k => k && k.trim()) : [],
-          highlightColor: role.highlightColor?.match(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/) ? role.highlightColor : '#ffeb3b'
+          matchPattern: role.matchPattern?.trim() || 'keyword',
+          matchValue: role.matchValue?.trim() || ''
+        })) || [],
+        accountPatterns: account.accountPatterns?.map(pattern => ({
+          ...pattern,
+          enable: typeof pattern.enable === 'boolean' ? pattern.enable : true,
+          matchPattern: pattern.matchPattern?.trim() || 'keyword',
+          matchValue: pattern.matchValue?.trim() || ''
         })) || []
       })) || []
     }));

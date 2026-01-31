@@ -1,45 +1,71 @@
 import { Matcher } from './matcher';
-import { CloudAccount, CloudRole, CloudEnvironment } from '../entrypoints/options/types';
+import { CloudAccount, CloudRole, CloudEnvironment, CloudAccountPattern } from '../entrypoints/options/types';
 
 /**
- * CloudMatcher extends the existing Matcher utility class for cloud-specific pattern matching.
+ * CloudMatcher extends from existing Matcher utility class for cloud-specific pattern matching.
  * Provides cloud account URL pattern matching and role keyword matching functionality.
  */
 export class CloudMatcher extends Matcher {
     /**
-     * Checks if a cloud account configuration matches the current URL/host.
-     * Uses the same matching logic as the base Matcher class but for CloudAccount objects.
+     * Checks if a cloud account pattern matches to current URL/host.
      * 
-     * @param account The cloud account configuration to check
+     * @param pattern The cloud account pattern to check
      * @param currentUrl The URL to match against
      * @param currentHost The host to match against
-     * @returns boolean indicating if the account matches
+     * @returns boolean indicating if pattern matches
      */
-    static isCloudAccountMatch(account: CloudAccount, currentUrl: string, currentHost: string): boolean {
-        if (!account.enable) return false;
+    static isAccountPatternMatch(pattern: CloudAccountPattern, currentUrl: string, currentHost: string): boolean {
+        if (!pattern.enable) return false;
 
-        // Convert CloudAccount to SiteConfig-like structure for reusing base matching logic
         const siteConfigLike = {
-            enable: account.enable,
-            matchPattern: account.matchPattern,
-            matchValue: account.matchValue,
-            envName: account.name, // Not used in matching logic
-            color: account.color, // Not used in matching logic
-            backgroudEnable: account.backgroundEnable, // Not used in matching logic
-            Position: '', // Not used in matching logic
-            flagEnable: false // Not used in matching logic
+            enable: pattern.enable,
+            matchPattern: pattern.matchPattern,
+            matchValue: pattern.matchValue,
+            envName: '',
+            color: '#4a9eff',
+            backgroudEnable: true,
+            Position: '',
+            flagEnable: false
         };
 
         return this.isMatch(siteConfigLike, currentUrl, currentHost);
     }
+    static isCloudAccountMatch(account: CloudAccount, currentUrl: string, currentHost: string): boolean {
+        if (!account.enable) return false;
+
+        // Check if account has account patterns
+        if (account.accountPatterns && account.accountPatterns.length > 0) {
+            for (const pattern of account.accountPatterns) {
+                if (!pattern.enable) continue;
+                
+                const siteConfigLike = {
+                    enable: pattern.enable,
+                    matchPattern: pattern.matchPattern,
+                    matchValue: pattern.matchValue,
+                    envName: account.name,
+                    color: account.backgroundColor,
+                    backgroudEnable: account.backgroundEnable,
+                    Position: '',
+                    flagEnable: false
+                };
+                
+                if (this.isMatch(siteConfigLike, currentUrl, currentHost)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        return false;
+    }
 
     /**
-     * Finds all cloud roles that have keywords matching the provided page content.
-     * Performs case-insensitive keyword matching against the page content.
+     * Finds all cloud roles that have patterns matching the provided page content.
+     * Performs pattern-based matching (keyword or regex) against the page content.
      * 
      * @param roles Array of cloud roles to check
-     * @param pageContent The page content to search for keywords
-     * @returns Array of CloudRole objects that have matching keywords
+     * @param pageContent The page content to search for patterns
+     * @returns Array of CloudRole objects that have matching patterns
      */
     static findMatchingRoles(roles: CloudRole[], pageContent: string): CloudRole[] {
         if (!roles || roles.length === 0 || !pageContent) {
@@ -47,24 +73,29 @@ export class CloudMatcher extends Matcher {
         }
 
         const matchingRoles: CloudRole[] = [];
-        const lowerPageContent = pageContent.toLowerCase();
 
         for (const role of roles) {
-            if (!role.enable || !role.keywords || role.keywords.length === 0) {
+            if (!role.enable || !role.matchValue || role.matchValue.trim() === '') {
                 continue;
             }
 
-            // Check if any of the role's keywords match the page content
-            const hasMatchingKeyword = role.keywords.some(keyword => {
-                if (!keyword || keyword.trim() === '') {
-                    return false;
-                }
-                
-                const lowerKeyword = keyword.toLowerCase().trim();
-                return lowerPageContent.includes(lowerKeyword);
-            });
+            const matchValue = role.matchValue.trim();
+            let isMatch = false;
 
-            if (hasMatchingKeyword) {
+            if (role.matchPattern === 'regex') {
+                try {
+                    const regex = new RegExp(matchValue, 'i');
+                    isMatch = regex.test(pageContent);
+                } catch (e) {
+                    console.error('[Enveil] Invalid role regex:', matchValue);
+                }
+            } else {
+                const lowerMatchValue = matchValue.toLowerCase();
+                const lowerPageContent = pageContent.toLowerCase();
+                isMatch = lowerPageContent.includes(lowerMatchValue);
+            }
+
+            if (isMatch) {
                 matchingRoles.push(role);
             }
         }
@@ -73,42 +104,53 @@ export class CloudMatcher extends Matcher {
     }
 
     /**
-     * Extracts role keywords from page content that match any of the provided roles.
-     * Returns the actual keyword strings found in the content for highlighting purposes.
+     * Extracts role patterns from page content that match any of the provided roles.
+     * Returns the actual matched strings found in the content for highlighting purposes.
      * 
      * @param content The page content to search
-     * @param roles Array of cloud roles with keywords to search for
-     * @returns Array of keyword strings found in the content
+     * @param roles Array of cloud roles with patterns to search for
+     * @returns Array of matched strings found in the content
      */
     static extractRoleKeywords(content: string, roles: CloudRole[]): string[] {
         if (!content || !roles || roles.length === 0) {
             return [];
         }
 
-        const foundKeywords: string[] = [];
-        const lowerContent = content.toLowerCase();
+        const foundMatches: string[] = [];
 
         for (const role of roles) {
-            if (!role.enable || !role.keywords || role.keywords.length === 0) {
+            if (!role.enable || !role.matchValue || role.matchValue.trim() === '') {
                 continue;
             }
 
-            for (const keyword of role.keywords) {
-                if (!keyword || keyword.trim() === '') {
-                    continue;
-                }
+            const matchValue = role.matchValue.trim();
 
-                const lowerKeyword = keyword.toLowerCase().trim();
-                if (lowerContent.includes(lowerKeyword)) {
-                    // Add the original keyword (preserving case) if not already added
-                    if (!foundKeywords.some(k => k.toLowerCase() === lowerKeyword)) {
-                        foundKeywords.push(keyword.trim());
+            if (role.matchPattern === 'regex') {
+                try {
+                    const regex = new RegExp(matchValue, 'gi');
+                    const matches = content.match(regex);
+                    if (matches) {
+                        matches.forEach(match => {
+                            if (!foundMatches.includes(match)) {
+                                foundMatches.push(match);
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.error('[Enveil] Invalid role regex:', matchValue);
+                }
+            } else {
+                const lowerMatchValue = matchValue.toLowerCase();
+                const lowerContent = content.toLowerCase();
+                if (lowerContent.includes(lowerMatchValue)) {
+                    if (!foundMatches.includes(matchValue)) {
+                        foundMatches.push(matchValue);
                     }
                 }
             }
         }
 
-        return foundKeywords;
+        return foundMatches;
     }
 
     /**
@@ -156,6 +198,7 @@ export class CloudMatcher extends Matcher {
     /**
      * Finds all cloud accounts within an environment that match the current URL.
      * Also returns all accounts if the URL matches the environment's template patterns.
+     * Also checks environment-level account patterns.
      * 
      * @param environment The cloud environment to search within
      * @param currentUrl The URL to match against
@@ -167,16 +210,36 @@ export class CloudMatcher extends Matcher {
             return [];
         }
 
-        // First check if URL matches environment template patterns
-        // If so, return all enabled accounts in this environment
-        if (this.isEnvironmentTemplateMatch(environment, currentUrl)) {
+        // Check each account's account patterns first
+        const matchingAccounts: CloudAccount[] = [];
+
+        for (const account of environment.accounts) {
+            if (!account.enable) continue;
+
+            // Check if account has account patterns
+            if (account.accountPatterns && account.accountPatterns.length > 0) {
+                const matchingPatterns = account.accountPatterns.filter(pattern =>
+                    this.isAccountPatternMatch(pattern, currentUrl, currentHost)
+                );
+
+                if (matchingPatterns.length > 0) {
+                    matchingAccounts.push(account);
+                    continue;
+                }
+            }
+
+            // Fall back to checking account's own match pattern
+            if (this.isCloudAccountMatch(account, currentUrl, currentHost)) {
+                matchingAccounts.push(account);
+            }
+        }
+
+        // If no accounts matched, check if URL matches environment template patterns
+        if (matchingAccounts.length === 0 && this.isEnvironmentTemplateMatch(environment, currentUrl)) {
             return environment.accounts.filter(account => account.enable);
         }
 
-        // Otherwise, check individual account match patterns
-        return environment.accounts.filter(account =>
-            this.isCloudAccountMatch(account, currentUrl, currentHost)
-        );
+        return matchingAccounts;
     }
 
     /**
@@ -205,7 +268,8 @@ export class CloudMatcher extends Matcher {
      * @returns Formatted string with matching information
      */
     static getCloudAccountMatchInfo(account: CloudAccount): string {
-        return `[CloudMatch] Account: ${account.name} | Pattern: ${account.matchPattern} | Value: ${account.matchValue}`;
+        const patternCount = account.accountPatterns?.length || 0;
+        return `[CloudMatch] Account: ${account.name} | Patterns: ${patternCount}`;
     }
 
     /**
@@ -215,8 +279,7 @@ export class CloudMatcher extends Matcher {
      * @returns Formatted string with role information
      */
     static getCloudRoleMatchInfo(role: CloudRole): string {
-        const keywords = role.keywords ? role.keywords.join(', ') : 'none';
-        return `[CloudMatch] Role: ${role.name} | Keywords: ${keywords}`;
+        return `[CloudMatch] Role Pattern: ${role.matchPattern} | Value: ${role.matchValue}`;
     }
 
     /**

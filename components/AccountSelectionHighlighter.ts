@@ -136,7 +136,7 @@ class AWSAccountSelectionHandler implements IAccountSelectionHandler {
     private findAccountContainers(selectors: string[], account: CloudAccount): HTMLElement[] {
         const containers: HTMLElement[] = [];
 
-        console.log(`[AWSAccountSelectionHandler] Finding containers for account: ${account.name}, matchValue: ${account.matchValue}`);
+        console.log(`[AWSAccountSelectionHandler] Finding containers for account: ${account.name}, patterns: ${account.accountPatterns?.length || 0}`);
 
         for (const selector of selectors) {
             if (!selector) continue;
@@ -199,13 +199,13 @@ class AWSAccountSelectionHandler implements IAccountSelectionHandler {
      * Priority: matchValue (account ID) > accountName
      */
     private isAccountMatch(element: HTMLElement, account: CloudAccount): boolean {
-        const matchValue = account.matchValue?.trim();
         const accountName = account.name?.trim();
+        const patterns = account.accountPatterns || [];
 
-        console.log(`[AWSAccountSelectionHandler] isAccountMatch: matchValue="${matchValue}", accountName="${accountName}"`);
+        console.log(`[AWSAccountSelectionHandler] isAccountMatch: accountName="${accountName}", patterns=${patterns.length}`);
 
-        if (!matchValue && !accountName) {
-            console.log(`[AWSAccountSelectionHandler] isAccountMatch: No matchValue or accountName, returning false`);
+        if (!accountName && patterns.length === 0) {
+            console.log(`[AWSAccountSelectionHandler] isAccountMatch: No accountName or patterns, returning false`);
             return false;
         }
 
@@ -221,33 +221,33 @@ class AWSAccountSelectionHandler implements IAccountSelectionHandler {
         const accountNameText = accountNameElement.textContent || '';
         console.log(`[AWSAccountSelectionHandler] isAccountMatch: accountNameText="${accountNameText}"`);
 
-        // Priority 1: For AWS, check for 12-digit account ID pattern with word boundaries
-        // This is the most reliable way to match AWS accounts
-        if (matchValue && /^\d{12}$/.test(matchValue)) {
-            const accountIdPattern = new RegExp(`\\b${matchValue}\\b`);
-            const isMatch = accountIdPattern.test(accountNameText);
-            console.log(`[AWSAccountSelectionHandler] isAccountMatch: Checking 12-digit ID "${matchValue}" against "${accountNameText}", result=${isMatch}`);
-            return isMatch;  // If matchValue is a valid account ID, only use it for matching
-        }
-
-        // Priority 2: For non-numeric match values, use word boundary matching
-        if (matchValue) {
-            // Escape special regex characters in match value
-            const escapedMatchValue = matchValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            // Use word boundary or account name pattern matching
-            // Match either as a whole word or within parentheses (account name format)
-            const matchPattern = new RegExp(
-                `\\b${escapedMatchValue}\\b|\\(${escapedMatchValue}\\)`,
-                'i'
-            );
-            const isMatch = matchPattern.test(accountNameText);
-            console.log(`[AWSAccountSelectionHandler] isAccountMatch: Checking pattern "${matchPattern}" against "${accountNameText}", result=${isMatch}`);
-            if (isMatch) {
-                return true;
+        // Check all account patterns
+        for (const pattern of patterns) {
+            if (!pattern.enable) continue;
+            
+            const matchValue = pattern.matchValue?.trim();
+            if (!matchValue) continue;
+            
+            // For AWS, check for 12-digit account ID pattern with word boundaries
+            if (/^\d{12}$/.test(matchValue)) {
+                const accountIdPattern = new RegExp(`\\b${matchValue}\\b`);
+                const isMatch = accountIdPattern.test(accountNameText);
+                console.log(`[AWSAccountSelectionHandler] isAccountMatch: Checking 12-digit ID "${matchValue}" against "${accountNameText}", result=${isMatch}`);
+                if (isMatch) return true;
+            } else {
+                // For non-numeric match values, use word boundary matching
+                const escapedMatchValue = matchValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const matchPattern = new RegExp(
+                    `\\b${escapedMatchValue}\\b|\\(${escapedMatchValue}\\)`,
+                    'i'
+                );
+                const isMatch = matchPattern.test(accountNameText);
+                console.log(`[AWSAccountSelectionHandler] isAccountMatch: Checking pattern "${matchPattern}" against "${accountNameText}", result=${isMatch}`);
+                if (isMatch) return true;
             }
         }
 
-        // Priority 3: Check account name with word boundaries (only if matchValue didn't match)
+        // Check account name with word boundaries
         if (accountName) {
             const escapedAccountName = accountName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const namePattern = new RegExp(`\\b${escapedAccountName}\\b`, 'i');
@@ -266,13 +266,13 @@ class AWSAccountSelectionHandler implements IAccountSelectionHandler {
      * Applies background color to an AWS account container.
      */
     private applyAccountBackground(element: HTMLElement, account: CloudAccount): void {
-        if (!account.backgroundEnable || !account.color) {
+        if (!account.backgroundEnable || !account.backgroundColor) {
             return;
         }
 
-        element.style.backgroundColor = this.hexToRgba(account.color, 0.25);
-        element.style.border = `2px solid ${account.color}`;
-        element.style.boxShadow = `0 0 8px ${this.hexToRgba(account.color, 0.35)}`;
+        element.style.backgroundColor = this.hexToRgba(account.backgroundColor, 0.25);
+        element.style.border = `2px solid ${account.backgroundColor}`;
+        element.style.boxShadow = `0 0 8px ${this.hexToRgba(account.backgroundColor, 0.35)}`;
         element.style.borderRadius = '4px';
         element.style.transition = 'all 0.3s ease';
 
@@ -284,7 +284,7 @@ class AWSAccountSelectionHandler implements IAccountSelectionHandler {
      * Highlights role keywords within an AWS account container.
      */
     private highlightRolesInContainer(container: HTMLElement, roles: CloudRole[]): void {
-        const enabledRoles = roles.filter(role => role.enable && role.keywords && role.keywords.length > 0);
+        const enabledRoles = roles.filter(role => role.enable && role.matchValue && role.matchValue.trim().length > 0);
 
         // Get role element selectors from template
         const selectors = this.currentEnvironment?.template?.selectors?.accountSelection?.roleElements || [
@@ -323,13 +323,28 @@ class AWSAccountSelectionHandler implements IAccountSelectionHandler {
     }
 
     /**
-     * Highlights role keywords within a specific element.
+     * Highlights role patterns within a specific element.
      */
     private highlightRoleKeywordsInElement(element: HTMLElement, roles: CloudRole[]): void {
         for (const role of roles) {
-            if (!role.keywords || role.keywords.length === 0) continue;
+            if (!role.matchValue || role.matchValue.trim() === '') continue;
 
-            // Walk text nodes
+            const matchValue = role.matchValue.trim();
+            let regex: RegExp | null = null;
+
+            if (role.matchPattern === 'regex') {
+                try {
+                    regex = new RegExp(`(${matchValue})`, 'gi');
+                } catch (e) {
+                    console.error('[Enveil] Invalid role regex:', matchValue);
+                    continue;
+                }
+            } else {
+                regex = new RegExp(`(${this.escapeRegExp(matchValue)})`, 'gi');
+            }
+
+            if (!regex) continue;
+
             const walker = document.createTreeWalker(
                 element,
                 NodeFilter.SHOW_TEXT,
@@ -358,29 +373,19 @@ class AWSAccountSelectionHandler implements IAccountSelectionHandler {
                 textNodes.push(node as Text);
             }
 
-            // Process each text node
+            const className = `${AWSAccountSelectionHandler.ROLE_HIGHLIGHT_CLASS}-${role.id}`;
+
             textNodes.forEach(textNode => {
                 const originalText = textNode.textContent || '';
-                let modifiedText = originalText;
-                let hasMatches = false;
+                
+                if (!regex.test(originalText)) return;
 
-                for (const keyword of role.keywords) {
-                    if (!keyword || keyword.trim() === '') continue;
+                const modifiedText = originalText.replace(
+                    regex,
+                    `<span class="${className} ${AWSAccountSelectionHandler.ROLE_HIGHLIGHT_CLASS}" data-role-id="${role.id}" data-original-text="$1">$1</span>`
+                );
 
-                    const trimmedKeyword = keyword.trim();
-                    const regex = new RegExp(`(${this.escapeRegExp(trimmedKeyword)})`, 'gi');
-
-                    if (regex.test(originalText)) {
-                        hasMatches = true;
-                        const className = `${AWSAccountSelectionHandler.ROLE_HIGHLIGHT_CLASS}-${role.id}`;
-                        modifiedText = modifiedText.replace(
-                            regex,
-                            `<span class="${className} ${AWSAccountSelectionHandler.ROLE_HIGHLIGHT_CLASS}" data-role-id="${role.id}" data-original-text="$1">$1</span>`
-                        );
-                    }
-                }
-
-                if (hasMatches && textNode.parentNode) {
+                if (modifiedText !== originalText && textNode.parentNode) {
                     const wrapper = document.createElement('span');
                     wrapper.innerHTML = modifiedText;
 
@@ -400,14 +405,12 @@ class AWSAccountSelectionHandler implements IAccountSelectionHandler {
      * Applies highlight style to a role element.
      */
     private applyRoleHighlightStyle(element: HTMLElement, role: CloudRole): void {
-        const style = role.highlightStyle;
-
         Object.assign(element.style, {
-            color: style.textColor,
-            backgroundColor: style.backgroundColor,
-            fontWeight: style.fontWeight,
-            textDecoration: style.textDecoration,
-            border: style.border,
+            color: '#000000',
+            backgroundColor: '#ffeb3b',
+            fontWeight: 'bold',
+            textDecoration: 'none',
+            border: 'none',
             padding: '1px 3px',
             borderRadius: '2px',
             display: 'inline'
@@ -677,10 +680,10 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
     }
 
     private isAccountMatch(element: HTMLElement, account: CloudAccount): boolean {
-        const matchValue = account.matchValue?.trim();
         const accountName = account.name?.trim();
+        const patterns = account.accountPatterns || [];
 
-        if (!matchValue && !accountName) return false;
+        if (!accountName && patterns.length === 0) return false;
 
         // Find the account name element within this container
         // Try common selectors for account name elements
@@ -692,25 +695,29 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
         // Get the text content of the account name element only
         const accountNameText = accountNameElement.textContent || '';
 
-        // Priority 1: For AWS, check for 12-digit account ID pattern with word boundaries
-        if (matchValue && /^\d{12}$/.test(matchValue)) {
-            const accountIdPattern = new RegExp(`\\b${matchValue}\\b`);
-            return accountIdPattern.test(accountNameText);  // If matchValue is a valid account ID, only use it for matching
-        }
-
-        // Priority 2: For non-numeric match values, use word boundary matching
-        if (matchValue) {
-            const escapedMatchValue = matchValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const matchPattern = new RegExp(
-                `\\b${escapedMatchValue}\\b|\\(${escapedMatchValue}\\)`,
-                'i'
-            );
-            if (matchPattern.test(accountNameText)) {
-                return true;
+        // Check all account patterns
+        for (const pattern of patterns) {
+            if (!pattern.enable) continue;
+            
+            const matchValue = pattern.matchValue?.trim();
+            if (!matchValue) continue;
+            
+            // For AWS, check for 12-digit account ID pattern with word boundaries
+            if (/^\d{12}$/.test(matchValue)) {
+                const accountIdPattern = new RegExp(`\\b${matchValue}\\b`);
+                if (accountIdPattern.test(accountNameText)) return true;
+            } else {
+                // For non-numeric match values, use word boundary matching
+                const escapedMatchValue = matchValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const matchPattern = new RegExp(
+                    `\\b${escapedMatchValue}\\b|\\(${escapedMatchValue}\\)`,
+                    'i'
+                );
+                if (matchPattern.test(accountNameText)) return true;
             }
         }
 
-        // Priority 3: Check account name with word boundaries (only if matchValue didn't match)
+        // Check account name with word boundaries
         if (accountName) {
             const escapedAccountName = accountName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const namePattern = new RegExp(`\\b${escapedAccountName}\\b`, 'i');
@@ -723,13 +730,13 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
     }
 
     private applyAccountBackground(element: HTMLElement, account: CloudAccount): void {
-        if (!account.backgroundEnable || !account.color) {
+        if (!account.backgroundEnable || !account.backgroundColor) {
             return;
         }
 
-        element.style.backgroundColor = this.hexToRgba(account.color, 0.25);
-        element.style.border = `2px solid ${account.color}`;
-        element.style.boxShadow = `0 0 8px ${this.hexToRgba(account.color, 0.35)}`;
+        element.style.backgroundColor = this.hexToRgba(account.backgroundColor, 0.25);
+        element.style.border = `2px solid ${account.backgroundColor}`;
+        element.style.boxShadow = `0 0 8px ${this.hexToRgba(account.backgroundColor, 0.35)}`;
         element.style.borderRadius = '4px';
         element.style.transition = 'all 0.3s ease';
 
@@ -738,7 +745,7 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
     }
 
     private highlightRolesInContainer(container: HTMLElement, roles: CloudRole[]): void {
-        const enabledRoles = roles.filter(role => role.enable && role.keywords && role.keywords.length > 0);
+        const enabledRoles = roles.filter(role => role.enable && role.matchValue && role.matchValue.trim().length > 0);
 
         const selectors = this.currentEnvironment?.template?.selectors?.accountSelection?.roleElements || [];
 
@@ -760,7 +767,23 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
 
     private highlightRoleKeywordsInElement(element: HTMLElement, roles: CloudRole[]): void {
         for (const role of roles) {
-            if (!role.keywords || role.keywords.length === 0) continue;
+            if (!role.matchValue || role.matchValue.trim().length === 0) continue;
+
+            const matchValue = role.matchValue.trim();
+            let regex: RegExp | null = null;
+
+            if (role.matchPattern === 'regex') {
+                try {
+                    regex = new RegExp(`(${matchValue})`, 'gi');
+                } catch (e) {
+                    console.error('[Enveil] Invalid role regex:', matchValue);
+                    continue;
+                }
+            } else {
+                regex = new RegExp(`(${this.escapeRegExp(matchValue)})`, 'gi');
+            }
+
+            if (!regex) continue;
 
             const walker = document.createTreeWalker(
                 element,
@@ -790,28 +813,19 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
                 textNodes.push(node as Text);
             }
 
+            const className = `${GenericAccountSelectionHandler.ROLE_HIGHLIGHT_CLASS}-${role.id}`;
+
             textNodes.forEach(textNode => {
                 const originalText = textNode.textContent || '';
-                let modifiedText = originalText;
-                let hasMatches = false;
+                
+                if (!regex.test(originalText)) return;
 
-                for (const keyword of role.keywords) {
-                    if (!keyword || keyword.trim() === '') continue;
+                const modifiedText = originalText.replace(
+                    regex,
+                    `<span class="${className} ${GenericAccountSelectionHandler.ROLE_HIGHLIGHT_CLASS}" data-role-id="${role.id}" data-original-text="$1">$1</span>`
+                );
 
-                    const trimmedKeyword = keyword.trim();
-                    const regex = new RegExp(`(${this.escapeRegExp(trimmedKeyword)})`, 'gi');
-
-                    if (regex.test(originalText)) {
-                        hasMatches = true;
-                        const className = `${GenericAccountSelectionHandler.ROLE_HIGHLIGHT_CLASS}-${role.id}`;
-                        modifiedText = modifiedText.replace(
-                            regex,
-                            `<span class="${className} ${GenericAccountSelectionHandler.ROLE_HIGHLIGHT_CLASS}" data-role-id="${role.id}" data-original-text="$1">$1</span>`
-                        );
-                    }
-                }
-
-                if (hasMatches && textNode.parentNode) {
+                if (modifiedText !== originalText && textNode.parentNode) {
                     const wrapper = document.createElement('span');
                     wrapper.innerHTML = modifiedText;
 
@@ -828,14 +842,12 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
     }
 
     private applyRoleHighlightStyle(element: HTMLElement, role: CloudRole): void {
-        const style = role.highlightStyle;
-
         Object.assign(element.style, {
-            color: style.textColor,
-            backgroundColor: style.backgroundColor,
-            fontWeight: style.fontWeight,
-            textDecoration: style.textDecoration,
-            border: style.border,
+            color: '#000000',
+            backgroundColor: '#ffeb3b',
+            fontWeight: 'bold',
+            textDecoration: 'none',
+            border: 'none',
             padding: '1px 3px',
             borderRadius: '2px',
             display: 'inline'

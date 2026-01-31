@@ -90,11 +90,9 @@ export interface RoleHighlightStyle {
 
 export interface CloudRole {
   id: string;
-  name: string;
   enable: boolean;
-  keywords: string[];
-  highlightColor: string;
-  highlightStyle: RoleHighlightStyle;
+  matchPattern: string;
+  matchValue: string;
   created: number;
   modified: number;
 }
@@ -103,10 +101,11 @@ export interface CloudAccount {
   id: string;
   name: string;
   enable: boolean;
-  matchPattern: string;
-  matchValue: string;
-  color: string;
   backgroundEnable: boolean;
+  backgroundColor: string;
+  highlightEnable: boolean;
+  highlightColor: string;
+  accountPatterns: CloudAccountPattern[];
   roles: CloudRole[];
   created: number;
   modified: number;
@@ -119,6 +118,15 @@ export interface CloudEnvironment {
   provider: CloudProvider;
   template: CloudTemplate;
   accounts: CloudAccount[];
+  created: number;
+  modified: number;
+}
+
+export interface CloudAccountPattern {
+  id: string;
+  enable: boolean;
+  matchPattern: string;
+  matchValue: string;
   created: number;
   modified: number;
 }
