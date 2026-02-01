@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Plus, Globe, Layout, ChevronRight } from 'lucide-react';
+import { Settings, Plus, Globe, Layout, ChevronRight, Cloud } from 'lucide-react';
 import { Switch } from '../../components/Switch';
 import { storage } from 'wxt/utils/storage';
 import { Matcher } from '../../utils/matcher';
-import { AppConfig, SiteConfig } from '../options/types';
+import { CloudMatcher } from '../../utils/cloudMatcher';
+import { AppConfig, SiteConfig, CloudAccount, CloudEnvironment } from '../options/types';
 import { clsx } from 'clsx';
 
 const patternMap: Record<string, string> = {
@@ -23,6 +24,7 @@ const positionMap: Record<string, string> = {
 
 const App: React.FC = () => {
     const [matchingSites, setMatchingSites] = useState<{ site: SiteConfig, groupIdx: number, siteIdx: number }[]>([]);
+    const [matchingCloudAccounts, setMatchingCloudAccounts] = useState<{ account: CloudAccount, environment: CloudEnvironment, envIdx: number, accIdx: number }[]>([]);
     const [currentHost, setCurrentHost] = useState('');
 
     useEffect(() => {
@@ -52,6 +54,7 @@ const App: React.FC = () => {
             let host = '';
             try { host = new URL(url).hostname; } catch (e) { }
 
+            // Match site configs
             const matches: { site: SiteConfig, groupIdx: number, siteIdx: number }[] = [];
             config.settings.forEach((group, gIdx) => {
                 group.sites.forEach((site, sIdx) => {
@@ -61,6 +64,24 @@ const App: React.FC = () => {
                 });
             });
             setMatchingSites(matches);
+
+            // Match cloud accounts
+            const cloudMatches: { account: CloudAccount, environment: CloudEnvironment, envIdx: number, accIdx: number }[] = [];
+            if (config.cloudEnvironments) {
+                config.cloudEnvironments.forEach((env, envIdx) => {
+                    if (!env.enable) return;
+                    // Use findMatchingAccounts to match accounts (including environment template fallback)
+                    const matchingAccounts = CloudMatcher.findMatchingAccounts(env, url, host);
+                    matchingAccounts.forEach((account) => {
+                        // Find the actual index of the account in the environment
+                        const accIdx = env.accounts.findIndex(acc => acc.id === account.id);
+                        if (accIdx !== -1) {
+                            cloudMatches.push({ account, environment: env, envIdx, accIdx });
+                        }
+                    });
+                });
+            }
+            setMatchingCloudAccounts(cloudMatches);
         }
     };
 
@@ -68,6 +89,15 @@ const App: React.FC = () => {
         const config = await storage.getItem<AppConfig>('sync:appConfig');
         if (config) {
             config.settings[groupIdx].sites[siteIdx].enable = enabled;
+            await storage.setItem('sync:appConfig', config);
+            await refreshMatches();
+        }
+    };
+
+    const toggleCloudAccount = async (envIdx: number, accIdx: number, enabled: boolean) => {
+        const config = await storage.getItem<AppConfig>('sync:appConfig');
+        if (config && config.cloudEnvironments) {
+            config.cloudEnvironments[envIdx].accounts[accIdx].enable = enabled;
             await storage.setItem('sync:appConfig', config);
             await refreshMatches();
         }
@@ -132,6 +162,58 @@ const App: React.FC = () => {
                                         <span className="flex items-center gap-1">
                                             <div className={clsx("w-1.5 h-1.5 rounded-full", site.flagEnable ? "bg-green-500" : "bg-gray-300 dark:bg-slate-700")} />
                                             Banner: {site.flagEnable ? 'On' : 'Off'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Matching Cloud Accounts */}
+            {matchingCloudAccounts.length > 0 && (
+                <div className="space-y-3">
+                    <div className="px-1 flex items-center gap-2">
+                        <Cloud className="w-3.5 h-3.5 text-blue-500" />
+                        <span className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest">Active Cloud Accounts</span>
+                    </div>
+                    <div className="space-y-2">
+                        {matchingCloudAccounts.map(({ account, environment, envIdx, accIdx }, idx) => (
+                            <div
+                                key={idx}
+                                className={clsx(
+                                    "flex items-center gap-3 p-3 rounded-xl border transition-all duration-300",
+                                    account.enable
+                                        ? "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 shadow-sm"
+                                        : "bg-gray-50/50 dark:bg-slate-900/50 border-gray-100 dark:border-slate-800 opacity-75"
+                                )}
+                            >
+                                <Switch
+                                    checked={account.enable}
+                                    onChange={(val) => toggleCloudAccount(envIdx, accIdx, val)}
+                                />
+
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span
+                                            className="px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider text-white shadow-sm ring-1 ring-white/20"
+                                            style={{ backgroundColor: account.backgroundColor }}
+                                        >
+                                            {environment.name}
+                                        </span>
+                                        <span className="text-xs font-bold text-gray-900 dark:text-slate-100 truncate">
+                                            {account.name}
+                                        </span>
+                                    </div>
+                                    <div className="flex gap-2 text-[10px] font-medium text-gray-500 dark:text-slate-400 tracking-tight">
+                                        <span className="flex items-center gap-1">
+                                            <div className={clsx("w-1.5 h-1.5 rounded-full", account.backgroundEnable ? "bg-green-500" : "bg-gray-300 dark:bg-slate-700")} />
+                                            Background: {account.backgroundEnable ? 'On' : 'Off'}
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                            <div className={clsx("w-1.5 h-1.5 rounded-full", account.highlightEnable ? "bg-green-500" : "bg-gray-300 dark:bg-slate-700")} />
+                                            Highlight: {account.highlightEnable ? 'On' : 'Off'}
                                         </span>
                                     </div>
                                 </div>
