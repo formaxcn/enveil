@@ -1,7 +1,8 @@
-import { AppConfig, SiteConfig, CloudAccount, CloudRole, CloudEnvironment } from './options/types';
+import { AppConfig, SiteConfig, CloudAccount, CloudRole, CloudEnvironment, CloudProvider } from './options/types';
 import { CloudHighlighter } from '../components/CloudHighlighter';
 import { AccountSelectionHighlighter } from '../components/AccountSelectionHighlighter';
 import { CloudMatcher } from '../utils/cloudMatcher';
+import { getCloudTemplate } from '../utils/cloudTemplates';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
@@ -41,10 +42,23 @@ export default defineContentScript({
 
           // Use AccountSelectionHighlighter for account selection pages
           if (isAccountSelectionPage && cloudEnvironment) {
-            mountAccountSelectionUI(cloudEnvironment, cloudAccounts, cloudRoles, accountSelectionHighlighter);
+            // Get full template with selectors for account selection pages
+            const fullTemplate = getCloudTemplate(cloudEnvironment.provider);
+            const environmentWithFullTemplate = {
+              ...cloudEnvironment,
+              template: fullTemplate
+            };
+            mountAccountSelectionUI(environmentWithFullTemplate, cloudAccounts, cloudRoles, accountSelectionHighlighter);
           } else {
-            // Use CloudHighlighter for console pages - pass all matching accounts
-            mountCloudUI(cloudAccounts, cloudRoles, cloudHighlighter);
+            // Use CloudHighlighter for console pages - pass all matching accounts and environment
+            // Get full template with selectors since stored template may be incomplete
+            const fullTemplate = getCloudTemplate(cloudEnvironment.provider);
+            console.log('[Enveil Content] Full template selectors:', fullTemplate.selectors);
+            const environmentWithFullTemplate = {
+              ...cloudEnvironment,
+              template: fullTemplate
+            };
+            mountCloudUI(cloudAccounts, cloudRoles, cloudHighlighter, environmentWithFullTemplate);
           }
         } else {
           console.log('[Enveil Content] Received CLOUD_MATCH_UPDATE: No cloud match, unmounting cloud UI');
@@ -200,17 +214,41 @@ function createOverlay(site: SiteConfig): HTMLElement {
  * @param cloudAccounts Array of cloud account configurations (for background highlighting)
  * @param cloudRoles Array of cloud roles (for text highlighting)
  * @param cloudHighlighter The CloudHighlighter instance
+ * @param cloudEnvironment The cloud environment configuration (for console page container highlighting)
  */
-function mountCloudUI(cloudAccounts: CloudAccount[], cloudRoles: CloudRole[] | null, cloudHighlighter: CloudHighlighter) {
+function mountCloudUI(
+  cloudAccounts: CloudAccount[],
+  cloudRoles: CloudRole[] | null,
+  cloudHighlighter: CloudHighlighter,
+  cloudEnvironment: CloudEnvironment | null = null
+) {
+  console.log('[Enveil Content] mountCloudUI called:', {
+    accountsCount: cloudAccounts.length,
+    rolesCount: cloudRoles?.length || 0,
+    hasEnvironment: !!cloudEnvironment,
+    environmentName: cloudEnvironment?.name,
+    currentUrl: window.location.href
+  });
+
   // Remove any existing cloud highlighting first
   cloudHighlighter.removeHighlighting();
 
   // Apply account-level background highlighting for all matching accounts
-  // Use the first account's background color as the primary highlight
-  for (const cloudAccount of cloudAccounts) {
-    if (cloudAccount.backgroundEnable) {
-      cloudHighlighter.applyAccountHighlighting(cloudAccount);
-    }
+  // Uses the first enabled account's background color for the global overlay
+  cloudHighlighter.applyAccountHighlighting(cloudAccounts);
+
+  // Apply account container highlighting for console pages
+  if (cloudEnvironment && cloudAccounts.length > 0) {
+    console.log('[Enveil Content] Scheduling account container highlighting');
+    setTimeout(() => {
+      console.log('[Enveil Content] Applying account container highlighting now');
+      cloudHighlighter.applyAccountContainerHighlighting(cloudEnvironment, cloudAccounts);
+    }, 100);
+  } else {
+    console.log('[Enveil Content] Skipping account container highlighting:', {
+      hasEnvironment: !!cloudEnvironment,
+      accountsCount: cloudAccounts.length
+    });
   }
 
   // Apply role-level text highlighting if roles are provided
@@ -218,7 +256,7 @@ function mountCloudUI(cloudAccounts: CloudAccount[], cloudRoles: CloudRole[] | n
     // Wait a bit for DOM to be ready, then apply role highlighting
     setTimeout(() => {
       cloudHighlighter.applyRoleHighlighting(cloudRoles);
-    }, 100);
+    }, 200);
   }
 }
 

@@ -206,15 +206,28 @@ const App: React.FC = () => {
                                             {account.name}
                                         </span>
                                     </div>
-                                    <div className="flex gap-2 text-[10px] font-medium text-gray-500 dark:text-slate-400 tracking-tight">
-                                        <span className="flex items-center gap-1">
-                                            <div className={clsx("w-1.5 h-1.5 rounded-full", account.backgroundEnable ? "bg-green-500" : "bg-gray-300 dark:bg-slate-700")} />
-                                            Background: {account.backgroundEnable ? 'On' : 'Off'}
-                                        </span>
-                                        <span className="flex items-center gap-1">
-                                            <div className={clsx("w-1.5 h-1.5 rounded-full", account.highlightEnable ? "bg-green-500" : "bg-gray-300 dark:bg-slate-700")} />
-                                            Highlight: {account.highlightEnable ? 'On' : 'Off'}
-                                        </span>
+                                    <div className="flex flex-col gap-1.5 text-[10px] font-medium text-gray-500 dark:text-slate-400 tracking-tight">
+                                        <div className="flex items-center gap-2">
+                                            <span className="flex items-center gap-1">
+                                                <div 
+                                                    className="w-3 h-3 rounded-full border border-gray-200 dark:border-slate-600" 
+                                                    style={{ backgroundColor: account.backgroundEnable ? account.backgroundColor : '#d1d5db' }}
+                                                />
+                                                Background: {account.backgroundEnable ? 'On' : 'Off'}
+                                            </span>
+                                            <span className="flex items-center gap-1">
+                                                <div 
+                                                    className="w-3 h-3 rounded-full border border-gray-200 dark:border-slate-600" 
+                                                    style={{ backgroundColor: account.highlightEnable ? account.highlightColor : '#d1d5db' }}
+                                                />
+                                                Highlight: {account.highlightEnable ? 'On' : 'Off'}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-[9px] text-gray-400 dark:text-slate-500">
+                                            <span>Patterns: {account.accountPatterns?.length || 0}</span>
+                                            <span>•</span>
+                                            <span>Roles: {account.roles?.length || 0}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

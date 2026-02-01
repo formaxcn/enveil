@@ -45,19 +45,35 @@ export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
         ]
       },
       console: {
-        // AWS Console account info containers
+        // AWS Console account info containers - targeting the account display area
+        // These selectors target the top navigation bar account info section
         accountContainers: [
+          // Main account dropdown trigger in top navigation
+          '#nav-usernameMenu',
+          '[data-testid="nav-username-menu"]',
+          // Account detail menu popover
           '#nav-usernav-popover',
-          '.awsc-username-display',
           '[data-testid="account-detail-menu"]',
-          '#awsc-username-menu-recent-usernames'
+          // Username display elements
+          '.awsc-username-display',
+          '[data-testid="current-user-name"]',
+          // Account info section in navigation
+          '.awsc-nav-account-info',
+          '[data-testid="account-info-section"]',
+          // Recent usernames section
+          '#awsc-username-menu-recent-usernames',
+          // Top bar account selector
+          '.globalNav-2D-',
+          '[data-testid="global-nav-account-selector"]'
         ],
-        // Console role/account text elements
+        // Console role/account text elements for keyword highlighting
         roleElements: [
           '.awsc-username-display .awsc-username',
           '#nav-usernav-popover .nav-elt-label',
           '[data-testid="current-user-name"]',
-          '.awsc-role-display-name'
+          '.awsc-role-display-name',
+          '.awsc-account-name',
+          '[data-testid="account-name"]'
         ]
       }
     }
@@ -83,17 +99,35 @@ export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
         ]
       },
       console: {
+        // AWS Console account info containers - targeting the account display area
+        // These selectors target the top navigation bar account info section
         accountContainers: [
+          // Main account dropdown trigger in top navigation
+          '#nav-usernameMenu',
+          '[data-testid="nav-username-menu"]',
+          // Account detail menu popover
           '#nav-usernav-popover',
-          '.awsc-username-display',
           '[data-testid="account-detail-menu"]',
-          '#awsc-username-menu-recent-usernames'
+          // Username display elements
+          '.awsc-username-display',
+          '[data-testid="current-user-name"]',
+          // Account info section in navigation
+          '.awsc-nav-account-info',
+          '[data-testid="account-info-section"]',
+          // Recent usernames section
+          '#awsc-username-menu-recent-usernames',
+          // Top bar account selector
+          '.globalNav-2D-',
+          '[data-testid="global-nav-account-selector"]'
         ],
+        // Console role/account text elements for keyword highlighting
         roleElements: [
           '.awsc-username-display .awsc-username',
           '#nav-usernav-popover .nav-elt-label',
           '[data-testid="current-user-name"]',
-          '.awsc-role-display-name'
+          '.awsc-role-display-name',
+          '.awsc-account-name',
+          '[data-testid="account-name"]'
         ]
       }
     }
