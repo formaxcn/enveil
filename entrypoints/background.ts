@@ -3,6 +3,18 @@ import { Matcher } from '../utils/matcher';
 import { CloudMatcher } from '../utils/cloudMatcher';
 import { storage } from 'wxt/utils/storage';
 
+// Magic Relogin 状态存储
+interface MagicReloginState {
+  sourceTabId: number;
+  sourceUrl: string;
+  accountId?: string;
+  roleArn?: string;
+  samlTabId?: number;
+  isWaitingForLogin: boolean;
+}
+
+let magicReloginState: MagicReloginState | null = null;
+
 export default defineBackground(() => {
   console.log('Enveil: Background service worker started');
 
@@ -11,6 +23,9 @@ export default defineBackground(() => {
     // We check if status is complete OR if a URL change is detected (for SPAs)
     if ((changeInfo.status === 'complete' || changeInfo.url) && tab.url) {
       await checkAndNotifyTab(tabId, tab.url);
+
+      // 检查是否是 Magic Relogin 流程中的 SAML 页面
+      await checkMagicReloginSamlPage(tabId, tab.url);
     }
   });
 
@@ -19,6 +34,97 @@ export default defineBackground(() => {
     const tab = await browser.tabs.get(activeInfo.tabId);
     if (tab.url) {
       await checkAndNotifyTab(tab.id!, tab.url);
+    }
+  });
+
+  // Listen for tab removal (用户关闭 SAML 登录页)
+  browser.tabs.onRemoved.addListener(async (tabId) => {
+    if (magicReloginState?.samlTabId === tabId) {
+      console.log('[Enveil Background] SAML tab closed, cleaning up relogin state');
+      magicReloginState = null;
+      await browser.storage.local.remove('enveil_magic_relogin_state');
+    }
+  });
+
+  // Listen for messages from content scripts
+  browser.runtime.onMessage.addListener(async (message, sender) => {
+    if (message.action === 'MAGIC_RELOGIN_START') {
+      console.log('[Enveil Background] Received MAGIC_RELOGIN_START:', message);
+
+      // 保存源标签页信息
+      const sourceTabId = sender.tab?.id;
+      if (!sourceTabId) {
+        console.error('[Enveil Background] No source tab ID');
+        return { success: false, error: 'No source tab ID' };
+      }
+
+      // 保存状态
+      magicReloginState = {
+        sourceTabId: sourceTabId,
+        sourceUrl: message.sourceUrl,
+        accountId: message.accountId,
+        roleArn: message.roleArn,
+        isWaitingForLogin: true
+      };
+
+      // 保存到 storage
+      await browser.storage.local.set({
+        'enveil_magic_relogin_state': magicReloginState
+      });
+
+      // 打开 SAML 登录页面
+      try {
+        const samlTab = await browser.tabs.create({
+          url: message.samlUrl,
+          active: true
+        });
+
+        if (samlTab.id) {
+          magicReloginState.samlTabId = samlTab.id;
+
+          // 更新 storage
+          await browser.storage.local.set({
+            'enveil_magic_relogin_state': magicReloginState
+          });
+
+          console.log('[Enveil Background] Opened SAML tab:', samlTab.id);
+          return { success: true, samlTabId: samlTab.id };
+        }
+      } catch (error) {
+        console.error('[Enveil Background] Failed to open SAML tab:', error);
+        return { success: false, error: String(error) };
+      }
+    }
+
+    if (message.action === 'MAGIC_RELOGIN_SUCCESS') {
+      console.log('[Enveil Background] Received MAGIC_RELOGIN_SUCCESS');
+
+      // 重新登录成功，刷新源页面
+      if (magicReloginState?.sourceTabId) {
+        try {
+          // 发送消息给源页面的 content script 刷新页面
+          await browser.tabs.sendMessage(magicReloginState.sourceTabId, {
+            action: 'MAGIC_RELOGIN_REFRESH_SOURCE'
+          });
+          console.log('[Enveil Background] Sent refresh message to source tab:', magicReloginState.sourceTabId);
+        } catch (error) {
+          console.error('[Enveil Background] Failed to send refresh message:', error);
+
+          // 如果消息发送失败，直接刷新标签页
+          try {
+            await browser.tabs.reload(magicReloginState.sourceTabId);
+            console.log('[Enveil Background] Reloaded source tab directly');
+          } catch (reloadError) {
+            console.error('[Enveil Background] Failed to reload source tab:', reloadError);
+          }
+        }
+
+        // 清理状态
+        magicReloginState = null;
+        await browser.storage.local.remove('enveil_magic_relogin_state');
+      }
+
+      return { success: true };
     }
   });
 
@@ -33,6 +139,34 @@ export default defineBackground(() => {
     }
   });
 });
+
+/**
+ * 检查是否是 Magic Relogin 流程中的 SAML 页面
+ * 如果是，更新状态中的 samlTabId
+ */
+async function checkMagicReloginSamlPage(tabId: number, url: string): Promise<void> {
+  // 检查是否是 SAML 登录页面
+  const isSamlPage = url.includes('signin.amazonaws.cn/saml') ||
+                     url.includes('signin.aws.amazon.com/saml');
+
+  if (isSamlPage && magicReloginState?.isWaitingForLogin) {
+    // 检查是否是从 Magic Relogin 打开的
+    const state = await browser.storage.local.get('enveil_magic_relogin_state');
+    const savedState = state['enveil_magic_relogin_state'] as MagicReloginState | undefined;
+
+    if (savedState?.isWaitingForLogin && !savedState.samlTabId) {
+      // 更新 SAML tab ID
+      magicReloginState.samlTabId = tabId;
+      savedState.samlTabId = tabId;
+
+      await browser.storage.local.set({
+        'enveil_magic_relogin_state': savedState
+      });
+
+      console.log('[Enveil Background] Updated SAML tab ID:', tabId);
+    }
+  }
+}
 
 async function checkAndNotifyTab(tabId: number, url: string) {
   // 1. Get Config

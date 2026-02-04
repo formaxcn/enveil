@@ -28,7 +28,10 @@ export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
     name: 'AWS China',
     accountSelectionUrl: 'https://signin.amazonaws.cn/saml',
     consoleDomainPattern: '*://*.amazonaws.cn/*',
+    // SAML 登录 URL - 需要用户配置自己的 IdP 登录地址
+    // 例如: 'https://login.microsoftonline.com/{tenant-id}/saml2'
     samlUrl: '',
+    // 是否启用自动重新登录功能
     enableAutoRelogin: false,
     selectors: {
       accountSelection: {

@@ -1,8 +1,13 @@
 import { AppConfig, SiteConfig, CloudAccount, CloudRole, CloudEnvironment, CloudProvider } from './options/types';
 import { CloudHighlighter } from '../components/CloudHighlighter';
 import { AccountSelectionHighlighter } from '../components/AccountSelectionHighlighter';
+import { MagicReloginHandler, magicReloginHandler } from '../components/MagicReloginHandler';
 import { CloudMatcher } from '../utils/cloudMatcher';
 import { getCloudTemplate } from '../utils/cloudTemplates';
+
+// 全局变量存储当前云环境信息
+let currentCloudEnvironment: CloudEnvironment | null = null;
+let currentCloudAccounts: CloudAccount[] = [];
 
 export default defineContentScript({
   matches: ['<all_urls>'],
@@ -12,6 +17,9 @@ export default defineContentScript({
     // Initialize cloud highlighters
     const cloudHighlighter = new CloudHighlighter();
     const accountSelectionHighlighter = new AccountSelectionHighlighter();
+
+    // 初始化 Magic Relogin Handler
+    await initMagicRelogin();
 
     // Initial check (in case background script doesn't send update immediately on reload/install)
     // However, usually background script handles updates.
@@ -33,6 +41,12 @@ export default defineContentScript({
         const cloudEnvironment = message.cloudEnvironment as CloudEnvironment | null;
         const isAccountSelectionPage = message.isAccountSelectionPage as boolean;
 
+        // 保存当前云环境信息（供 Magic Relogin 使用）
+        if (cloudEnvironment) {
+          currentCloudEnvironment = cloudEnvironment;
+          currentCloudAccounts = cloudAccounts || [];
+        }
+
         if (cloudAccounts && cloudAccounts.length > 0) {
           console.log('[Enveil Content] Received CLOUD_MATCH_UPDATE: Cloud matches found', {
             accounts: cloudAccounts.map(acc => acc.name),
@@ -50,6 +64,9 @@ export default defineContentScript({
                 template: fullTemplate
               };
               mountAccountSelectionUI(environmentWithFullTemplate, cloudAccounts, cloudRoles, accountSelectionHighlighter);
+
+              // 检查是否需要自动选择角色（Magic Relogin 流程）
+              handleAutoRoleSelection(environmentWithFullTemplate, cloudAccounts);
             } else {
               // Use CloudHighlighter for console pages - pass all matching accounts and environment
               // Get full template with selectors since stored template may be incomplete
@@ -60,17 +77,179 @@ export default defineContentScript({
                 template: fullTemplate
               };
               mountCloudUI(cloudAccounts, cloudRoles, cloudHighlighter, environmentWithFullTemplate);
+
+              // 启动 Magic Relogin 监听（用于 Console 页面的注销弹窗）
+              magicReloginHandler.startWatching(environmentWithFullTemplate, cloudAccounts);
             }
           }
         } else {
           console.log('[Enveil Content] Received CLOUD_MATCH_UPDATE: No cloud match, unmounting cloud UI');
           unmountCloudUI(cloudHighlighter);
           unmountAccountSelectionUI(accountSelectionHighlighter);
+
+          // 停止 Magic Relogin 监听
+          magicReloginHandler.stopWatching();
         }
+      } else if (message.action === 'MAGIC_RELOGIN_REFRESH_SOURCE') {
+        // 收到刷新源页面的消息（SAML 登录成功后）
+        console.log('[Enveil Content] Received MAGIC_RELOGIN_REFRESH_SOURCE, refreshing page');
+        handleReloginComplete();
       }
     });
   },
 });
+
+/**
+ * 初始化 Magic Relogin 功能
+ * 检查是否是从 SAML 登录页面返回的
+ */
+async function initMagicRelogin(): Promise<void> {
+  // 检查是否有重新登录状态
+  const reloginState = await magicReloginHandler.loadReloginState();
+
+  if (reloginState?.isWaitingForLogin) {
+    console.log('[Enveil Content] Found relogin state:', reloginState);
+
+    // 检查当前页面是否是 AWS Console（登录成功）
+    const currentUrl = window.location.href;
+    const isAwsConsole = currentUrl.includes('console.amazonaws.cn') ||
+                         currentUrl.includes('console.aws.amazon.com');
+
+    if (isAwsConsole) {
+      console.log('[Enveil Content] Detected AWS Console, relogin successful');
+
+      // 清除重新登录状态
+      await magicReloginHandler.clearReloginState();
+
+      // 通知 background 刷新源页面
+      try {
+        await browser.runtime.sendMessage({
+          action: 'MAGIC_RELOGIN_SUCCESS',
+          sourceUrl: reloginState.sourceUrl
+        });
+      } catch (error) {
+        console.error('[Enveil Content] Failed to notify relogin success:', error);
+      }
+    }
+  }
+}
+
+/**
+ * 处理自动角色选择（在 SAML 登录页面）
+ */
+async function handleAutoRoleSelection(
+  environment: CloudEnvironment,
+  accounts: CloudAccount[]
+): Promise<void> {
+  const reloginState = await magicReloginHandler.loadReloginState();
+
+  if (!reloginState?.isWaitingForLogin) {
+    return;
+  }
+
+  console.log('[Enveil Content] Auto role selection enabled, looking for role:', reloginState.roleArn);
+
+  // 等待页面加载完成
+  setTimeout(() => {
+    if (reloginState.roleArn) {
+      // 尝试查找并选择对应的 role
+      selectRoleOnSamlPage(reloginState.roleArn);
+    } else if (reloginState.accountId) {
+      // 如果没有 role ARN，尝试展开对应的 account
+      expandAccountOnSamlPage(reloginState.accountId);
+    }
+  }, 1000);
+}
+
+/**
+ * 在 SAML 页面上选择指定的 role
+ */
+function selectRoleOnSamlPage(roleArn: string): void {
+  console.log('[Enveil Content] Selecting role:', roleArn);
+
+  // 查找所有 radio 按钮
+  const radioButtons = document.querySelectorAll('input[type="radio"][name="roleIndex"]');
+
+  for (const radio of Array.from(radioButtons)) {
+    const value = (radio as HTMLInputElement).value;
+    if (value === roleArn || value.includes(roleArn)) {
+      console.log('[Enveil Content] Found matching role radio button:', value);
+
+      // 选中该 role
+      (radio as HTMLInputElement).checked = true;
+
+      // 触发 change 事件
+      radio.dispatchEvent(new Event('change', { bubbles: true }));
+
+      // 自动点击登录按钮
+      setTimeout(() => {
+        clickSignInButton();
+      }, 500);
+
+      return;
+    }
+  }
+
+  console.log('[Enveil Content] Could not find role radio button for:', roleArn);
+}
+
+/**
+ * 在 SAML 页面上展开指定的 account
+ */
+function expandAccountOnSamlPage(accountId: string): void {
+  console.log('[Enveil Content] Expanding account:', accountId);
+
+  // 查找所有 account 容器
+  const accountContainers = document.querySelectorAll('.saml-account, .expandable-container');
+
+  for (const container of Array.from(accountContainers)) {
+    const text = container.textContent || '';
+
+    // 检查是否包含 account ID
+    if (text.includes(accountId)) {
+      console.log('[Enveil Content] Found matching account container:', text);
+
+      // 查找展开按钮并点击
+      const expandableContainer = container.classList.contains('expandable-container')
+        ? container
+        : container.querySelector('.expandable-container');
+
+      if (expandableContainer) {
+        (expandableContainer as HTMLElement).click();
+        console.log('[Enveil Content] Clicked expandable container');
+      }
+
+      return;
+    }
+  }
+
+  console.log('[Enveil Content] Could not find account container for:', accountId);
+}
+
+/**
+ * 点击登录按钮
+ */
+function clickSignInButton(): void {
+  console.log('[Enveil Content] Clicking sign in button');
+
+  // 查找登录按钮
+  const signInButton = document.querySelector('#signin_button, input[type="submit"], button[type="submit"]');
+
+  if (signInButton) {
+    (signInButton as HTMLElement).click();
+    console.log('[Enveil Content] Sign in button clicked');
+  } else {
+    console.log('[Enveil Content] Could not find sign in button');
+  }
+}
+
+/**
+ * 处理重新登录完成
+ */
+function handleReloginComplete(): void {
+  console.log('[Enveil Content] Relogin complete, refreshing page');
+  window.location.reload();
+}
 
 let shadowHost: HTMLElement | null = null;
 let shadowRoot: ShadowRoot | null = null;
