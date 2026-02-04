@@ -11,6 +11,7 @@ export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
     accountSelectionUrl: '',
     consoleDomainPattern: '',
     samlUrl: '',
+    enableAutoRelogin: false,
     selectors: {
       accountSelection: {
         accountContainers: [],
@@ -28,6 +29,7 @@ export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
     accountSelectionUrl: 'https://signin.amazonaws.cn/saml',
     consoleDomainPattern: '*://*.amazonaws.cn/*',
     samlUrl: '',
+    enableAutoRelogin: false,
     selectors: {
       accountSelection: {
         // AWS CN SAML account selection containers
@@ -80,6 +82,7 @@ export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
     accountSelectionUrl: 'https://signin.aws.amazon.com/saml',
     consoleDomainPattern: '*://*.aws.amazon.com/*',
     samlUrl: '',
+    enableAutoRelogin: false,
     selectors: {
       accountSelection: {
         // Match div.saml-account that:

@@ -23,6 +23,7 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
     const [enabled, setEnabled] = useState(true);
     const [provider, setProvider] = useState<CloudProvider>(CloudProvider.AWS_GLOBAL);
     const [samlUrl, setSamlUrl] = useState('');
+    const [enableAutoRelogin, setEnableAutoRelogin] = useState(false);
     const [consolePattern, setConsolePattern] = useState('');
     const [accountUrl, setAccountUrl] = useState('');
     const [accountContainers, setAccountContainers] = useState<string[]>([]);
@@ -39,6 +40,7 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
             setEnabled(environment.enable);
             setProvider(environment.provider);
             setSamlUrl(environment.template.samlUrl || '');
+            setEnableAutoRelogin(environment.template.enableAutoRelogin || false);
             setConsolePattern(environment.template.consoleDomainPattern);
             setAccountUrl(environment.template.accountSelectionUrl);
             setAccountContainers(environment.template.selectors.accountSelection.accountContainers);
@@ -51,6 +53,7 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
             setEnabled(true);
             setProvider(CloudProvider.AWS_GLOBAL);
             setSamlUrl('');
+            setEnableAutoRelogin(false);
             const template = getCloudTemplate(CloudProvider.AWS_GLOBAL);
             setConsolePattern(template.consoleDomainPattern);
             setAccountUrl(template.accountSelectionUrl);
@@ -67,6 +70,7 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
             const template = getCloudTemplate(provider);
             setConsolePattern(template.consoleDomainPattern);
             setAccountUrl(template.accountSelectionUrl);
+            setEnableAutoRelogin(template.enableAutoRelogin || false);
             setAccountContainers(template.selectors.accountSelection.accountContainers);
             setRoleElements(template.selectors.accountSelection.roleElements);
             setConsoleAccountContainers(template.selectors.console.accountContainers);
@@ -134,6 +138,7 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
             accountSelectionUrl: accountUrl,
             consoleDomainPattern: consolePattern,
             samlUrl,
+            enableAutoRelogin,
             selectors: {
                 accountSelection: {
                     accountContainers: accountContainers.filter(Boolean),
@@ -212,13 +217,20 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
                     </div>
 
                     <div className="form-group font-bold">
-                        <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2">SAML URL</label>
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-wider">SAML URL</label>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-gray-600 dark:text-slate-400">Auto-Login</span>
+                                <Switch checked={enableAutoRelogin} onChange={setEnableAutoRelogin} />
+                            </div>
+                        </div>
                         <input
                             type="url"
                             value={samlUrl}
                             onChange={(e) => setSamlUrl(e.target.value)}
-                            className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                            placeholder="https://..."
+                            disabled={!enableAutoRelogin}
+                            className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            placeholder={enableAutoRelogin ? "https://..." : "Enable auto-login to enter SAML URL"}
                         />
                     </div>
 

@@ -60,7 +60,8 @@ export interface CloudTemplate {
   name: string;
   accountSelectionUrl: string;
   consoleDomainPattern: string;
-  samlUrl?: string; // For future auto-relogin functionality
+  samlUrl?: string;
+  enableAutoRelogin?: boolean; // Auto re-login when session expires
   // DOM selectors for highlighting
   selectors: {
     // Account selection page selectors
