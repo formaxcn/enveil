@@ -22,6 +22,7 @@ export class CloudHighlighter {
     private accountStyleElement: HTMLStyleElement | null = null; // Style element for account highlighting
     private currentEnvironment: CloudEnvironment | null = null; // Current environment for selectors
     private accountMutationObserver: MutationObserver | null = null; // Observer for account container changes
+    private currentHighlightColor: string | null = null; // Store highlight color for dynamic updates
 
     /**
      * Applies account-level background highlighting using the account's configured color.
@@ -32,14 +33,14 @@ export class CloudHighlighter {
      */
     public applyAccountHighlighting(accounts: CloudAccount[]): void {
         console.log('[CloudHighlighter] applyAccountHighlighting called with accounts:', accounts.length);
-        
+
         // Remove existing account overlay if present
         this.removeAccountHighlighting();
 
         // Filter enabled accounts with background
         const enabledAccounts = accounts.filter(acc => acc.enable && acc.backgroundEnable && acc.backgroundColor);
         console.log('[CloudHighlighter] Enabled accounts with background:', enabledAccounts.length);
-        
+
         if (enabledAccounts.length === 0) {
             console.log('[CloudHighlighter] No enabled accounts with background');
             return;
@@ -47,10 +48,10 @@ export class CloudHighlighter {
 
         // Use the first account's color for the global overlay
         const primaryAccount = enabledAccounts[0];
-        
+
         // Create new account overlay
         this.currentAccountOverlay = this.createAccountOverlay(primaryAccount.backgroundColor);
-        
+
         // Add to shadow root if available, otherwise to document
         const shadowRoot = this.getShadowRoot();
         if (shadowRoot) {
@@ -68,8 +69,9 @@ export class CloudHighlighter {
      * Sets up mutation observer for dynamic content changes.
      * 
      * @param roles Array of cloud roles to apply highlighting for
+     * @param highlightColor Optional highlight color from account configuration
      */
-    public applyRoleHighlighting(roles: CloudRole[]): void {
+    public applyRoleHighlighting(roles: CloudRole[], highlightColor?: string): void {
         if (!roles || roles.length === 0) {
             return;
         }
@@ -82,11 +84,12 @@ export class CloudHighlighter {
         }
 
         this.currentRoles = enabledRoles;
+        this.currentHighlightColor = highlightColor || null;
 
-        this.createRoleStyles(enabledRoles);
+        this.createRoleStyles(enabledRoles, highlightColor);
 
         for (const role of enabledRoles) {
-            this.highlightRoleText(role);
+            this.highlightRoleText(role, highlightColor);
         }
 
         this.setupMutationObserver();
@@ -126,20 +129,23 @@ export class CloudHighlighter {
             return;
         }
 
-        this.currentEnvironment = environment;
-        const enabledAccounts = accounts.filter(acc => acc.enable);
-        
-        console.log(`[CloudHighlighter] Enabled accounts: ${enabledAccounts.length}`, 
-            enabledAccounts.map(acc => ({ name: acc.name, id: acc.id, backgroundEnable: acc.backgroundEnable, backgroundColor: acc.backgroundColor })));
-
         // Remove existing highlighting
         this.removeAccountContainerHighlighting();
+
+        this.currentEnvironment = environment;
 
         // Create styles
         this.createAccountStyles();
 
+        const enabledAccounts = accounts.filter(acc => acc.enable);
+
         // Apply highlighting for each account
         for (const account of enabledAccounts) {
+            // Ensure unique role styles are created for this environment's accounts
+            if (account.roles && account.roles.length > 0) {
+                const highlightColor = account.highlightEnable ? account.highlightColor : undefined;
+                this.createRoleStyles(account.roles, highlightColor);
+            }
             this.highlightAccountContainers(account);
         }
 
@@ -207,11 +213,11 @@ export class CloudHighlighter {
                         id: el.id,
                         textPreview: textContent.substring(0, 50)
                     });
-                    
+
                     // Check if container matches the account patterns
                     const isMatch = this.isAccountContainerMatch(el, account);
                     console.log(`[CloudHighlighter] Element ${idx} match result:`, isMatch);
-                    
+
                     if (isMatch) {
                         containers.push(el);
                     }
@@ -221,7 +227,13 @@ export class CloudHighlighter {
             }
         }
 
-        return containers;
+        // Filter out nested containers to avoid "double bordering"
+        // If a container has an ancestor that is also in the list, we skip the child
+        const topLevelContainers = containers.filter(el => {
+            return !containers.some(other => other !== el && other.contains(el));
+        });
+
+        return topLevelContainers;
     }
 
     /**
@@ -249,23 +261,28 @@ export class CloudHighlighter {
                 console.log(`[CloudHighlighter] Pattern disabled, skipping`);
                 continue;
             }
-            
+
             const matchValue = pattern.matchValue?.trim();
             if (!matchValue) {
                 console.log(`[CloudHighlighter] Empty matchValue, skipping`);
                 continue;
             }
-            
+
             console.log(`[CloudHighlighter] Checking pattern:`, {
                 matchPattern: pattern.matchPattern,
                 matchValue: matchValue
             });
-            
+
             // For 12-digit account ID pattern with word boundaries
-            if (/^\d{12}$/.test(matchValue)) {
-                const accountIdPattern = new RegExp(`\\b${matchValue}\\b`);
+            // Normalize: remove hyphens for numeric check, but also check for hyphenated version in text
+            if (/^\d{12}$/.test(matchValue) || /^(\d{4}-){2}\d{4}$/.test(matchValue)) {
+                const normalizedMatchValue = matchValue.replace(/-/g, '');
+                // Find either the raw ID or the hyphenated version
+                const hyphenatedMatchValue = normalizedMatchValue.replace(/(\d{4})(\d{4})(\d{4})/, '$1-$2-$3');
+
+                const accountIdPattern = new RegExp(`\\b(${normalizedMatchValue}|${hyphenatedMatchValue})\\b`);
                 const isMatch = accountIdPattern.test(elementText);
-                console.log(`[CloudHighlighter] 12-digit ID check: ${matchValue} -> ${isMatch}`);
+                console.log(`[CloudHighlighter] ID check: ${matchValue} -> ${isMatch}`);
                 if (isMatch) return true;
             } else {
                 // For non-numeric match values, use word boundary matching
@@ -298,15 +315,33 @@ export class CloudHighlighter {
 
     /**
      * Applies styles to an account container element.
+     * Directly modifies element styles like account selection page:
+     * - Sets semi-transparent background color
+     * - Adds solid border with the same color
      */
     private applyAccountContainerStyles(element: HTMLElement, account: CloudAccount): void {
-        // Apply background color if enabled
+        // Check if already processed
+        if (element.hasAttribute('data-enveil-account-id')) {
+            return;
+        }
+
+        // Apply background color and border if enabled
         if (account.backgroundEnable && account.backgroundColor) {
-            element.style.backgroundColor = this.hexToRgba(account.backgroundColor, 0.25);
-            element.style.border = `2px solid ${account.backgroundColor}`;
-            element.style.boxShadow = `0 0 8px ${this.hexToRgba(account.backgroundColor, 0.35)}`;
-            element.style.borderRadius = '4px';
+            const color = account.backgroundColor;
+            // Apply styles similar to account selection page
+            element.style.backgroundColor = this.hexToRgba(color, 0.2);
+            element.style.border = `2px solid ${color}`;
+            element.style.borderRadius = '6px';
+            element.style.padding = '2px 8px'; // Add some padding for better look
+            element.style.margin = '2px'; // Add some margin
             element.style.transition = 'all 0.3s ease';
+            element.style.display = 'inline-block'; // Ensure border wraps text nicely
+        }
+
+        // Apply keywords highlighting within this container if roles are provided
+        if (account.roles && account.roles.length > 0) {
+            const highlightColor = account.highlightEnable ? account.highlightColor : undefined;
+            this.highlightRoleKeywordsInContainer(element, account.roles, highlightColor);
         }
 
         // Apply highlight color if enabled
@@ -409,15 +444,29 @@ export class CloudHighlighter {
     }
 
     /**
+     * Highlights role keywords within an account container.
+     */
+    private highlightRoleKeywordsInContainer(container: HTMLElement, roles: CloudRole[], highlightColor?: string): void {
+        const enabledRoles = roles.filter(role => role.enable && role.matchValue && role.matchValue.trim().length > 0);
+        if (enabledRoles.length === 0) return;
+
+        console.log(`[CloudHighlighter] Highlighting ${enabledRoles.length} roles in container`, container);
+
+        for (const role of enabledRoles) {
+            this.highlightRoleTextInElement(container, role, highlightColor);
+        }
+    }
+
+    /**
      * Removes account container highlighting.
      */
     public removeAccountContainerHighlighting(): void {
         // Remove account container highlights
         this.highlightedAccountContainers.forEach((elements) => {
             elements.forEach(el => {
+                // Remove applied styles
                 el.style.backgroundColor = '';
                 el.style.border = '';
-                el.style.boxShadow = '';
                 el.style.borderRadius = '';
                 el.style.transition = '';
                 el.removeAttribute('data-enveil-account-id');
@@ -498,8 +547,9 @@ export class CloudHighlighter {
             this.currentStyleElement = null;
         }
 
-        // Clear stored roles
+        // Clear stored roles and highlight color
         this.currentRoles = [];
+        this.currentHighlightColor = null;
 
         // Mark role highlighting as inactive
         this.roleHighlightingActive = false;
@@ -534,29 +584,35 @@ export class CloudHighlighter {
      * Creates CSS styles for role text highlighting.
      * 
      * @param roles Array of cloud roles to create styles for
+     * @param highlightColor Optional highlight color from account configuration
      */
-    private createRoleStyles(roles: CloudRole[]): void {
+    private createRoleStyles(roles: CloudRole[], highlightColor?: string): void {
         const styleElement = document.createElement('style');
         styleElement.id = CloudHighlighter.CLOUD_ROLE_STYLE_ID;
-        
+
         let cssRules = '';
-        
+
+        // Use configured highlight color or default
+        const bgColor = highlightColor || '#bee3f8';
+        const textColor = this.getContrastColor(bgColor);
+        const borderColor = this.darkenColor(bgColor, 20);
+
         roles.forEach((role, index) => {
             if (!role.enable) return;
-            
+
             const className = `${CloudHighlighter.CLOUD_ROLE_HIGHLIGHT_CLASS}-${role.id}`;
-            
+
             cssRules += `
                 .${className} {
-                    color: #000000 !important;
-                    background-color: #ffeb3b !important;
-                    font-weight: bold !important;
+                    color: ${textColor} !important;
+                    background-color: ${this.hexToRgba(bgColor, 0.85)} !important;
+                    font-weight: 600 !important;
                     text-decoration: none !important;
-                    border: none !important;
-                    padding: 1px 2px !important;
-                    border-radius: 2px !important;
+                    border: 1px solid ${borderColor} !important;
+                    padding: 1px 4px !important;
+                    border-radius: 3px !important;
                     display: inline !important;
-                    box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+                    box-shadow: 0 1px 3px ${this.hexToRgba(borderColor, 0.3)} !important;
                 }
             `;
         });
@@ -567,17 +623,62 @@ export class CloudHighlighter {
     }
 
     /**
+     * Gets contrast color (black or white) for given background color
+     */
+    private getContrastColor(hexColor: string): string {
+        hexColor = hexColor.replace('#', '');
+        if (hexColor.length === 3) {
+            hexColor = hexColor.split('').map(c => c + c).join('');
+        }
+
+        const r = parseInt(hexColor.substring(0, 2), 16);
+        const g = parseInt(hexColor.substring(2, 4), 16);
+        const b = parseInt(hexColor.substring(4, 6), 16);
+
+        // Calculate luminance
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        return luminance > 0.5 ? '#1a365d' : '#ffffff';
+    }
+
+    /**
+     * Darkens a hex color by percentage
+     */
+    private darkenColor(hexColor: string, percent: number): string {
+        hexColor = hexColor.replace('#', '');
+        if (hexColor.length === 3) {
+            hexColor = hexColor.split('').map(c => c + c).join('');
+        }
+
+        let r = parseInt(hexColor.substring(0, 2), 16);
+        let g = parseInt(hexColor.substring(2, 4), 16);
+        let b = parseInt(hexColor.substring(4, 6), 16);
+
+        r = Math.floor(r * (100 - percent) / 100);
+        g = Math.floor(g * (100 - percent) / 100);
+        b = Math.floor(b * (100 - percent) / 100);
+
+        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    }
+
+    /**
      * Highlights text content for a specific role's pattern.
      * 
      * @param role The cloud role configuration
+     * @param highlightColor Optional highlight color from account configuration
      */
-    private highlightRoleText(role: CloudRole): void {
+    private highlightRoleText(role: CloudRole, highlightColor?: string): void {
+        this.highlightRoleTextInElement(document.body, role, highlightColor);
+    }
+
+    /**
+     * Highlights text content for a specific role's pattern within a specific root element.
+     */
+    private highlightRoleTextInElement(root: HTMLElement, role: CloudRole, highlightColor?: string): void {
         if (!role.matchValue || role.matchValue.trim().length === 0) {
             return;
         }
 
         if (typeof document === 'undefined' || typeof NodeFilter === 'undefined') {
-            console.warn('[CloudHighlighter] DOM APIs not available, skipping role text highlighting');
             return;
         }
 
@@ -588,7 +689,6 @@ export class CloudHighlighter {
             try {
                 regex = new RegExp(`(${matchValue})`, 'gi');
             } catch (e) {
-                console.error('[CloudHighlighter] Invalid role regex:', matchValue);
                 return;
             }
         } else {
@@ -598,25 +698,25 @@ export class CloudHighlighter {
         if (!regex) return;
 
         const className = `${CloudHighlighter.CLOUD_ROLE_HIGHLIGHT_CLASS}-${role.id}`;
-        
+
         const walker = document.createTreeWalker(
-            document.body,
+            root,
             NodeFilter.SHOW_TEXT,
             {
                 acceptNode: (node) => {
                     const parent = node.parentElement;
                     if (!parent) return NodeFilter.FILTER_REJECT;
-                    
+
                     const tagName = parent.tagName.toLowerCase();
                     if (['script', 'style', 'noscript'].includes(tagName)) {
                         return NodeFilter.FILTER_REJECT;
                     }
-                    
+
                     if (parent.classList.contains(CloudHighlighter.CLOUD_ROLE_HIGHLIGHT_CLASS) ||
                         parent.closest(`.${CloudHighlighter.CLOUD_ROLE_HIGHLIGHT_CLASS}`)) {
                         return NodeFilter.FILTER_REJECT;
                     }
-                    
+
                     return NodeFilter.FILTER_ACCEPT;
                 }
             }
@@ -630,22 +730,22 @@ export class CloudHighlighter {
 
         textNodes.forEach(textNode => {
             const originalText = textNode.textContent || '';
-            
+
             if (!regex.test(originalText)) return;
 
-            const modifiedText = originalText.replace(regex, `<span class="${className}" data-role-id="${role.id}">$1</span>`);
+            const modifiedText = originalText.replace(regex, `<span class="${className} ${CloudHighlighter.CLOUD_ROLE_HIGHLIGHT_CLASS}" data-role-id="${role.id}">$1</span>`);
 
             if (modifiedText !== originalText && textNode.parentNode) {
                 const wrapper = document.createElement('span');
                 wrapper.innerHTML = modifiedText;
                 wrapper.setAttribute('data-original-text', originalText);
                 wrapper.setAttribute('data-enveil-processed', 'true');
-                
+
                 const highlightedElements = wrapper.querySelectorAll(`.${className}`);
                 highlightedElements.forEach(el => {
                     this.currentRoleHighlights.push(el as HTMLElement);
                 });
-                
+
                 textNode.parentNode.replaceChild(wrapper, textNode);
             } else if (textNode.parentElement) {
                 textNode.parentElement.setAttribute('data-enveil-processed', 'true');
@@ -694,7 +794,7 @@ export class CloudHighlighter {
     public updateRoleHighlighting(roles: CloudRole[]): void {
         // Remove existing role highlighting
         this.removeRoleHighlighting();
-        
+
         // Re-apply role highlighting
         this.applyRoleHighlighting(roles);
     }
@@ -729,7 +829,7 @@ export class CloudHighlighter {
                         }
                     }
                 }
-                
+
                 // Check for text content changes
                 if (mutation.type === 'characterData') {
                     shouldReapplyHighlighting = true;
@@ -766,7 +866,7 @@ export class CloudHighlighter {
 
         // Apply highlighting for each current role to new content
         for (const role of this.currentRoles) {
-            this.highlightNewRoleText(role);
+            this.highlightNewRoleText(role, this.currentHighlightColor || undefined);
         }
     }
 
@@ -775,8 +875,9 @@ export class CloudHighlighter {
      * More efficient than full DOM scan for dynamic updates.
      * 
      * @param role The cloud role configuration
+     * @param highlightColor Optional highlight color from account configuration
      */
-    private highlightNewRoleText(role: CloudRole): void {
+    private highlightNewRoleText(role: CloudRole, highlightColor?: string): void {
         if (!role.matchValue || role.matchValue.trim().length === 0) {
             return;
         }
@@ -802,7 +903,7 @@ export class CloudHighlighter {
         if (!regex) return;
 
         const className = `${CloudHighlighter.CLOUD_ROLE_HIGHLIGHT_CLASS}-${role.id}`;
-        
+
         const walker = document.createTreeWalker(
             document.body,
             NodeFilter.SHOW_TEXT,
@@ -810,18 +911,18 @@ export class CloudHighlighter {
                 acceptNode: (node) => {
                     const parent = node.parentElement;
                     if (!parent) return NodeFilter.FILTER_REJECT;
-                    
+
                     const tagName = parent.tagName.toLowerCase();
                     if (['script', 'style', 'noscript'].includes(tagName)) {
                         return NodeFilter.FILTER_REJECT;
                     }
-                    
+
                     if (parent.classList.contains(CloudHighlighter.CLOUD_ROLE_HIGHLIGHT_CLASS) ||
                         parent.closest(`.${CloudHighlighter.CLOUD_ROLE_HIGHLIGHT_CLASS}`) ||
                         parent.hasAttribute('data-enveil-processed')) {
                         return NodeFilter.FILTER_REJECT;
                     }
-                    
+
                     return NodeFilter.FILTER_ACCEPT;
                 }
             }
@@ -835,7 +936,7 @@ export class CloudHighlighter {
 
         textNodes.forEach(textNode => {
             const originalText = textNode.textContent || '';
-            
+
             if (!regex.test(originalText)) return;
 
             const modifiedText = originalText.replace(regex, `<span class="${className}" data-role-id="${role.id}">$1</span>`);
@@ -845,12 +946,12 @@ export class CloudHighlighter {
                 wrapper.innerHTML = modifiedText;
                 wrapper.setAttribute('data-original-text', originalText);
                 wrapper.setAttribute('data-enveil-processed', 'true');
-                
+
                 const highlightedElements = wrapper.querySelectorAll(`.${className}`);
                 highlightedElements.forEach(el => {
                     this.currentRoleHighlights.push(el as HTMLElement);
                 });
-                
+
                 textNode.parentNode.replaceChild(wrapper, textNode);
             } else if (textNode.parentElement) {
                 textNode.parentElement.setAttribute('data-enveil-processed', 'true');
@@ -865,7 +966,7 @@ export class CloudHighlighter {
      */
     public getHighlightedRolesInfo(): Array<{ roleId: string; highlightCount: number }> {
         const roleInfo: { [roleId: string]: number } = {};
-        
+
         this.currentRoleHighlights.forEach(element => {
             const roleId = element.getAttribute('data-role-id');
             if (roleId) {

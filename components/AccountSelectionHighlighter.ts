@@ -123,7 +123,8 @@ class AWSAccountSelectionHandler implements IAccountSelectionHandler {
 
             // Highlight role keywords within this container
             if (account.roles && account.roles.length > 0) {
-                this.highlightRolesInContainer(container, account.roles);
+                const highlightColor = account.highlightEnable ? account.highlightColor : undefined;
+                this.highlightRolesInContainer(container, account.roles, highlightColor);
             }
         });
 
@@ -283,7 +284,7 @@ class AWSAccountSelectionHandler implements IAccountSelectionHandler {
     /**
      * Highlights role keywords within an AWS account container.
      */
-    private highlightRolesInContainer(container: HTMLElement, roles: CloudRole[]): void {
+    private highlightRolesInContainer(container: HTMLElement, roles: CloudRole[], highlightColor?: string): void {
         const enabledRoles = roles.filter(role => role.enable && role.matchValue && role.matchValue.trim().length > 0);
 
         // Get role element selectors from template
@@ -318,14 +319,14 @@ class AWSAccountSelectionHandler implements IAccountSelectionHandler {
         const searchRoots = roleElements.length > 0 ? roleElements : [container];
 
         for (const root of searchRoots) {
-            this.highlightRoleKeywordsInElement(root, enabledRoles);
+            this.highlightRoleKeywordsInElement(root, enabledRoles, highlightColor);
         }
     }
 
     /**
      * Highlights role patterns within a specific element.
      */
-    private highlightRoleKeywordsInElement(element: HTMLElement, roles: CloudRole[]): void {
+    private highlightRoleKeywordsInElement(element: HTMLElement, roles: CloudRole[], highlightColor?: string): void {
         for (const role of roles) {
             if (!role.matchValue || role.matchValue.trim() === '') continue;
 
@@ -392,7 +393,7 @@ class AWSAccountSelectionHandler implements IAccountSelectionHandler {
                     const highlightedElements = wrapper.querySelectorAll(`.${AWSAccountSelectionHandler.ROLE_HIGHLIGHT_CLASS}`);
                     highlightedElements.forEach(el => {
                         this.highlightedRoles.push(el as HTMLElement);
-                        this.applyRoleHighlightStyle(el as HTMLElement, role);
+                        this.applyRoleHighlightStyle(el as HTMLElement, role, highlightColor);
                     });
 
                     textNode.parentNode.replaceChild(wrapper, textNode);
@@ -404,17 +405,60 @@ class AWSAccountSelectionHandler implements IAccountSelectionHandler {
     /**
      * Applies highlight style to a role element.
      */
-    private applyRoleHighlightStyle(element: HTMLElement, role: CloudRole): void {
+    private applyRoleHighlightStyle(element: HTMLElement, role: CloudRole, highlightColor?: string): void {
+        // Use configured highlight color or default
+        const bgColor = highlightColor || '#bee3f8';
+        const textColor = this.getContrastColor(bgColor);
+        const borderColor = this.darkenColor(bgColor, 20);
+        
         Object.assign(element.style, {
-            color: '#000000',
-            backgroundColor: '#ffeb3b',
-            fontWeight: 'bold',
+            color: textColor,
+            backgroundColor: this.hexToRgba(bgColor, 0.85),
+            fontWeight: '600',
             textDecoration: 'none',
-            border: 'none',
-            padding: '1px 3px',
-            borderRadius: '2px',
+            border: `1px solid ${borderColor}`,
+            padding: '1px 4px',
+            borderRadius: '3px',
             display: 'inline'
         });
+    }
+
+    /**
+     * Gets contrast color (black or white) for given background color
+     */
+    private getContrastColor(hexColor: string): string {
+        hexColor = hexColor.replace('#', '');
+        if (hexColor.length === 3) {
+            hexColor = hexColor.split('').map(c => c + c).join('');
+        }
+        
+        const r = parseInt(hexColor.substring(0, 2), 16);
+        const g = parseInt(hexColor.substring(2, 4), 16);
+        const b = parseInt(hexColor.substring(4, 6), 16);
+        
+        // Calculate luminance
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        return luminance > 0.5 ? '#1a365d' : '#ffffff';
+    }
+
+    /**
+     * Darkens a hex color by percentage
+     */
+    private darkenColor(hexColor: string, percent: number): string {
+        hexColor = hexColor.replace('#', '');
+        if (hexColor.length === 3) {
+            hexColor = hexColor.split('').map(c => c + c).join('');
+        }
+        
+        let r = parseInt(hexColor.substring(0, 2), 16);
+        let g = parseInt(hexColor.substring(2, 4), 16);
+        let b = parseInt(hexColor.substring(4, 6), 16);
+        
+        r = Math.floor(r * (100 - percent) / 100);
+        g = Math.floor(g * (100 - percent) / 100);
+        b = Math.floor(b * (100 - percent) / 100);
+        
+        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
     }
 
     /**
@@ -626,7 +670,8 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
             this.applyAccountBackground(container, account);
 
             if (account.roles && account.roles.length > 0) {
-                this.highlightRolesInContainer(container, account.roles);
+                const highlightColor = account.highlightEnable ? account.highlightColor : undefined;
+                this.highlightRolesInContainer(container, account.roles, highlightColor);
             }
         });
 
@@ -744,7 +789,7 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
         element.classList.add(GenericAccountSelectionHandler.ACCOUNT_HIGHLIGHT_CLASS);
     }
 
-    private highlightRolesInContainer(container: HTMLElement, roles: CloudRole[]): void {
+    private highlightRolesInContainer(container: HTMLElement, roles: CloudRole[], highlightColor?: string): void {
         const enabledRoles = roles.filter(role => role.enable && role.matchValue && role.matchValue.trim().length > 0);
 
         const selectors = this.currentEnvironment?.template?.selectors?.accountSelection?.roleElements || [];
@@ -761,11 +806,11 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
 
         for (const root of searchRoots) {
             if (!root) continue;
-            this.highlightRoleKeywordsInElement(root, enabledRoles);
+            this.highlightRoleKeywordsInElement(root, enabledRoles, highlightColor);
         }
     }
 
-    private highlightRoleKeywordsInElement(element: HTMLElement, roles: CloudRole[]): void {
+    private highlightRoleKeywordsInElement(element: HTMLElement, roles: CloudRole[], highlightColor?: string): void {
         for (const role of roles) {
             if (!role.matchValue || role.matchValue.trim().length === 0) continue;
 
@@ -832,7 +877,7 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
                     const highlightedElements = wrapper.querySelectorAll(`.${GenericAccountSelectionHandler.ROLE_HIGHLIGHT_CLASS}`);
                     highlightedElements.forEach(el => {
                         this.highlightedRoles.push(el as HTMLElement);
-                        this.applyRoleHighlightStyle(el as HTMLElement, role);
+                        this.applyRoleHighlightStyle(el as HTMLElement, role, highlightColor);
                     });
 
                     textNode.parentNode.replaceChild(wrapper, textNode);
@@ -841,15 +886,20 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
         }
     }
 
-    private applyRoleHighlightStyle(element: HTMLElement, role: CloudRole): void {
+    private applyRoleHighlightStyle(element: HTMLElement, role: CloudRole, highlightColor?: string): void {
+        // Use configured highlight color or default
+        const bgColor = highlightColor || '#bee3f8';
+        const textColor = this.getContrastColor(bgColor);
+        const borderColor = this.darkenColor(bgColor, 20);
+        
         Object.assign(element.style, {
-            color: '#000000',
-            backgroundColor: '#ffeb3b',
-            fontWeight: 'bold',
+            color: textColor,
+            backgroundColor: this.hexToRgba(bgColor, 0.85),
+            fontWeight: '600',
             textDecoration: 'none',
-            border: 'none',
-            padding: '1px 3px',
-            borderRadius: '2px',
+            border: `1px solid ${borderColor}`,
+            padding: '1px 4px',
+            borderRadius: '3px',
             display: 'inline'
         });
     }
@@ -954,6 +1004,44 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
         const b = parseInt(hex.substring(4, 6), 16);
 
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    /**
+     * Gets contrast color (black or white) for given background color
+     */
+    private getContrastColor(hexColor: string): string {
+        hexColor = hexColor.replace('#', '');
+        if (hexColor.length === 3) {
+            hexColor = hexColor.split('').map(c => c + c).join('');
+        }
+
+        const r = parseInt(hexColor.substring(0, 2), 16);
+        const g = parseInt(hexColor.substring(2, 4), 16);
+        const b = parseInt(hexColor.substring(4, 6), 16);
+
+        // Calculate luminance
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        return luminance > 0.5 ? '#1a365d' : '#ffffff';
+    }
+
+    /**
+     * Darkens a hex color by percentage
+     */
+    private darkenColor(hexColor: string, percent: number): string {
+        hexColor = hexColor.replace('#', '');
+        if (hexColor.length === 3) {
+            hexColor = hexColor.split('').map(c => c + c).join('');
+        }
+
+        let r = parseInt(hexColor.substring(0, 2), 16);
+        let g = parseInt(hexColor.substring(2, 4), 16);
+        let b = parseInt(hexColor.substring(4, 6), 16);
+
+        r = Math.floor(r * (100 - percent) / 100);
+        g = Math.floor(g * (100 - percent) / 100);
+        b = Math.floor(b * (100 - percent) / 100);
+
+        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
     }
 
     private escapeRegExp(string: string): string {

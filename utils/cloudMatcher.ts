@@ -243,6 +243,53 @@ export class CloudMatcher extends Matcher {
     }
 
     /**
+     * Finds all cloud accounts within an environment that match the current URL,
+     * including disabled accounts. This is used for popup display to show all
+     * matching accounts with their toggle state.
+     * 
+     * @param environment The cloud environment to search within
+     * @param currentUrl The URL to match against
+     * @param currentHost The host to match against
+     * @returns Array of matching CloudAccount objects (including disabled ones)
+     */
+    static findMatchingAccountsWithDisabled(environment: CloudEnvironment, currentUrl: string, currentHost: string): CloudAccount[] {
+        if (!environment.enable || !environment.accounts || environment.accounts.length === 0) {
+            return [];
+        }
+
+        // Check each account's account patterns first (including disabled accounts)
+        const matchingAccounts: CloudAccount[] = [];
+
+        for (const account of environment.accounts) {
+            // Check if account has account patterns
+            if (account.accountPatterns && account.accountPatterns.length > 0) {
+                const matchingPatterns = account.accountPatterns.filter(pattern =>
+                    this.isAccountPatternMatch(pattern, currentUrl, currentHost)
+                );
+
+                if (matchingPatterns.length > 0) {
+                    matchingAccounts.push(account);
+                    continue;
+                }
+            }
+
+            // Fall back to checking account's own match pattern (including disabled accounts)
+            // Create a temporary enabled version to check pattern match
+            const tempEnabledAccount = { ...account, enable: true };
+            if (this.isCloudAccountMatch(tempEnabledAccount, currentUrl, currentHost)) {
+                matchingAccounts.push(account);
+            }
+        }
+
+        // If no accounts matched, check if URL matches environment template patterns
+        if (matchingAccounts.length === 0 && this.isEnvironmentTemplateMatch(environment, currentUrl)) {
+            return environment.accounts;
+        }
+
+        return matchingAccounts;
+    }
+
+    /**
      * Finds all cloud environments that have at least one matching account for the current URL.
      * 
      * @param environments Array of cloud environments to check

@@ -45,35 +45,31 @@ export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
         ]
       },
       console: {
-        // AWS Console account info containers - targeting the account display area
-        // These selectors target the top navigation bar account info section
+        // AWS Console account info containers - targeting ONLY the top-right account dropdown
+        // These selectors specifically target the username menu in the top navigation bar
         accountContainers: [
-          // Main account dropdown trigger in top navigation
-          '#nav-usernameMenu',
+          // Primary: Main account dropdown trigger button in top-right corner
           '[data-testid="nav-username-menu"]',
-          // Account detail menu popover
-          '#nav-usernav-popover',
-          '[data-testid="account-detail-menu"]',
-          // Username display elements
-          '.awsc-username-display',
-          '[data-testid="current-user-name"]',
-          // Account info section in navigation
+          '[data-testid="awsc-nav-unified-account-menu-trigger"]',
+          '[data-testid="more-menu__awsc-nav-account-menu-button"]',
+          '#nav-usernameMenu',
+          // The button inside the username menu
+          '#nav-usernameMenu button',
+          '[data-testid="nav-username-menu-button"]',
+          // Alternative selectors for the account display area
           '.awsc-nav-account-info',
-          '[data-testid="account-info-section"]',
-          // Recent usernames section
-          '#awsc-username-menu-recent-usernames',
-          // Top bar account selector
-          '.globalNav-2D-',
-          '[data-testid="global-nav-account-selector"]'
+          '[data-testid="account-menu-trigger"]',
+          '[data-testid="awsc-account-info-tile"]',
+          // Fallback: any element with account-related classes
+          '[class*="awsui_button-trigger"][class*="account"]'
         ],
         // Console role/account text elements for keyword highlighting
         roleElements: [
-          '.awsc-username-display .awsc-username',
-          '#nav-usernav-popover .nav-elt-label',
-          '[data-testid="current-user-name"]',
-          '.awsc-role-display-name',
-          '.awsc-account-name',
-          '[data-testid="account-name"]'
+          '[data-testid="nav-username-menu"]',
+          '[data-testid="awsc-nav-unified-account-menu-trigger"]',
+          '#nav-usernameMenu',
+          '#nav-usernameMenu button',
+          '[data-testid="awsc-account-info-tile"]'
         ]
       }
     }
@@ -99,35 +95,31 @@ export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
         ]
       },
       console: {
-        // AWS Console account info containers - targeting the account display area
-        // These selectors target the top navigation bar account info section
+        // AWS Console account info containers - targeting ONLY the top-right account dropdown
+        // These selectors specifically target the username menu in the top navigation bar
         accountContainers: [
-          // Main account dropdown trigger in top navigation
-          '#nav-usernameMenu',
+          // Primary: Main account dropdown trigger button in top-right corner
           '[data-testid="nav-username-menu"]',
-          // Account detail menu popover
-          '#nav-usernav-popover',
-          '[data-testid="account-detail-menu"]',
-          // Username display elements
-          '.awsc-username-display',
-          '[data-testid="current-user-name"]',
-          // Account info section in navigation
+          '[data-testid="awsc-nav-unified-account-menu-trigger"]',
+          '[data-testid="more-menu__awsc-nav-account-menu-button"]',
+          '#nav-usernameMenu',
+          // The button inside the username menu
+          '#nav-usernameMenu button',
+          '[data-testid="nav-username-menu-button"]',
+          // Alternative selectors for the account display area
           '.awsc-nav-account-info',
-          '[data-testid="account-info-section"]',
-          // Recent usernames section
-          '#awsc-username-menu-recent-usernames',
-          // Top bar account selector
-          '.globalNav-2D-',
-          '[data-testid="global-nav-account-selector"]'
+          '[data-testid="account-menu-trigger"]',
+          '[data-testid="awsc-account-info-tile"]',
+          // Fallback: any element with account-related classes
+          '[class*="awsui_button-trigger"][class*="account"]'
         ],
         // Console role/account text elements for keyword highlighting
         roleElements: [
-          '.awsc-username-display .awsc-username',
-          '#nav-usernav-popover .nav-elt-label',
-          '[data-testid="current-user-name"]',
-          '.awsc-role-display-name',
-          '.awsc-account-name',
-          '[data-testid="account-name"]'
+          '[data-testid="nav-username-menu"]',
+          '[data-testid="awsc-nav-unified-account-menu-trigger"]',
+          '#nav-usernameMenu',
+          '#nav-usernameMenu button',
+          '[data-testid="awsc-account-info-tile"]'
         ]
       }
     }

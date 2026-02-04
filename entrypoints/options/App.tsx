@@ -12,6 +12,12 @@ import { AppConfig, Setting, GroupDefaults, SiteConfig, CloudEnvironment, CloudA
 import { storage } from 'wxt/utils/storage';
 import { clsx } from 'clsx';
 
+declare const chrome: {
+  runtime: {
+    getManifest(): { version: string };
+  };
+};
+
 const DEFAULT_CONFIG: AppConfig = {
     browserSync: false,
     defaultColors: ['#4a9eff', '#4CAF50', '#ff9800', '#f44336', '#9c27b0'],

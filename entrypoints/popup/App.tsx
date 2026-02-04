@@ -70,8 +70,9 @@ const App: React.FC = () => {
             if (config.cloudEnvironments) {
                 config.cloudEnvironments.forEach((env, envIdx) => {
                     if (!env.enable) return;
-                    // Use findMatchingAccounts to match accounts (including environment template fallback)
-                    const matchingAccounts = CloudMatcher.findMatchingAccounts(env, url, host);
+                    // Use findMatchingAccountsWithDisabled to match accounts (including disabled ones)
+                    // This ensures disabled accounts are still shown in popup with toggle off
+                    const matchingAccounts = CloudMatcher.findMatchingAccountsWithDisabled(env, url, host);
                     matchingAccounts.forEach((account) => {
                         // Find the actual index of the account in the environment
                         const accIdx = env.accounts.findIndex(acc => acc.id === account.id);

@@ -41,24 +41,26 @@ export default defineContentScript({
           });
 
           // Use AccountSelectionHighlighter for account selection pages
-          if (isAccountSelectionPage && cloudEnvironment) {
-            // Get full template with selectors for account selection pages
-            const fullTemplate = getCloudTemplate(cloudEnvironment.provider);
-            const environmentWithFullTemplate = {
-              ...cloudEnvironment,
-              template: fullTemplate
-            };
-            mountAccountSelectionUI(environmentWithFullTemplate, cloudAccounts, cloudRoles, accountSelectionHighlighter);
-          } else {
-            // Use CloudHighlighter for console pages - pass all matching accounts and environment
-            // Get full template with selectors since stored template may be incomplete
-            const fullTemplate = getCloudTemplate(cloudEnvironment.provider);
-            console.log('[Enveil Content] Full template selectors:', fullTemplate.selectors);
-            const environmentWithFullTemplate = {
-              ...cloudEnvironment,
-              template: fullTemplate
-            };
-            mountCloudUI(cloudAccounts, cloudRoles, cloudHighlighter, environmentWithFullTemplate);
+          if (cloudEnvironment) {
+            if (isAccountSelectionPage) {
+              // Get full template with selectors for account selection pages
+              const fullTemplate = getCloudTemplate(cloudEnvironment.provider);
+              const environmentWithFullTemplate = {
+                ...cloudEnvironment,
+                template: fullTemplate
+              };
+              mountAccountSelectionUI(environmentWithFullTemplate, cloudAccounts, cloudRoles, accountSelectionHighlighter);
+            } else {
+              // Use CloudHighlighter for console pages - pass all matching accounts and environment
+              // Get full template with selectors since stored template may be incomplete
+              const fullTemplate = getCloudTemplate(cloudEnvironment.provider);
+              console.log('[Enveil Content] Full template selectors:', fullTemplate.selectors);
+              const environmentWithFullTemplate = {
+                ...cloudEnvironment,
+                template: fullTemplate
+              };
+              mountCloudUI(cloudAccounts, cloudRoles, cloudHighlighter, environmentWithFullTemplate);
+            }
           }
         } else {
           console.log('[Enveil Content] Received CLOUD_MATCH_UPDATE: No cloud match, unmounting cloud UI');
@@ -252,12 +254,9 @@ function mountCloudUI(
   }
 
   // Apply role-level text highlighting if roles are provided
-  if (cloudRoles && cloudRoles.length > 0) {
-    // Wait a bit for DOM to be ready, then apply role highlighting
-    setTimeout(() => {
-      cloudHighlighter.applyRoleHighlighting(cloudRoles);
-    }, 200);
-  }
+  // Note: For console pages, we don't apply global role highlighting
+  // Role highlighting is only applied on account selection pages
+  // Console page only shows account container highlighting
 }
 
 /**
