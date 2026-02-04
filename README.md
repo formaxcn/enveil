@@ -13,11 +13,12 @@ A powerful Chrome extension for developers, DevOps engineers, and QA teams to vi
 - **Shadow DOM Isolation**: UI elements don't interfere with page functionality
 - **Real-time Updates**: Changes apply immediately without page refresh
 
-### **Cloud Environment Highlighting** ⭐ NEW
+### Cloud Environment Highlighting ⭐ NEW
 - **AWS Support**: Pre-configured templates for AWS China and AWS Global
 - **Account Highlighting**: Visual distinction between different cloud accounts
 - **Role Highlighting**: Keyword-based text emphasis for role names
 - **Account Selection Pages**: Enhanced indicators on SAML login pages
+- **Console Page Highlighting**: Persistent account and role highlighting in AWS Console navigation bar
 
 ### **Intelligent URL Matching**
 - **5 Matching Strategies**: Domain, URL Prefix, Exact URL, Regex, and smart "Everything" mode
@@ -51,8 +52,11 @@ A powerful Chrome extension for developers, DevOps engineers, and QA teams to vi
 ![Site Example](./docs/assets/images/sites-example.png)
 *Example of environment banner displayed on a webpage*
 
-![AWS Account Selection](./docs/assets/images/clouds-example-aws.png)
-*AWS account selection page with account highlighting and role keyword emphasis*
+![AWS Account Selection](./docs/assets/images/clouds-example-aws-accounts.png)
+*AWS account selection page with account container highlighting and role keyword emphasis*
+
+![AWS Console Highlighting](./docs/assets/images/clouds-example-aws-console.png)
+*AWS Console navigation bar with account information and role highlighting*
 
 ## 📖 Documentation
 
@@ -133,7 +137,8 @@ bun run build
    Account Pattern: domain: 123456789012
    ```
 4. Add role keywords to highlight (e.g., "Administrator", "ReadOnly")
-5. Visit your AWS SAML sign-in page to see the highlighting!
+5. Visit your AWS SAML sign-in page to see the account and role highlighting!
+6. After signing in, the highlighting persists in the AWS Console navigation bar
 
 ## 🎨 Common Use Cases
 
@@ -163,8 +168,10 @@ bun run build
 ☁️ AWS-Production
 ├── Account: prod-main (123456789012) - Red background
 │   └── Roles: Admin, ReadOnly (yellow highlight)
+│   └── Console: Navigation bar highlighting
 └── Account: dev-sandbox (987654321098) - Blue background
     └── Roles: Developer, Tester (yellow highlight)
+    └── Console: Navigation bar highlighting
 ```
 
 ## 🛠️ Development

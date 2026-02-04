@@ -34,13 +34,16 @@ Enveil now supports intelligent cloud environment visualization for AWS, with su
 - **Custom Providers**: Flexible configuration for any cloud platform
 
 #### Smart Cloud Detection
-- **Account Selection Pages**: Enhanced visual indicators on SAML login pages
-- **Console Interfaces**: Persistent highlighting in cloud provider consoles
+- **Account Selection Pages**: Enhanced visual indicators on SAML login pages with account container highlighting
+- **Console Page Highlighting**: Persistent account and role highlighting in AWS Console navigation bar
 - **Dynamic Content**: Mutation observer handles dynamically loaded content
 - **Cross-Page Consistency**: Maintains highlighting across navigation
 
-![AWS Account Selection Page](./assets/images/clouds-example-aws.png)
-*AWS account selection page with account highlighting and role keyword emphasis*
+![AWS Account Selection Page](./assets/images/clouds-example-aws-accounts.png)
+*AWS account selection page with account container highlighting and role keyword emphasis*
+
+![AWS Console Highlighting](./assets/images/clouds-example-aws-console.png)
+*AWS Console navigation bar with account information and role highlighting*
 
 ### 🎯 Intelligent URL Matching
 **Five sophisticated matching strategies for maximum flexibility**
@@ -301,16 +304,18 @@ Quick actions via URL parameters:
 
 ### Account Selection Page Highlighting
 When on AWS SAML sign-in pages:
-- **Account Containers**: Highlighted with configured background color
+- **Account Containers**: Highlighted with configured background color (25% opacity with border)
 - **Role Names**: Keywords highlighted in yellow (e.g., "Admin", "ReadOnly")
 - **Visual Distinction**: Different accounts have different background colors
 - **Quick Identification**: Instantly find the right account/role combination
 
 ### Console Page Highlighting
-When in AWS Console:
-- **Background Overlay**: Subtle color tint based on account
-- **Role Text**: Keywords highlighted in navigation and headers
-- **Persistent**: Maintains highlighting across page navigation
+When in AWS Console, the highlighting persists in the navigation bar:
+- **Navigation Bar Highlighting**: Account information container highlighted with configured background color
+- **Role Text Highlighting**: Role keywords highlighted in yellow within the navigation bar
+- **Account Info Display**: Account name/ID and role information visually distinguished
+- **Persistent**: Maintains highlighting across page navigation and service switches
+- **Dynamic Updates**: Automatically updates when switching accounts or roles
 
 ## Planned Features
 

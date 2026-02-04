@@ -258,8 +258,11 @@ Match Value: ReadOnlyAccess
 - **Padding**: 1px 3px
 - **Border Radius**: 2px
 
-![AWS Account Selection Page](./assets/images/clouds-example-aws.png)
-*AWS account selection page with account highlighting and role keyword emphasis*
+![AWS Account Selection Page](./assets/images/clouds-example-aws-accounts.png)
+*AWS account selection page with account container highlighting and role keyword emphasis*
+
+![AWS Console Highlighting](./assets/images/clouds-example-aws-console.png)
+*AWS Console navigation bar with account information and role highlighting*
 
 ### Cloud Provider Templates
 
@@ -275,8 +278,16 @@ Match Value: ReadOnlyAccess
       roleElements: ['.saml-role-name', '.saml-role-description', 'label.saml-role']
     },
     console: {
-      accountContainers: ['#nav-usernav-popover', '.awsc-username-display'],
-      roleElements: ['.awsc-username-display .awsc-username', '.awsc-role-display-name']
+      accountContainers: [
+        '[data-testid="nav-username-menu"]',
+        '[data-testid="awsc-nav-unified-account-menu-trigger"]',
+        '#nav-usernameMenu',
+        '.awsc-nav-account-info'
+      ],
+      roleElements: [
+        '[data-testid="nav-username-menu"]',
+        '#nav-usernameMenu button'
+      ]
     }
   }
 }
@@ -291,6 +302,13 @@ Match Value: ReadOnlyAccess
   // Same selectors as AWS China
 }
 ```
+
+#### Console Page Highlighting
+The console highlighting works on the AWS Console navigation bar:
+- **Account Containers**: Targets the account information dropdown/menu in the top navigation
+- **Role Elements**: Highlights role names within the account display area
+- **Dynamic Detection**: Uses multiple selectors to handle different AWS Console versions and layouts
+- **Persistent**: Highlighting remains active when navigating between AWS services
 
 ---
 

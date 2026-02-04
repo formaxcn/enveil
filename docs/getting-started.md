@@ -145,9 +145,13 @@ The left sidebar contains:
 1. Visit your AWS SAML sign-in page (e.g., `https://signin.amazonaws.cn/saml`)
 2. Your configured accounts should be highlighted with background colors
 3. Role names matching your keywords should be highlighted in yellow
+4. After signing in, the highlighting persists in the AWS Console navigation bar
 
-![AWS Account Selection Page](./assets/images/clouds-example-aws.png)
-*AWS account selection page with account highlighting and role keyword emphasis*
+![AWS Account Selection Page](./assets/images/clouds-example-aws-accounts.png)
+*AWS account selection page with account container highlighting and role keyword emphasis*
+
+![AWS Console Highlighting](./assets/images/clouds-example-aws-console.png)
+*AWS Console navigation bar with account information and role highlighting*
 
 ## Common Configurations
 
