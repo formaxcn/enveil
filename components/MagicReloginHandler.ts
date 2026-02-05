@@ -4,7 +4,7 @@ import { CloudEnvironment, CloudAccount, CloudRole, CloudProvider } from '../ent
  * MagicReloginHandler - 处理 AWS 重新登录的 Magic 功能
  *
  * 功能流程：
- * 1. 检测 AWS Console 注销弹窗
+ * 1. 检测 AWS Console 注销弹窗 (通过 document.getElementById("awsc-nav-signin-again-modal-root"))
  * 2. 在"重新登录"按钮旁添加 Magic 按钮
  * 3. 点击 Magic 按钮后：
  *    - 获取当前页面的 account 和 role 信息
@@ -27,32 +27,6 @@ export class MagicReloginHandler {
   private reloginState: ReloginState | null = null;
   private magicButton: HTMLElement | null = null;
   private observer: MutationObserver | null = null;
-
-  // AWS CN 注销弹窗的选择器
-  private readonly logoutDialogSelectors = [
-    // 中文注销弹窗
-    '.awsui_dialog_1d2i7_18r6w_169:has(.awsui_header--text_1d2i7_18r6w_404:contains("您已注销"))',
-    '.awsui_dialog_1d2i7_18r6w_169:has(span:contains("您已注销"))',
-    // 英文注销弹窗
-    '.awsui_dialog_1d2i7_18r6w_169:has(span:contains("You have signed out"))',
-    // 通用选择器
-    '[data-awsui-analytics*="Modal"]:has(span:contains("注销"))',
-    '[data-awsui-analytics*="Modal"]:has(span:contains("signed out"))',
-    // 基于按钮文本的选择器
-    '.awsui_dialog_1d2i7_18r6w_169:has(button:contains("重新登录"))',
-    '.awsui_dialog_1d2i7_18r6w_169:has(button:contains("Sign in again"))',
-    // 更通用的选择器
-    '.awsui_dialog_1d2i7_18r6w_169',
-    '.awsui_focus-lock_1d2i7_18r6w_306'
-  ];
-
-  // 重新登录按钮的选择器
-  private readonly reloginButtonSelectors = [
-    'button:contains("重新登录")',
-    'button:contains("Sign in again")',
-    '.awsui_variant-primary_vjswe_381hp_235',
-    'button[type="submit"]'
-  ];
 
   private constructor() {}
 
@@ -94,33 +68,24 @@ export class MagicReloginHandler {
 
     // 使用 MutationObserver 监听 DOM 变化
     this.observer = new MutationObserver((mutations) => {
-      console.log('[MagicRelogin] MutationObserver triggered, mutations count:', mutations.length);
-
-      // 检查是否有新的弹窗出现
-      const hasDialogChange = mutations.some(mutation =>
+      // 检查是否有 awsc-nav-signin-again-modal-root 元素被添加
+      const hasModalChange = mutations.some(mutation =>
         Array.from(mutation.addedNodes).some(node => {
           if (node instanceof HTMLElement) {
-            // 检查是否是 AWS 注销弹窗容器
             const isSigninAgainModal = node.id === 'awsc-nav-signin-again-modal-root';
-            const hasDialog = node.classList.contains('awsui_dialog_1d2i7_18r6w_169') ||
-                             node.querySelector('.awsui_dialog_1d2i7_18r6w_169') !== null ||
-                             node.querySelector('#awsc-nav-signin-again-modal-root') !== null;
+            const containsSigninModal = node.querySelector('#awsc-nav-signin-again-modal-root') !== null;
 
-            if (isSigninAgainModal || hasDialog) {
-              console.log('[MagicRelogin] Detected new dialog element:', {
-                className: node.className,
-                id: node.id,
-                isSigninAgainModal
-              });
+            if (isSigninAgainModal || containsSigninModal) {
+              console.log('[MagicRelogin] Detected signin again modal element');
+              return true;
             }
-            return isSigninAgainModal || hasDialog;
           }
           return false;
         })
       );
 
-      if (hasDialogChange) {
-        console.log('[MagicRelogin] Detected dialog change, checking for logout dialog');
+      if (hasModalChange) {
+        console.log('[MagicRelogin] Detected modal change, checking for logout dialog');
         this.checkForLogoutDialog(environment, accounts);
       }
     });
@@ -130,7 +95,7 @@ export class MagicReloginHandler {
       subtree: true
     });
 
-    console.log('[MagicRelogin] MutationObserver started observing document.body');
+    console.log('[MagicRelogin] MutationObserver started');
 
     // 添加定期检查，以防 MutationObserver 错过某些变化
     const checkInterval = setInterval(() => {
@@ -193,102 +158,27 @@ export class MagicReloginHandler {
   private checkForLogoutDialog(environment: CloudEnvironment, accounts: CloudAccount[]): void {
     console.log('[MagicRelogin] checkForLogoutDialog called');
 
-    // 尝试多种方式查找注销弹窗
-    let logoutDialog = this.findLogoutDialog();
-
-    if (logoutDialog) {
-      console.log('[MagicRelogin] Found logout dialog:', {
-        className: logoutDialog.className,
-        id: logoutDialog.id,
-        textContent: logoutDialog.textContent?.substring(0, 100)
-      });
-      this.injectMagicButton(logoutDialog, environment, accounts);
-    } else {
-      console.log('[MagicRelogin] No logout dialog found');
-    }
-  }
-
-  /**
-   * 查找注销弹窗
-   */
-  private findLogoutDialog(): HTMLElement | null {
-    console.log('[MagicRelogin] findLogoutDialog called, searching for logout dialog');
-
-    // 方法0: 通过 ID 查找 AWS 特定的注销弹窗容器
+    // 使用 document.getElementById 查找 AWS 注销弹窗
     const signinAgainModal = document.getElementById('awsc-nav-signin-again-modal-root');
-    console.log('[MagicRelogin] Method 0: Checking for awsc-nav-signin-again-modal-root:', !!signinAgainModal);
-    if (signinAgainModal) {
-      console.log('[MagicRelogin] Method 0: Found awsc-nav-signin-again-modal-root');
-      // 返回弹窗的实际内容容器
-      const modalContent = signinAgainModal.querySelector('.awsui_dialog_1d2i7_18r6w_169, .awsui_modal_1d2i7_18r6w_169, [class*="awsui_dialog"]') as HTMLElement;
-      if (modalContent) {
-        console.log('[MagicRelogin] Method 0: Found modal content inside');
-        return modalContent;
-      }
-      // 如果没有找到内部容器，返回根元素本身
-      return signinAgainModal;
+    console.log('[MagicRelogin] Checking for awsc-nav-signin-again-modal-root:', !!signinAgainModal);
+
+    if (!signinAgainModal) {
+      console.log('[MagicRelogin] No logout dialog found');
+      return;
     }
 
-    // 方法1: 通过标题文本查找
-    const dialogs = document.querySelectorAll('.awsui_dialog_1d2i7_18r6w_169, .awsui_focus-lock_1d2i7_18r6w_306');
-    console.log('[MagicRelogin] Method 1: Found', dialogs.length, 'potential dialogs');
+    console.log('[MagicRelogin] Found awsc-nav-signin-again-modal-root');
 
-    for (const dialog of Array.from(dialogs)) {
-      const text = dialog.textContent || '';
-      console.log('[MagicRelogin] Checking dialog text:', text.substring(0, 50));
+    // 查找弹窗内容容器
+    const modalContent = signinAgainModal.querySelector('[class*="awsui_dialog"]') as HTMLElement;
+    const logoutDialog = modalContent || signinAgainModal;
 
-      // 检查是否包含注销相关文本
-      if (text.includes('您已注销') ||
-          text.includes('You have signed out') ||
-          text.includes('重新登录') ||
-          text.includes('Sign in again')) {
-        console.log('[MagicRelogin] Method 1: Found matching dialog');
-        return dialog as HTMLElement;
-      }
-    }
+    console.log('[MagicRelogin] Using dialog element:', {
+      className: logoutDialog.className,
+      id: logoutDialog.id
+    });
 
-    // 方法2: 通过 focus-lock 容器查找
-    const focusLocks = document.querySelectorAll('.awsui_focus-lock_1d2i7_18r6w_306');
-    console.log('[MagicRelogin] Method 2: Found', focusLocks.length, 'focus-lock elements');
-
-    for (const lock of Array.from(focusLocks)) {
-      const text = lock.textContent || '';
-      if (text.includes('注销') || text.includes('signed out')) {
-        console.log('[MagicRelogin] Method 2: Found matching focus-lock');
-        return lock as HTMLElement;
-      }
-    }
-
-    // 方法3: 查找包含特定按钮的对话框
-    const allDialogs = document.querySelectorAll('[class*="awsui_dialog"]');
-    console.log('[MagicRelogin] Method 3: Found', allDialogs.length, 'awsui_dialog elements');
-
-    for (const dialog of Array.from(allDialogs)) {
-      const buttons = (dialog as HTMLElement).querySelectorAll('button');
-      for (const button of Array.from(buttons)) {
-        const buttonText = button.textContent || '';
-        if (buttonText.includes('重新登录') || buttonText.includes('Sign in again')) {
-          console.log('[MagicRelogin] Method 3: Found dialog with relogin button');
-          return dialog as HTMLElement;
-        }
-      }
-    }
-
-    // 方法4: 更宽松的查找 - 查找任何包含"重新登录"或"Sign in again"文本的容器
-    const allElements = document.querySelectorAll('div, section, article');
-    console.log('[MagicRelogin] Method 4: Checking', allElements.length, 'elements for relogin text');
-
-    for (const element of Array.from(allElements)) {
-      const text = element.textContent || '';
-      if ((text.includes('重新登录') || text.includes('Sign in again')) &&
-          (text.includes('您已注销') || text.includes('You have signed out') || text.includes('退出'))) {
-        console.log('[MagicRelogin] Method 4: Found element with relogin text:', element.className);
-        return element as HTMLElement;
-      }
-    }
-
-    console.log('[MagicRelogin] No logout dialog found by any method');
-    return null;
+    this.injectMagicButton(logoutDialog, environment, accounts);
   }
 
   /**
@@ -336,7 +226,7 @@ export class MagicReloginHandler {
    * 查找重新登录按钮
    */
   private findReloginButton(dialog: HTMLElement): HTMLElement | null {
-    // 查找按钮
+    // 查找按钮文本包含"重新登录"或"Sign in again"的按钮
     const buttons = dialog.querySelectorAll('button');
     for (const button of Array.from(buttons)) {
       const text = button.textContent || '';
@@ -348,7 +238,7 @@ export class MagicReloginHandler {
     }
 
     // 查找主按钮样式的元素
-    const primaryButtons = dialog.querySelectorAll('.awsui_variant-primary_vjswe_381hp_235');
+    const primaryButtons = dialog.querySelectorAll('[class*="awsui_variant-primary"]');
     if (primaryButtons.length > 0) {
       return primaryButtons[0] as HTMLElement;
     }
@@ -362,19 +252,32 @@ export class MagicReloginHandler {
   private createMagicButton(environment: CloudEnvironment, accounts: CloudAccount[]): HTMLElement {
     const button = document.createElement('button');
 
-    // 复制 AWS 按钮的样式类
-    button.className = 'awsui_button_vjswe_381hp_157 awsui_variant-primary_vjswe_381hp_235 enveil-magic-button';
+    // 使用自定义样式，不依赖 AWS 的随机 class 名
+    button.className = 'enveil-magic-button';
 
     // 设置按钮文本
     const span = document.createElement('span');
-    span.className = 'awsui_content_vjswe_381hp_153 awsui_label_1f1d4_ocied_5';
     span.textContent = 'Magic';
     button.appendChild(span);
 
-    // 添加自定义样式
-    button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-    button.style.border = 'none';
-    button.style.boxShadow = '0 2px 8px rgba(102, 126, 234, 0.4)';
+    // 添加 AWS 风格的基础样式 + 自定义渐变背景
+    button.style.cssText = `
+      font-family: "Amazon Ember", "Helvetica Neue", Roboto, Arial, sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 20px;
+      padding: 4px 20px;
+      border-radius: 2px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+      transition: all 0.2s ease;
+    `;
 
     // 添加点击事件
     button.addEventListener('click', (e) => {
