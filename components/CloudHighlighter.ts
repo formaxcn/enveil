@@ -214,6 +214,12 @@ export class CloudHighlighter {
                         textPreview: textContent.substring(0, 50)
                     });
 
+                    // Skip if already processed by another account
+                    if (el.hasAttribute('data-enveil-account-id')) {
+                        console.log(`[CloudHighlighter] Element ${idx} already processed, skipping`);
+                        return;
+                    }
+
                     // Check if container matches the account patterns
                     const isMatch = this.isAccountContainerMatch(el, account);
                     console.log(`[CloudHighlighter] Element ${idx} match result:`, isMatch);
@@ -325,6 +331,20 @@ export class CloudHighlighter {
             return;
         }
 
+        // Check if an ancestor is already highlighted (avoid double highlighting)
+        const ancestorHighlighted = element.closest('[data-enveil-account-id]');
+        if (ancestorHighlighted) {
+            console.log('[CloudHighlighter] Skipping element - ancestor already highlighted:', element);
+            return;
+        }
+
+        // Check if a descendant is already highlighted (prefer the outer element)
+        const descendantHighlighted = element.querySelector('[data-enveil-account-id]');
+        if (descendantHighlighted) {
+            console.log('[CloudHighlighter] Skipping element - descendant already highlighted:', element);
+            return;
+        }
+
         // Apply background color and border if enabled
         if (account.backgroundEnable && account.backgroundColor) {
             const color = account.backgroundColor;
@@ -419,6 +439,7 @@ export class CloudHighlighter {
 
         for (const account of accounts) {
             const existingContainers = this.highlightedAccountContainers.get(account.id) || [];
+            const newContainers: HTMLElement[] = [];
 
             for (const selector of selectors.accountContainers) {
                 if (!selector) continue;
@@ -427,17 +448,31 @@ export class CloudHighlighter {
                     const elements = document.querySelectorAll<HTMLElement>(selector);
 
                     elements.forEach(el => {
+                        // Skip if already in existing containers
                         if (existingContainers.includes(el)) return;
 
+                        // Skip if already processed by another account
+                        if (el.hasAttribute('data-enveil-account-id')) return;
+
                         if (this.isAccountContainerMatch(el, account)) {
-                            existingContainers.push(el);
-                            this.applyAccountContainerStyles(el, account);
+                            newContainers.push(el);
                         }
                     });
                 } catch (e) {
                     console.warn(`[CloudHighlighter] Invalid selector during reapply: ${selector}`, e);
                 }
             }
+
+            // Filter out nested containers to avoid "double bordering"
+            const topLevelContainers = newContainers.filter(el => {
+                return !newContainers.some(other => other !== el && other.contains(el));
+            });
+
+            // Apply styles to top-level containers
+            topLevelContainers.forEach(el => {
+                existingContainers.push(el);
+                this.applyAccountContainerStyles(el, account);
+            });
 
             this.highlightedAccountContainers.set(account.id, existingContainers);
         }

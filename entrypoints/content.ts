@@ -41,14 +41,30 @@ export default defineContentScript({
         const cloudEnvironment = message.cloudEnvironment as CloudEnvironment | null;
         const isAccountSelectionPage = message.isAccountSelectionPage as boolean;
 
+        console.log('[Enveil Content] Received CLOUD_MATCH_UPDATE:', {
+          hasCloudAccounts: !!(cloudAccounts && cloudAccounts.length > 0),
+          accountsCount: cloudAccounts?.length || 0,
+          hasCloudEnvironment: !!cloudEnvironment,
+          environmentName: cloudEnvironment?.name,
+          environmentProvider: cloudEnvironment?.provider,
+          isAccountSelectionPage,
+          currentUrl: window.location.href
+        });
+
         // 保存当前云环境信息（供 Magic Relogin 使用）
         if (cloudEnvironment) {
           currentCloudEnvironment = cloudEnvironment;
           currentCloudAccounts = cloudAccounts || [];
+          console.log('[Enveil Content] Saved cloud environment for Magic Relogin:', {
+            name: cloudEnvironment.name,
+            provider: cloudEnvironment.provider,
+            templateSamlUrl: cloudEnvironment.template?.samlUrl,
+            templateEnableAutoRelogin: cloudEnvironment.template?.enableAutoRelogin
+          });
         }
 
         if (cloudAccounts && cloudAccounts.length > 0) {
-          console.log('[Enveil Content] Received CLOUD_MATCH_UPDATE: Cloud matches found', {
+          console.log('[Enveil Content] Processing cloud matches:', {
             accounts: cloudAccounts.map(acc => acc.name),
             rolesCount: cloudRoles?.length || 0,
             isAccountSelectionPage
@@ -79,15 +95,17 @@ export default defineContentScript({
               mountCloudUI(cloudAccounts, cloudRoles, cloudHighlighter, environmentWithFullTemplate);
 
               // 启动 Magic Relogin 监听（用于 Console 页面的注销弹窗）
+              console.log('[Enveil Content] Starting Magic Relogin watcher for console page');
               magicReloginHandler.startWatching(environmentWithFullTemplate, cloudAccounts);
             }
           }
         } else {
-          console.log('[Enveil Content] Received CLOUD_MATCH_UPDATE: No cloud match, unmounting cloud UI');
+          console.log('[Enveil Content] No cloud match, unmounting cloud UI');
           unmountCloudUI(cloudHighlighter);
           unmountAccountSelectionUI(accountSelectionHighlighter);
 
           // 停止 Magic Relogin 监听
+          console.log('[Enveil Content] Stopping Magic Relogin watcher');
           magicReloginHandler.stopWatching();
         }
       } else if (message.action === 'MAGIC_RELOGIN_REFRESH_SOURCE') {

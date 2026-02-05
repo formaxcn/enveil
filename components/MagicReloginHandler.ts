@@ -67,7 +67,23 @@ export class MagicReloginHandler {
    * 开始监听注销弹窗
    */
   public startWatching(environment: CloudEnvironment | null, accounts: CloudAccount[]): void {
-    if (!environment || !this.isAutoReloginEnabled(environment)) {
+    console.log('[MagicRelogin] startWatching called', {
+      hasEnvironment: !!environment,
+      environmentName: environment?.name,
+      provider: environment?.provider,
+      accountsCount: accounts?.length,
+      isAutoReloginEnabled: environment ? this.isAutoReloginEnabled(environment) : false,
+      samlUrl: environment?.template?.samlUrl,
+      enableAutoRelogin: environment?.template?.enableAutoRelogin
+    });
+
+    if (!environment) {
+      console.log('[MagicRelogin] No environment provided, skipping');
+      return;
+    }
+
+    if (!this.isAutoReloginEnabled(environment)) {
+      console.log('[MagicRelogin] Auto relogin not enabled for this environment');
       return;
     }
 
@@ -78,13 +94,29 @@ export class MagicReloginHandler {
 
     // 使用 MutationObserver 监听 DOM 变化
     this.observer = new MutationObserver((mutations) => {
+      console.log('[MagicRelogin] MutationObserver triggered, mutations count:', mutations.length);
+
       // 检查是否有新的弹窗出现
       const hasDialogChange = mutations.some(mutation =>
-        Array.from(mutation.addedNodes).some(node =>
-          node instanceof HTMLElement &&
-          (node.classList.contains('awsui_dialog_1d2i7_18r6w_169') ||
-           node.querySelector('.awsui_dialog_1d2i7_18r6w_169'))
-        )
+        Array.from(mutation.addedNodes).some(node => {
+          if (node instanceof HTMLElement) {
+            // 检查是否是 AWS 注销弹窗容器
+            const isSigninAgainModal = node.id === 'awsc-nav-signin-again-modal-root';
+            const hasDialog = node.classList.contains('awsui_dialog_1d2i7_18r6w_169') ||
+                             node.querySelector('.awsui_dialog_1d2i7_18r6w_169') !== null ||
+                             node.querySelector('#awsc-nav-signin-again-modal-root') !== null;
+
+            if (isSigninAgainModal || hasDialog) {
+              console.log('[MagicRelogin] Detected new dialog element:', {
+                className: node.className,
+                id: node.id,
+                isSigninAgainModal
+              });
+            }
+            return isSigninAgainModal || hasDialog;
+          }
+          return false;
+        })
       );
 
       if (hasDialogChange) {
@@ -97,6 +129,23 @@ export class MagicReloginHandler {
       childList: true,
       subtree: true
     });
+
+    console.log('[MagicRelogin] MutationObserver started observing document.body');
+
+    // 添加定期检查，以防 MutationObserver 错过某些变化
+    const checkInterval = setInterval(() => {
+      if (!this.observer) {
+        clearInterval(checkInterval);
+        return;
+      }
+      this.checkForLogoutDialog(environment, accounts);
+    }, 2000); // 每2秒检查一次
+
+    // 5分钟后停止定期检查
+    setTimeout(() => {
+      clearInterval(checkInterval);
+      console.log('[MagicRelogin] Stopped periodic check after 5 minutes');
+    }, 5 * 60 * 1000);
   }
 
   /**
@@ -115,16 +164,26 @@ export class MagicReloginHandler {
    * 检查是否启用了自动重新登录
    */
   private isAutoReloginEnabled(environment: CloudEnvironment): boolean {
+    console.log('[MagicRelogin] Checking if auto relogin is enabled:', {
+      template: !!environment.template,
+      enableAutoRelogin: environment.template?.enableAutoRelogin,
+      samlUrl: environment.template?.samlUrl,
+      hasSamlUrl: !!(environment.template?.samlUrl && environment.template.samlUrl.trim() !== '')
+    });
+
     // 检查环境配置中的 enableAutoRelogin 标志
     if (environment.template?.enableAutoRelogin) {
+      console.log('[MagicRelogin] Auto relogin enabled via enableAutoRelogin flag');
       return true;
     }
 
     // 检查是否有配置 SAML URL
     if (environment.template?.samlUrl && environment.template.samlUrl.trim() !== '') {
+      console.log('[MagicRelogin] Auto relogin enabled via samlUrl configuration');
       return true;
     }
 
+    console.log('[MagicRelogin] Auto relogin NOT enabled');
     return false;
   }
 
@@ -132,12 +191,20 @@ export class MagicReloginHandler {
    * 检查是否存在注销弹窗
    */
   private checkForLogoutDialog(environment: CloudEnvironment, accounts: CloudAccount[]): void {
+    console.log('[MagicRelogin] checkForLogoutDialog called');
+
     // 尝试多种方式查找注销弹窗
     let logoutDialog = this.findLogoutDialog();
 
     if (logoutDialog) {
-      console.log('[MagicRelogin] Found logout dialog:', logoutDialog);
+      console.log('[MagicRelogin] Found logout dialog:', {
+        className: logoutDialog.className,
+        id: logoutDialog.id,
+        textContent: logoutDialog.textContent?.substring(0, 100)
+      });
       this.injectMagicButton(logoutDialog, environment, accounts);
+    } else {
+      console.log('[MagicRelogin] No logout dialog found');
     }
   }
 
@@ -145,40 +212,82 @@ export class MagicReloginHandler {
    * 查找注销弹窗
    */
   private findLogoutDialog(): HTMLElement | null {
+    console.log('[MagicRelogin] findLogoutDialog called, searching for logout dialog');
+
+    // 方法0: 通过 ID 查找 AWS 特定的注销弹窗容器
+    const signinAgainModal = document.getElementById('awsc-nav-signin-again-modal-root');
+    console.log('[MagicRelogin] Method 0: Checking for awsc-nav-signin-again-modal-root:', !!signinAgainModal);
+    if (signinAgainModal) {
+      console.log('[MagicRelogin] Method 0: Found awsc-nav-signin-again-modal-root');
+      // 返回弹窗的实际内容容器
+      const modalContent = signinAgainModal.querySelector('.awsui_dialog_1d2i7_18r6w_169, .awsui_modal_1d2i7_18r6w_169, [class*="awsui_dialog"]') as HTMLElement;
+      if (modalContent) {
+        console.log('[MagicRelogin] Method 0: Found modal content inside');
+        return modalContent;
+      }
+      // 如果没有找到内部容器，返回根元素本身
+      return signinAgainModal;
+    }
+
     // 方法1: 通过标题文本查找
     const dialogs = document.querySelectorAll('.awsui_dialog_1d2i7_18r6w_169, .awsui_focus-lock_1d2i7_18r6w_306');
+    console.log('[MagicRelogin] Method 1: Found', dialogs.length, 'potential dialogs');
+
     for (const dialog of Array.from(dialogs)) {
       const text = dialog.textContent || '';
+      console.log('[MagicRelogin] Checking dialog text:', text.substring(0, 50));
+
       // 检查是否包含注销相关文本
       if (text.includes('您已注销') ||
           text.includes('You have signed out') ||
           text.includes('重新登录') ||
           text.includes('Sign in again')) {
+        console.log('[MagicRelogin] Method 1: Found matching dialog');
         return dialog as HTMLElement;
       }
     }
 
     // 方法2: 通过 focus-lock 容器查找
     const focusLocks = document.querySelectorAll('.awsui_focus-lock_1d2i7_18r6w_306');
+    console.log('[MagicRelogin] Method 2: Found', focusLocks.length, 'focus-lock elements');
+
     for (const lock of Array.from(focusLocks)) {
       const text = lock.textContent || '';
       if (text.includes('注销') || text.includes('signed out')) {
+        console.log('[MagicRelogin] Method 2: Found matching focus-lock');
         return lock as HTMLElement;
       }
     }
 
     // 方法3: 查找包含特定按钮的对话框
     const allDialogs = document.querySelectorAll('[class*="awsui_dialog"]');
+    console.log('[MagicRelogin] Method 3: Found', allDialogs.length, 'awsui_dialog elements');
+
     for (const dialog of Array.from(allDialogs)) {
       const buttons = (dialog as HTMLElement).querySelectorAll('button');
       for (const button of Array.from(buttons)) {
         const buttonText = button.textContent || '';
         if (buttonText.includes('重新登录') || buttonText.includes('Sign in again')) {
+          console.log('[MagicRelogin] Method 3: Found dialog with relogin button');
           return dialog as HTMLElement;
         }
       }
     }
 
+    // 方法4: 更宽松的查找 - 查找任何包含"重新登录"或"Sign in again"文本的容器
+    const allElements = document.querySelectorAll('div, section, article');
+    console.log('[MagicRelogin] Method 4: Checking', allElements.length, 'elements for relogin text');
+
+    for (const element of Array.from(allElements)) {
+      const text = element.textContent || '';
+      if ((text.includes('重新登录') || text.includes('Sign in again')) &&
+          (text.includes('您已注销') || text.includes('You have signed out') || text.includes('退出'))) {
+        console.log('[MagicRelogin] Method 4: Found element with relogin text:', element.className);
+        return element as HTMLElement;
+      }
+    }
+
+    console.log('[MagicRelogin] No logout dialog found by any method');
     return null;
   }
 
