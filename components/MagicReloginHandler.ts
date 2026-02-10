@@ -96,21 +96,6 @@ export class MagicReloginHandler {
     });
 
     console.log('[MagicRelogin] MutationObserver started');
-
-    // 添加定期检查，以防 MutationObserver 错过某些变化
-    const checkInterval = setInterval(() => {
-      if (!this.observer) {
-        clearInterval(checkInterval);
-        return;
-      }
-      this.checkForLogoutDialog(environment, accounts);
-    }, 2000); // 每2秒检查一次
-
-    // 5分钟后停止定期检查
-    setTimeout(() => {
-      clearInterval(checkInterval);
-      console.log('[MagicRelogin] Stopped periodic check after 5 minutes');
-    }, 5 * 60 * 1000);
   }
 
   /**
