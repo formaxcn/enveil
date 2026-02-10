@@ -52,5 +52,11 @@ export default defineConfig({
       open_in_tab: true,
     },
     permissions: ["storage", "tabs"],
+    web_accessible_resources: [
+      {
+        resources: ['icon/*'],
+        matches: ['<all_urls>'],
+      },
+    ],
   },
 });

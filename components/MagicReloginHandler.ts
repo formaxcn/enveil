@@ -240,18 +240,15 @@ export class MagicReloginHandler {
     // 使用自定义样式，不依赖 AWS 的随机 class 名
     button.className = 'enveil-magic-button';
 
-    // 添加 Enveil 扩展图标 (基于 wxt.svg 的简化版本)
-    const iconSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    iconSvg.setAttribute('width', '16');
-    iconSvg.setAttribute('height', '16');
-    iconSvg.setAttribute('viewBox', '0 0 72 72');
-    iconSvg.setAttribute('fill', 'none');
-    iconSvg.style.marginRight = '6px';
-    iconSvg.style.flexShrink = '0';
-    iconSvg.innerHTML = `
-      <path d="M49.0229 69.1875C54.1272 69.1875 58.265 65.0497 58.265 59.9454V50.7033H59.9454C65.0497 50.7033 69.1875 46.5655 69.1875 41.4612C69.1875 36.357 65.0497 32.2191 59.9454 32.2191H58.265V22.9771C58.265 17.8728 54.1272 13.735 49.0229 13.735H39.7809V12.0546C39.7809 6.95032 35.643 2.8125 30.5388 2.8125C25.4345 2.8125 21.2967 6.95032 21.2967 12.0546V13.735H12.0546C6.95032 13.735 2.8125 17.8728 2.8125 22.9771V32.2191H4.49288C9.59714 32.2191 13.735 36.357 13.735 41.4612C13.735 46.5655 9.59714 50.7033 4.49288 50.7033H2.8125V69.1875H21.2967V67.5071C21.2967 62.4029 25.4345 58.265 30.5388 58.265C35.643 58.265 39.7809 62.4029 39.7809 67.5071V69.1875H49.0229Z" stroke="#67D55E" stroke-width="5.625"/>
-    `;
-    button.appendChild(iconSvg);
+    // 添加 Enveil 扩展图标
+    const iconImg = document.createElement('img');
+    iconImg.src = browser.runtime.getURL('icon/16-gray.png' as any);
+    iconImg.width = 16;
+    iconImg.height = 16;
+    iconImg.style.marginRight = '6px';
+    iconImg.style.flexShrink = '0';
+    iconImg.alt = 'Enveil';
+    button.appendChild(iconImg);
 
     // 设置按钮文本
     const span = document.createElement('span');
