@@ -2,6 +2,7 @@ import { AppConfig, SiteConfig, CloudEnvironment, CloudAccount, CloudRole } from
 import { Matcher } from '../utils/matcher';
 import { CloudMatcher } from '../utils/cloudMatcher';
 import { storage } from 'wxt/utils/storage';
+import { getCloudTemplate } from '../utils/cloudTemplates';
 
 // Magic Relogin 状态存储
 interface MagicReloginState {
@@ -11,9 +12,20 @@ interface MagicReloginState {
   roleArn?: string;
   samlTabId?: number;
   isWaitingForLogin: boolean;
+  isMagicRelogin?: boolean;
 }
 
 let magicReloginState: MagicReloginState | null = null;
+
+// 缓存每个 tab 的最后匹配状态，避免重复发送 "无匹配" 消息
+const tabMatchCache = new Map<number, {
+  hasCloudMatch: boolean;
+  cloudEnvironmentId?: string;
+  timestamp: number;
+}>();
+
+// 缓存有效期（毫秒）
+const CACHE_TTL = 5000;
 
 export default defineBackground(() => {
   console.log('Enveil: Background service worker started');
@@ -119,7 +131,8 @@ export default defineBackground(() => {
           }
         }
 
-        // 清理状态
+        // 清理状态（包括 isMagicRelogin 标记）
+        console.log('[Enveil Background] Cleaning up relogin state, isMagicRelogin was:', magicReloginState.isMagicRelogin);
         magicReloginState = null;
         await browser.storage.local.remove('enveil_magic_relogin_state');
       }
@@ -209,20 +222,43 @@ async function checkAndNotifyTab(tabId: number, url: string) {
     for (const environment of config.cloudEnvironments) {
       if (!environment.enable) continue;
 
+      // 使用完整的 template 来检查是否是账户选择页面
+      const fullTemplate = getCloudTemplate(environment.provider);
+      const isSamlPage = !!(fullTemplate.accountSelectionUrl && 
+                           url.includes(fullTemplate.accountSelectionUrl));
+
+      // 查找匹配的账户
       const matchingAccounts = CloudMatcher.findMatchingAccounts(environment, url, host);
-      if (matchingAccounts.length > 0) {
+      
+      // 如果有匹配的账户，或者是 SAML 登录页面，都进行处理
+      if (matchingAccounts.length > 0 || isSamlPage) {
         // Collect all matching accounts from this environment
-        matchedCloudAccounts = matchingAccounts;
-        matchedCloudEnvironment = environment;
+        // 如果是 SAML 页面但没有匹配的账户，使用所有启用的账户
+        matchedCloudAccounts = matchingAccounts.length > 0 ? matchingAccounts : environment.accounts.filter(acc => acc.enable);
+        
+        // 使用完整的 template 来确保有 accountSelectionUrl，但保留用户配置的 samlUrl 和 enableAutoRelogin
+        const mergedTemplate = {
+          ...fullTemplate,
+          samlUrl: environment.template?.samlUrl || fullTemplate.samlUrl,
+          enableAutoRelogin: environment.template?.enableAutoRelogin ?? fullTemplate.enableAutoRelogin
+        };
+        matchedCloudEnvironment = {
+          ...environment,
+          template: mergedTemplate
+        };
         
         // Check if this is an account selection page
-        isAccountSelectionPage = !!(CloudMatcher.isEnvironmentTemplateMatch(environment, url) && 
-                                 environment.template?.accountSelectionUrl && 
-                                 url.includes(environment.template.accountSelectionUrl));
+        isAccountSelectionPage = isSamlPage;
         
-        console.log(`[Enveil Background] Found ${matchingAccounts.length} cloud account matches:`, 
-          matchingAccounts.map(acc => CloudMatcher.getCloudAccountMatchInfo(acc)).join(', '));
+        console.log(`[Enveil Background] Found ${matchedCloudAccounts.length} cloud account matches:`, 
+          matchedCloudAccounts.map(acc => CloudMatcher.getCloudAccountMatchInfo(acc)).join(', '));
         console.log(`[Enveil Background] Is account selection page:`, isAccountSelectionPage);
+        console.log(`[Enveil Background] Account selection URL:`, fullTemplate.accountSelectionUrl);
+        console.log(`[Enveil Background] Current URL:`, url);
+        console.log(`[Enveil Background] Merged template:`, {
+          samlUrl: mergedTemplate.samlUrl,
+          enableAutoRelogin: mergedTemplate.enableAutoRelogin
+        });
         break;
       }
     }

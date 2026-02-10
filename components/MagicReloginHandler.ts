@@ -20,6 +20,7 @@ interface ReloginState {
   roleArn?: string;
   environment?: CloudEnvironment;
   isWaitingForLogin: boolean;
+  isMagicRelogin?: boolean;
 }
 
 export class MagicReloginHandler {
@@ -320,7 +321,8 @@ export class MagicReloginHandler {
       accountId: currentInfo.accountId,
       roleArn: currentInfo.roleArn,
       environment: environment,
-      isWaitingForLogin: true
+      isWaitingForLogin: true,
+      isMagicRelogin: true // 标记是通过 Magic 按钮触发的 relogin
     };
 
     // 保存到 storage 供其他页面使用
@@ -347,44 +349,94 @@ export class MagicReloginHandler {
 
   /**
    * 提取当前页面的 account 和 role 信息
+   * 优先从界面元素中提取
    */
   private extractCurrentAccountInfo(accounts: CloudAccount[]): { accountId?: string; roleArn?: string } {
     const result: { accountId?: string; roleArn?: string } = {};
 
-    // 从 URL 中提取 account 信息
+    console.log('[MagicRelogin] Extracting current account info from page...');
+
     const url = window.location.href;
+    console.log('[MagicRelogin] Current URL:', url);
 
-    // 尝试从 URL 参数中提取
-    const urlParams = new URLSearchParams(window.location.search);
-    const accountParam = urlParams.get('account');
-    if (accountParam) {
-      result.accountId = accountParam;
+    // ========== 优先从界面元素中提取 Account ID ==========
+    // AWS Console 的账户信息通常在顶部导航栏的 account info tile 中
+    const accountInfoSelectors = [
+      '[data-testid="awsc-account-info-tile"]',
+      '[data-testid="awsc-nav-account-menu-button"]',
+      '.awsc-nav-account-info',
+      '[class*="account-info"]',
+      '#nav-usernameMenu'
+    ];
+
+    for (const selector of accountInfoSelectors) {
+      const elements = document.querySelectorAll(selector);
+      for (const element of Array.from(elements)) {
+        const text = element.textContent || '';
+        console.log('[MagicRelogin] Checking account element:', selector, 'text:', text.substring(0, 100));
+
+        // 匹配带连字符的格式（如 0663-2217-6721）- AWS 标准显示格式
+        const dashedAccountMatch = text.match(/(\d{4}-\d{4}-\d{4})/);
+        if (dashedAccountMatch) {
+          result.accountId = dashedAccountMatch[1].replace(/-/g, '');
+          console.log('[MagicRelogin] Found accountId from UI element:', dashedAccountMatch[1], '->', result.accountId);
+          break;
+        }
+
+        // 匹配纯数字 12 位
+        const accountMatch = text.match(/(\d{12})/);
+        if (accountMatch) {
+          result.accountId = accountMatch[1];
+          console.log('[MagicRelogin] Found accountId from UI element:', accountMatch[1]);
+          break;
+        }
+      }
+      if (result.accountId) break;
     }
 
-    // 尝试从页面内容中提取 account ID（12位数字）
-    const accountIdMatch = url.match(/(\d{12})/);
-    if (accountIdMatch) {
-      result.accountId = accountIdMatch[1];
-    }
+    // ========== 从界面元素中提取 Role 信息 ==========
+    // 从 account info tile 中提取 role 名称
+    if (result.accountId) {
+      for (const selector of accountInfoSelectors) {
+        const elements = document.querySelectorAll(selector);
+        for (const element of Array.from(elements)) {
+          const text = element.textContent || '';
+          console.log('[MagicRelogin] Checking role in element:', selector, 'text:', text.substring(0, 150));
 
-    // 尝试从 cookie 或 localStorage 中提取 role 信息
-    const roleCookie = document.cookie.split(';').find(c => c.trim().startsWith('aws_role='));
-    if (roleCookie) {
-      result.roleArn = decodeURIComponent(roleCookie.split('=')[1]);
-    }
+          // 尝试匹配完整的 ARN
+          const arnMatch = text.match(/(arn:aws(?:-cn)?:iam::\d{12}:role\/[^\s\/]+)/);
+          if (arnMatch && !result.roleArn) {
+            result.roleArn = arnMatch[1];
+            console.log('[MagicRelogin] Found roleArn from UI element:', arnMatch[1]);
+            break;
+          }
 
-    // 尝试从页面元素中提取 role 信息
-    const roleElements = document.querySelectorAll('[data-testid="nav-username-menu"], #nav-usernameMenu');
-    for (const element of Array.from(roleElements)) {
-      const text = element.textContent || '';
-      // 匹配 ARN 格式
-      const arnMatch = text.match(/(arn:aws-cn:iam::\d{12}:role\/[^\s]+)/);
-      if (arnMatch) {
-        result.roleArn = arnMatch[1];
-        break;
+          // 从文本中提取 role 名称（通常在 account 名称后面）
+          // 格式如: "apacdl-cdc-dev (0663-2217-6721)" 或 "r-aad-apacdl-cdc-dev-aiSwatUser/ZTANG26@volvocars.com"
+          // 尝试匹配 role/ 开头的部分
+          const roleWithPrefixMatch = text.match(/role\/([^\s\/]+)/i);
+          if (roleWithPrefixMatch && !result.roleArn) {
+            const partition = url.includes('amazonaws.cn') ? 'aws-cn' : 'aws';
+            result.roleArn = `arn:${partition}:iam::${result.accountId}:role/${roleWithPrefixMatch[1]}`;
+            console.log('[MagicRelogin] Constructed roleArn from UI text:', result.roleArn);
+            break;
+          }
+
+          // 尝试从 email/用户名格式中提取 role 名称
+          // 格式如: "r-aad-apacdl-cdc-dev-aiSwatUser/ZTANG26@volvocars.com"
+          // 匹配 r-aad- 开头的完整 role 名称（包含 / 和 @）
+          const userMatch = text.match(/(r-aad-[^\s]+)/);
+          if (userMatch && !result.roleArn) {
+            result.roleArn = userMatch[1];
+            console.log('[MagicRelogin] Found roleArn from UI text:', result.roleArn);
+            break;
+          }
+        }
+        if (result.roleArn) break;
       }
     }
 
+    console.log('[MagicRelogin] Final extracted account info:', result);
     return result;
   }
 
