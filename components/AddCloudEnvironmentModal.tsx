@@ -220,7 +220,7 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
                         <div className="flex items-center justify-between mb-2">
                             <label className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-wider">SAML URL</label>
                             <div className="flex items-center gap-2">
-                                <span className="text-xs text-gray-600 dark:text-slate-400">Auto-Login</span>
+                                <span className="text-xs text-gray-600 dark:text-slate-400">Smart-Relogin</span>
                                 <Switch checked={enableAutoRelogin} onChange={setEnableAutoRelogin} />
                             </div>
                         </div>
