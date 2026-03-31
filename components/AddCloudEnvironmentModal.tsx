@@ -88,9 +88,8 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
         value: string
     ) => {
         setter(value);
-        if (provider !== CloudProvider.CUSTOM) {
-            setProvider(CloudProvider.CUSTOM);
-        }
+        // 修改 Console Pattern 和 Account URL 不改变 provider
+        // 只有修改 Advanced Settings 中的选择器才改变 provider
         setIsAutoFilled(false);
     };
 
@@ -104,6 +103,7 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
             newArray[index] = value;
             return newArray;
         });
+        // 修改选择器才改变 provider 为 CUSTOM
         if (provider !== CloudProvider.CUSTOM) {
             setProvider(CloudProvider.CUSTOM);
         }
@@ -112,6 +112,7 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
 
     const addArrayItem = (setter: React.Dispatch<React.SetStateAction<string[]>>) => {
         setter(prev => [...prev, '']);
+        // 添加选择器才改变 provider 为 CUSTOM
         if (provider !== CloudProvider.CUSTOM) {
             setProvider(CloudProvider.CUSTOM);
         }
@@ -123,6 +124,7 @@ export const AddCloudEnvironmentModal: React.FC<AddCloudEnvironmentModalProps> =
         index: number
     ) => {
         setter(prev => prev.filter((_, i) => i !== index));
+        // 删除选择器才改变 provider 为 CUSTOM
         if (provider !== CloudProvider.CUSTOM) {
             setProvider(CloudProvider.CUSTOM);
         }

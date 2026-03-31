@@ -52,6 +52,7 @@ export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 export enum CloudProvider {
   AWS_CN = 'aws-cn',
   AWS_GLOBAL = 'aws-global',
+  ALIYUN = 'aliyun',
   CUSTOM = 'custom'
 }
 

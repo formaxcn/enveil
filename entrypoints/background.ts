@@ -222,10 +222,10 @@ async function checkAndNotifyTab(tabId: number, url: string) {
     for (const environment of config.cloudEnvironments) {
       if (!environment.enable) continue;
 
-      // 使用完整的 template 来检查是否是账户选择页面
+      // 使用用户配置的 accountSelectionUrl，如果没有则使用模板默认值
       const fullTemplate = getCloudTemplate(environment.provider);
-      const isSamlPage = !!(fullTemplate.accountSelectionUrl && 
-                           url.includes(fullTemplate.accountSelectionUrl));
+      const accountSelectionUrl = environment.template?.accountSelectionUrl || fullTemplate.accountSelectionUrl;
+      const isSamlPage = !!(accountSelectionUrl && url.includes(accountSelectionUrl));
 
       // 查找匹配的账户
       const matchingAccounts = CloudMatcher.findMatchingAccounts(environment, url, host);

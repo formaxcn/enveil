@@ -129,6 +129,34 @@ export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
         ]
       }
     }
+  },
+  [CloudProvider.ALIYUN]: {
+    provider: CloudProvider.ALIYUN,
+    name: 'Aliyun',
+    accountSelectionUrl: 'alibabacloudsso.com/user-portal',
+    consoleDomainPattern: '*://*.aliyun.com/*',
+    samlUrl: '',
+    enableAutoRelogin: false,
+    selectors: {
+      accountSelection: {
+        accountContainers: [
+          'tr.next-table-row'
+        ],
+        roleElements: [
+          '.wind-rc-truncate__truncated',
+          '.next-table-cell-wrapper',
+          '.sc-kYxDKI'
+        ]
+      },
+      console: {
+        accountContainers: [
+          '[data-tracker-params="locaid=daccount"]'
+        ],
+        roleElements: [
+          '.sc-CB-edUIhV'
+        ]
+      }
+    }
   }
 };
 

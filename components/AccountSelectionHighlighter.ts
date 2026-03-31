@@ -681,16 +681,25 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
     private findAccountContainers(selectors: string[], account: CloudAccount): HTMLElement[] {
         const containers: HTMLElement[] = [];
 
+        console.log(`[GenericAccountSelectionHandler] findAccountContainers: selectors=${JSON.stringify(selectors)}, account=${account.name}`);
+
         for (const selector of selectors) {
             if (!selector) continue;
 
             try {
                 const elements = document.querySelectorAll<HTMLElement>(selector);
+                console.log(`[GenericAccountSelectionHandler] findAccountContainers: Selector "${selector}" found ${elements.length} elements`);
 
-                elements.forEach(el => {
+                elements.forEach((el, index) => {
+                    console.log(`[GenericAccountSelectionHandler] findAccountContainers: Checking element ${index}`);
+                    const isMatch = this.isAccountMatch(el, account);
+                    const hasRoles = this.hasRoleElements(el);
+                    console.log(`[GenericAccountSelectionHandler] findAccountContainers: Element ${index} - isMatch=${isMatch}, hasRoles=${hasRoles}`);
+                    
                     // Only match elements that contain account identifier
                     // and have role elements as children (to avoid matching wrapper/parent elements)
-                    if (this.isAccountMatch(el, account) && this.hasRoleElements(el)) {
+                    if (isMatch && hasRoles) {
+                        console.log(`[GenericAccountSelectionHandler] findAccountContainers: -> MATCHED! Adding element ${index}`);
                         containers.push(el);
                     }
                 });
@@ -699,6 +708,7 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
             }
         }
 
+        console.log(`[GenericAccountSelectionHandler] findAccountContainers: Total containers found: ${containers.length}`);
         return containers;
     }
 
@@ -708,7 +718,8 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
      */
     private hasRoleElements(element: HTMLElement): boolean {
         // Check for role radio buttons or checkboxes
-        const hasRadioButtons = element.querySelectorAll('input[type="radio"], input[type="checkbox"]').length > 0;
+        const radioButtons = element.querySelectorAll('input[type="radio"], input[type="checkbox"]');
+        const hasRadioButtons = radioButtons.length > 0;
         
         // Check for role elements using configured selectors
         const roleSelectors = this.currentEnvironment?.template?.selectors?.accountSelection?.roleElements || [];
@@ -720,6 +731,8 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
             }
         }
         
+        console.log(`[GenericAccountSelectionHandler] hasRoleElements: hasRadioButtons=${hasRadioButtons} (${radioButtons.length} buttons), hasRoleNames=${hasRoleNames}`);
+        
         // An account container should have role elements
         return hasRadioButtons || hasRoleNames;
     }
@@ -728,17 +741,47 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
         const accountName = account.name?.trim();
         const patterns = account.accountPatterns || [];
 
-        if (!accountName && patterns.length === 0) return false;
+        console.log(`[GenericAccountSelectionHandler] isAccountMatch: accountName="${accountName}", patterns=${patterns.length}`);
+
+        if (!accountName && patterns.length === 0) {
+            console.log(`[GenericAccountSelectionHandler] isAccountMatch: No accountName or patterns, returning false`);
+            return false;
+        }
 
         // Find the account name element within this container
-        // Try common selectors for account name elements
-        const accountNameElement = element.querySelector('.saml-account-name, .account-name, [data-testid="account-name"]');
+        // First try configured roleElements selectors, then fall back to common selectors
+        const roleSelectors = this.currentEnvironment?.template?.selectors?.accountSelection?.roleElements || [];
+        let accountNameElement: Element | null = null;
+        
+        // Try configured selectors first
+        for (const selector of roleSelectors) {
+            try {
+                accountNameElement = element.querySelector(selector);
+                if (accountNameElement) {
+                    console.log(`[GenericAccountSelectionHandler] isAccountMatch: Found account name element with selector "${selector}"`);
+                    break;
+                }
+            } catch (e) {
+                console.warn(`[GenericAccountSelectionHandler] Invalid selector: ${selector}`, e);
+            }
+        }
+        
+        // Fall back to common selectors
         if (!accountNameElement) {
+            accountNameElement = element.querySelector('.saml-account-name, .account-name, [data-testid="account-name"]');
+            if (accountNameElement) {
+                console.log(`[GenericAccountSelectionHandler] isAccountMatch: Found account name element with fallback selector`);
+            }
+        }
+        
+        if (!accountNameElement) {
+            console.log(`[GenericAccountSelectionHandler] isAccountMatch: No account name element found`);
             return false;
         }
 
         // Get the text content of the account name element only
         const accountNameText = accountNameElement.textContent || '';
+        console.log(`[GenericAccountSelectionHandler] isAccountMatch: accountNameText="${accountNameText}"`);
 
         // Check all account patterns
         for (const pattern of patterns) {
@@ -747,10 +790,14 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
             const matchValue = pattern.matchValue?.trim();
             if (!matchValue) continue;
             
+            console.log(`[GenericAccountSelectionHandler] isAccountMatch: Checking pattern "${matchValue}"`);
+            
             // For AWS, check for 12-digit account ID pattern with word boundaries
             if (/^\d{12}$/.test(matchValue)) {
                 const accountIdPattern = new RegExp(`\\b${matchValue}\\b`);
-                if (accountIdPattern.test(accountNameText)) return true;
+                const isMatch = accountIdPattern.test(accountNameText);
+                console.log(`[GenericAccountSelectionHandler] isAccountMatch: 12-digit ID pattern result=${isMatch}`);
+                if (isMatch) return true;
             } else {
                 // For non-numeric match values, use word boundary matching
                 const escapedMatchValue = matchValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -758,7 +805,9 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
                     `\\b${escapedMatchValue}\\b|\\(${escapedMatchValue}\\)`,
                     'i'
                 );
-                if (matchPattern.test(accountNameText)) return true;
+                const isMatch = matchPattern.test(accountNameText);
+                console.log(`[GenericAccountSelectionHandler] isAccountMatch: Pattern "${matchPattern}" result=${isMatch}`);
+                if (isMatch) return true;
             }
         }
 
@@ -766,11 +815,14 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
         if (accountName) {
             const escapedAccountName = accountName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const namePattern = new RegExp(`\\b${escapedAccountName}\\b`, 'i');
-            if (namePattern.test(accountNameText)) {
+            const isMatch = namePattern.test(accountNameText);
+            console.log(`[GenericAccountSelectionHandler] isAccountMatch: Account name "${accountName}" pattern "${namePattern}" result=${isMatch}`);
+            if (isMatch) {
                 return true;
             }
         }
 
+        console.log(`[GenericAccountSelectionHandler] isAccountMatch: No match found, returning false`);
         return false;
     }
 

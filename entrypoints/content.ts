@@ -75,9 +75,43 @@ export default defineContentScript({
             if (isAccountSelectionPage) {
               // Get full template with selectors for account selection pages
               const fullTemplate = getCloudTemplate(cloudEnvironment.provider);
+              
+              // 合并模板：优先使用用户配置的选择器，否则使用模板默认值
+              const mergedTemplate = {
+                ...fullTemplate,
+                // 用户配置的 URL 和开关
+                accountSelectionUrl: cloudEnvironment.template?.accountSelectionUrl || fullTemplate.accountSelectionUrl,
+                samlUrl: cloudEnvironment.template?.samlUrl || fullTemplate.samlUrl,
+                enableAutoRelogin: cloudEnvironment.template?.enableAutoRelogin ?? fullTemplate.enableAutoRelogin,
+                // 合并选择器：优先使用用户配置的选择器
+                selectors: {
+                  accountSelection: {
+                    accountContainers: cloudEnvironment.template?.selectors?.accountSelection?.accountContainers?.length 
+                      ? cloudEnvironment.template.selectors.accountSelection.accountContainers 
+                      : fullTemplate.selectors?.accountSelection?.accountContainers || [],
+                    roleElements: cloudEnvironment.template?.selectors?.accountSelection?.roleElements?.length 
+                      ? cloudEnvironment.template.selectors.accountSelection.roleElements 
+                      : fullTemplate.selectors?.accountSelection?.roleElements || []
+                  },
+                  console: {
+                    accountContainers: cloudEnvironment.template?.selectors?.console?.accountContainers?.length 
+                      ? cloudEnvironment.template.selectors.console.accountContainers 
+                      : fullTemplate.selectors?.console?.accountContainers || [],
+                    roleElements: cloudEnvironment.template?.selectors?.console?.roleElements?.length 
+                      ? cloudEnvironment.template.selectors.console.roleElements 
+                      : fullTemplate.selectors?.console?.roleElements || []
+                  }
+                }
+              };
+              
+              console.log('[Enveil Content] Merged template for account selection:', {
+                accountContainers: mergedTemplate.selectors.accountSelection.accountContainers,
+                roleElements: mergedTemplate.selectors.accountSelection.roleElements
+              });
+              
               const environmentWithFullTemplate = {
                 ...cloudEnvironment,
-                template: fullTemplate
+                template: mergedTemplate
               };
               mountAccountSelectionUI(environmentWithFullTemplate, cloudAccounts, cloudRoles, accountSelectionHighlighter);
 
