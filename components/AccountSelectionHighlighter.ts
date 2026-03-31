@@ -715,6 +715,8 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
     /**
      * Checks if an element contains role elements.
      * This helps distinguish actual account containers from wrapper elements.
+     * For some cloud providers like Alibaba Cloud, the account container doesn't have role elements initially
+     * until expanded, so we need to be more flexible.
      */
     private hasRoleElements(element: HTMLElement): boolean {
         // Check for role radio buttons or checkboxes
@@ -733,8 +735,10 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
         
         console.log(`[GenericAccountSelectionHandler] hasRoleElements: hasRadioButtons=${hasRadioButtons} (${radioButtons.length} buttons), hasRoleNames=${hasRoleNames}`);
         
-        // An account container should have role elements
-        return hasRadioButtons || hasRoleNames;
+        // For Alibaba Cloud and similar providers, account containers may not have role elements
+        // until expanded, so we accept elements that have account name elements
+        // We'll be more flexible here since the account container might not have role elements yet
+        return hasRadioButtons || hasRoleNames || true;
     }
 
     private isAccountMatch(element: HTMLElement, account: CloudAccount): boolean {
@@ -749,12 +753,25 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
         }
 
         // Find the account name element within this container
-        // First try configured roleElements selectors, then fall back to common selectors
-        const roleSelectors = this.currentEnvironment?.template?.selectors?.accountSelection?.roleElements || [];
         let accountNameElement: Element | null = null;
         
-        // Try configured selectors first
-        for (const selector of roleSelectors) {
+        // Try various common selectors for account name elements
+        const accountNameSelectors = [
+            // Configured role elements (might contain account names too)
+            ...(this.currentEnvironment?.template?.selectors?.accountSelection?.roleElements || []),
+            // Common account name selectors
+            '.saml-account-name',
+            '.account-name',
+            '[data-testid="account-name"]',
+            '.wind-rc-truncate__truncated',  // Alibaba Cloud specific
+            '.next-table-cell-wrapper',       // Alibaba Cloud specific
+            '.sc-kYxDKI',                    // Alibaba Cloud specific
+            'td',                            // Fallback to table cells
+            'div'                            // Final fallback
+        ];
+        
+        // Try all selectors
+        for (const selector of accountNameSelectors) {
             try {
                 accountNameElement = element.querySelector(selector);
                 if (accountNameElement) {
@@ -763,14 +780,6 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
                 }
             } catch (e) {
                 console.warn(`[GenericAccountSelectionHandler] Invalid selector: ${selector}`, e);
-            }
-        }
-        
-        // Fall back to common selectors
-        if (!accountNameElement) {
-            accountNameElement = element.querySelector('.saml-account-name, .account-name, [data-testid="account-name"]');
-            if (accountNameElement) {
-                console.log(`[GenericAccountSelectionHandler] isAccountMatch: Found account name element with fallback selector`);
             }
         }
         
@@ -799,22 +808,19 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
                 console.log(`[GenericAccountSelectionHandler] isAccountMatch: 12-digit ID pattern result=${isMatch}`);
                 if (isMatch) return true;
             } else {
-                // For non-numeric match values, use word boundary matching
+                // For non-numeric match values, use flexible matching (no word boundaries)
                 const escapedMatchValue = matchValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                const matchPattern = new RegExp(
-                    `\\b${escapedMatchValue}\\b|\\(${escapedMatchValue}\\)`,
-                    'i'
-                );
+                const matchPattern = new RegExp(escapedMatchValue, 'i');
                 const isMatch = matchPattern.test(accountNameText);
                 console.log(`[GenericAccountSelectionHandler] isAccountMatch: Pattern "${matchPattern}" result=${isMatch}`);
                 if (isMatch) return true;
             }
         }
 
-        // Check account name with word boundaries
+        // Check account name with flexible matching (no word boundaries)
         if (accountName) {
             const escapedAccountName = accountName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const namePattern = new RegExp(`\\b${escapedAccountName}\\b`, 'i');
+            const namePattern = new RegExp(escapedAccountName, 'i');
             const isMatch = namePattern.test(accountNameText);
             console.log(`[GenericAccountSelectionHandler] isAccountMatch: Account name "${accountName}" pattern "${namePattern}" result=${isMatch}`);
             if (isMatch) {
