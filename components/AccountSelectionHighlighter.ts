@@ -765,7 +765,8 @@ class GenericAccountSelectionHandler implements IAccountSelectionHandler {
             '[data-testid="account-name"]',
             '.wind-rc-truncate__truncated',  // Alibaba Cloud specific
             '.next-table-cell-wrapper',       // Alibaba Cloud specific
-            '.sc-kYxDKI',                    // Alibaba Cloud specific
+            '.next-table-cell-wrapper > div', // Alibaba Cloud specific
+            '.next-table-row td:first-child div', // Alibaba Cloud specific
             'td',                            // Fallback to table cells
             'div'                            // Final fallback
         ];

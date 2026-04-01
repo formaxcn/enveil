@@ -133,7 +133,7 @@ export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
   [CloudProvider.ALIYUN]: {
     provider: CloudProvider.ALIYUN,
     name: 'Aliyun',
-    accountSelectionUrl: 'alibabacloudsso.com/user-portal',
+    accountSelectionUrl: 'https://example.alibabacloudsso.com/user-portal',
     consoleDomainPattern: '*://*.aliyun.com/*',
     samlUrl: '',
     enableAutoRelogin: false,
@@ -145,15 +145,21 @@ export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
         roleElements: [
           '.wind-rc-truncate__truncated',
           '.next-table-cell-wrapper',
-          '.sc-kYxDKI'
+          '.next-table-cell-wrapper > div',
+          '.next-table-row td:first-child div'
         ]
       },
       console: {
         accountContainers: [
-          '[data-tracker-params="locaid=daccount"]'
+          '[data-tracker-params="locaid=daccount"]',
+          '[data-tracker-params="locaid=ditem-account"]'
         ],
         roleElements: [
-          '.sc-CB-edUIhV'
+          '[data-tracker-params="locaid=daccount"] [title]',
+          '[data-tracker-params="locaid=ditem-account"] [data-clipboard-text]',
+          '[data-tracker-params="locaid=ditem-account"] [data-spm-anchor-id*="console-base_top-nav"]',
+          '[data-tracker-params="locaid=ditem-account"] section:first-child div:nth-child(2) p:nth-child(1)',
+          '[data-tracker-params="locaid=ditem-account"] section:first-child div:nth-child(2) p:nth-child(2)'
         ]
       }
     }
