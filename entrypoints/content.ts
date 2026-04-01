@@ -565,8 +565,6 @@ function findAndMarkLastUsedRole(roleArn?: string, userColor?: string): HTMLElem
   console.log('[Enveil Content] Finding role:', roleArn);
 
   // 提取 role 名称（处理两种格式）
-  // 格式1: arn:aws-cn:iam::066322176721:role/r-aad-apacdl-cdc-dev-app-admin
-  // 格式2: r-aad-apacdl-cdc-dev-app-admin/ZTANG26@volvocars.com
   let roleName = roleArn;
 
   // 尝试从 ARN 格式提取

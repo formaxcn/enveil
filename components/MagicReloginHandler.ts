@@ -412,7 +412,6 @@ export class MagicReloginHandler {
           }
 
           // 从文本中提取 role 名称（通常在 account 名称后面）
-          // 格式如: "apacdl-cdc-dev (0663-2217-6721)" 或 "r-aad-apacdl-cdc-dev-aiSwatUser/ZTANG26@volvocars.com"
           // 尝试匹配 role/ 开头的部分
           const roleWithPrefixMatch = text.match(/role\/([^\s\/]+)/i);
           if (roleWithPrefixMatch && !result.roleArn) {
@@ -423,7 +422,6 @@ export class MagicReloginHandler {
           }
 
           // 尝试从 email/用户名格式中提取 role 名称
-          // 格式如: "r-aad-apacdl-cdc-dev-aiSwatUser/ZTANG26@volvocars.com"
           // 匹配 r-aad- 开头的完整 role 名称（包含 / 和 @）
           const userMatch = text.match(/(r-aad-[^\s]+)/);
           if (userMatch && !result.roleArn) {
