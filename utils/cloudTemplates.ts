@@ -163,6 +163,44 @@ export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
         ]
       }
     }
+  },
+  [CloudProvider.VOLCENGINE]: {
+    provider: CloudProvider.VOLCENGINE,
+    name: 'Volcengine',
+    accountSelectionUrl: 'https://console.volcengine.com/iam/policies/role',
+    consoleDomainPattern: '*://*.volcengine.com/*',
+    samlUrl: '',
+    enableAutoRelogin: false,
+    selectors: {
+      accountSelection: {
+        accountContainers: [
+          'tr.arco-table-tr'
+        ],
+        roleElements: [
+          '.arco-table-cell-wrap-value',
+          '.arco-table-cell',
+          'td:nth-child(1) .arco-table-cell',
+          'td:nth-child(2) .arco-table-cell'
+        ]
+      },
+      console: {
+        accountContainers: [
+          '.account-dropdown-0x3r',
+          '.account-dropdown-info_0x3r',
+          '.account-info__name_0x3r',
+          '.account-info__data_0x3r',
+          '[class*="account-dropdown"]',
+          '[class*="account-info"]'
+        ],
+        roleElements: [
+          '.account-info__name_0x3r',
+          '.account-info__type_0x3r',
+          '.account-info__id_0x3r',
+          '.account-info__name_0x3r div',
+          '[class*="account-info__"]'
+        ]
+      }
+    }
   }
 };
 

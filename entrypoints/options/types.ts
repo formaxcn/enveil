@@ -53,6 +53,7 @@ export enum CloudProvider {
   AWS_CN = 'aws-cn',
   AWS_GLOBAL = 'aws-global',
   ALIYUN = 'aliyun',
+  VOLCENGINE = 'volcengine',
   CUSTOM = 'custom'
 }
 
