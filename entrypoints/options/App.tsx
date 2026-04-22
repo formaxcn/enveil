@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
-import { Globe, Cloudy, Cloud, FileUp, FileDown, Plus, FolderPlus, Info, ChevronRight, Zap, X, Edit3, Github, BookOpen, Terminal } from 'lucide-react';
+import { Globe, Cloudy, Cloud, FileUp, FileDown, Plus, FolderPlus, Info, ChevronRight, Zap, X, Edit3, Github, BookOpen, FileText } from 'lucide-react';
 import { Switch } from '../../components/Switch';
 import { ConfigGroup } from '../../components/ConfigGroup';
 import { CloudEnvironmentItem } from '../../components/CloudEnvironmentItem';
@@ -46,7 +46,7 @@ const App: React.FC = () => {
   
   useEffect(() => {
     // Initialize logger and override console
-    logger.overrideConsole(Component.OPTIONS_PAGE);
+    logger.initialize(false, Component.OPTIONS_PAGE);
     log(Component.OPTIONS_PAGE, 'Options page loaded');
   }, []);
 
@@ -437,7 +437,7 @@ const App: React.FC = () => {
                 className="text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 title="Logs"
               >
-                <Terminal className="w-3.5 h-3.5" />
+                <FileText className="w-3.5 h-3.5" />
               </button>
               <a
                 href="https://github.com/formaxcn/enveil"

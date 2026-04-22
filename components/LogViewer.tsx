@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { X, Trash2, Download, Search, Filter, ChevronDown, ChevronUp } from 'lucide-react';
-import { logger, LogEntry, LogLevel, Component } from '../utils/logger';
+import React, { useState, useEffect, useMemo, Fragment } from 'react';
+import { X, Trash2, Download, Search, Filter, ChevronDown, ChevronUp, FileText, Check, ChevronRight } from 'lucide-react';
+import { Listbox, Transition } from '@headlessui/react';
+import { logger, LogEntry, LogLevel, Component, ComponentGroups } from '../utils/logger';
 
 interface LogViewerProps {
   isOpen: boolean;
@@ -17,10 +18,12 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     if (isOpen) {
-      // Load existing logs immediately
+      logger.fetchLogsFromBackground().then(fetchedLogs => {
+        setLogs(fetchedLogs);
+      });
+      
       setLogs(logger.getLogs());
       
-      // Add listener
       const listener = (newLogs: LogEntry[]) => {
         setLogs(newLogs);
       };
@@ -32,25 +35,20 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose }) => {
     }
   }, [isOpen]);
 
-  // Get all available components
   const availableComponents = useMemo(() => {
     return logger.getComponents();
   }, [logs]);
 
-  // Filter logs
   const filteredLogs = useMemo(() => {
     return logs.filter(log => {
-      // Filter by level
       if (selectedLevel !== 'all' && log.level !== selectedLevel) {
         return false;
       }
       
-      // Filter by component
       if (selectedComponent !== 'all' && log.component !== selectedComponent) {
         return false;
       }
       
-      // Filter by search query
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         return (
@@ -63,7 +61,6 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose }) => {
     });
   }, [logs, selectedLevel, selectedComponent, searchQuery]);
 
-  // Auto scroll
   useEffect(() => {
     if (autoScroll && isOpen && filteredLogs.length > 0) {
       const container = document.getElementById('log-container');
@@ -146,17 +143,15 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex">
-      {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
       
-      {/* Log panel */}
       <div className="relative ml-auto w-full max-w-4xl h-full bg-white dark:bg-slate-900 shadow-2xl flex flex-col">
-        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b dark:border-slate-700 bg-gray-50 dark:bg-slate-800">
           <div className="flex items-center gap-3">
+            <FileText className="w-5 h-5 text-blue-500" />
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">Log Viewer</h2>
             <span className="text-xs text-gray-500 dark:text-slate-400">
               {filteredLogs.length} logs
@@ -189,9 +184,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Filters */}
         <div className="p-4 border-b dark:border-slate-700 bg-white dark:bg-slate-900 space-y-3">
-          {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -203,37 +196,177 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose }) => {
             />
           </div>
 
-          {/* Filter controls */}
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-gray-500 dark:text-gray-400" />
               <span className="text-sm text-gray-600 dark:text-gray-300">Level:</span>
-              <select
-                value={selectedLevel}
-                onChange={(e) => setSelectedLevel(e.target.value as LogLevel | 'all')}
-                className="px-3 py-1.5 border dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              >
-                <option value="all">All</option>
-                <option value="log">Log</option>
-                <option value="info">Info</option>
-                <option value="warn">Warn</option>
-                <option value="error">Error</option>
-                <option value="debug">Debug</option>
-              </select>
+              
+              <Listbox value={selectedLevel} onChange={setSelectedLevel}>
+                <div className="relative">
+                  <Listbox.Button className="px-3 py-1.5 border dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-w-[100px] text-left">
+                    <div className="flex items-center justify-between">
+                      <span>
+                        {selectedLevel === 'all' ? 'All' : selectedLevel.charAt(0).toUpperCase() + selectedLevel.slice(1)}
+                      </span>
+                      <ChevronRight className="w-4 h-4 transform rotate-90" />
+                    </div>
+                  </Listbox.Button>
+                  <Transition
+                    as={Fragment}
+                    leave="transition ease-in duration-100"
+                    leaveFrom="opacity-100"
+                    leaveTo="opacity-0"
+                  >
+                    <Listbox.Options className="absolute z-20 mt-1 w-full bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg shadow-lg max-h-60 overflow-auto">
+                      {[
+                        { value: 'all', label: 'All' },
+                        { value: 'log', label: 'Log' },
+                        { value: 'info', label: 'Info' },
+                        { value: 'warn', label: 'Warn' },
+                        { value: 'error', label: 'Error' },
+                        { value: 'debug', label: 'Debug' }
+                      ].map((option) => (
+                        <Listbox.Option
+                          key={option.value}
+                          className={({ active }) =>
+                            `${active ? 'bg-gray-100 dark:bg-slate-700' : ''} cursor-default select-none relative py-2 pl-10 pr-4 text-sm text-gray-900 dark:text-white`
+                          }
+                          value={option.value}
+                        >
+                          {({ selected }) => (
+                            <>
+                              <span className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}>
+                                {option.label}
+                              </span>
+                              {selected ? (
+                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-500">
+                                  <Check className="w-4 h-4" />
+                                </span>
+                              ) : null}
+                            </>
+                          )}
+                        </Listbox.Option>
+                      ))}
+                    </Listbox.Options>
+                  </Transition>
+                </div>
+              </Listbox>
             </div>
 
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600 dark:text-gray-300">Component:</span>
-              <select
-                value={selectedComponent}
-                onChange={(e) => setSelectedComponent(e.target.value)}
-                className="px-3 py-1.5 border dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              >
-                <option value="all">All</option>
-                {availableComponents.map(comp => (
-                  <option key={comp} value={comp}>{comp}</option>
-                ))}
-              </select>
+              
+              <Listbox value={selectedComponent} onChange={setSelectedComponent}>
+                <div className="relative">
+                  <Listbox.Button className="px-3 py-1.5 border dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-w-[160px] text-left">
+                    <div className="flex items-center justify-between">
+                      <span className="truncate">
+                        {selectedComponent === 'all' ? 'All' : selectedComponent}
+                      </span>
+                      <ChevronRight className="w-4 h-4 transform rotate-90 flex-shrink-0 ml-2" />
+                    </div>
+                  </Listbox.Button>
+                  <Transition
+                    as={Fragment}
+                    leave="transition ease-in duration-100"
+                    leaveFrom="opacity-100"
+                    leaveTo="opacity-0"
+                  >
+                    <Listbox.Options className="absolute z-20 mt-1 w-full bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg shadow-lg max-h-80 overflow-auto">
+                      <Listbox.Option
+                        className={({ active }) =>
+                          `${active ? 'bg-gray-100 dark:bg-slate-700' : ''} cursor-default select-none relative py-2 pl-10 pr-4 text-sm text-gray-900 dark:text-white`
+                        }
+                        value="all"
+                      >
+                        {({ selected }) => (
+                          <>
+                            <span className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}>
+                              All
+                            </span>
+                            {selected ? (
+                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-500">
+                                <Check className="w-4 h-4" />
+                              </span>
+                            ) : null}
+                          </>
+                        )}
+                      </Listbox.Option>
+
+                      {ComponentGroups.map((group, groupIndex) => (
+                        <Fragment key={group.label}>
+                          {groupIndex > 0 && (
+                            <div className="border-t border-gray-200 dark:border-slate-700 my-1" />
+                          )}
+                          <div className="px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-700/50 sticky top-0">
+                            {group.label}
+                          </div>
+                          {group.components.map((component) => {
+                            const hasLogs = availableComponents.includes(component);
+                            return (
+                              <Listbox.Option
+                                key={component}
+                                className={({ active }) =>
+                                  `${active ? 'bg-gray-100 dark:bg-slate-700' : ''} ${!hasLogs ? 'text-gray-400 dark:text-gray-600' : ''} cursor-default select-none relative py-2 pl-10 pr-4 text-sm text-gray-900 dark:text-white`
+                                }
+                                value={component}
+                                disabled={!hasLogs}
+                              >
+                                {({ selected }) => (
+                                  <>
+                                    <span className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}>
+                                      {component}
+                                      {!hasLogs && ' (0)'}
+                                    </span>
+                                    {selected ? (
+                                      <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-500">
+                                        <Check className="w-4 h-4" />
+                                      </span>
+                                    ) : null}
+                                  </>
+                                )}
+                              </Listbox.Option>
+                            );
+                          })}
+                        </Fragment>
+                      ))}
+
+                      {availableComponents.some(c => !ComponentGroups.flatMap(g => g.components).includes(c)) && (
+                        <>
+                          <div className="border-t border-gray-200 dark:border-slate-700 my-1" />
+                          <div className="px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-700/50">
+                            Other
+                          </div>
+                          {availableComponents
+                            .filter(c => !ComponentGroups.flatMap(g => g.components).includes(c))
+                            .map((component) => (
+                              <Listbox.Option
+                                key={component}
+                                className={({ active }) =>
+                                  `${active ? 'bg-gray-100 dark:bg-slate-700' : ''} cursor-default select-none relative py-2 pl-10 pr-4 text-sm text-gray-900 dark:text-white`
+                                }
+                                value={component}
+                              >
+                                {({ selected }) => (
+                                  <>
+                                    <span className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}>
+                                      {component}
+                                    </span>
+                                    {selected ? (
+                                      <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-500">
+                                        <Check className="w-4 h-4" />
+                                      </span>
+                                    ) : null}
+                                  </>
+                                )}
+                              </Listbox.Option>
+                            ))}
+                        </>
+                      )}
+                    </Listbox.Options>
+                  </Transition>
+                </div>
+              </Listbox>
             </div>
 
             <div className="flex items-center gap-2 ml-auto">
@@ -250,7 +383,6 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Log list */}
         <div 
           id="log-container"
           className="flex-1 overflow-y-auto bg-gray-50 dark:bg-slate-900 p-4 space-y-2"

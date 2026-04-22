@@ -14,7 +14,7 @@ export default defineContentScript({
   matches: ['<all_urls>'],
   async main() {
     // 初始化 logger
-    logger.overrideConsole(Component.CONTENT_SCRIPT);
+    logger.initialize(false, Component.CONTENT_SCRIPT);
     log(Component.CONTENT_SCRIPT, 'Enveil: Content script loaded');
 
     // Initialize cloud highlighters

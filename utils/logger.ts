@@ -38,6 +38,56 @@ export enum Component {
   UNKNOWN = 'Unknown'
 }
 
+// 组件分组配置
+export const ComponentGroups = [
+  {
+    label: 'Scripts',
+    components: [
+      Component.OPTIONS_PAGE,
+      Component.CONTENT_SCRIPT,
+      Component.BACKGROUND_SCRIPT
+    ]
+  },
+  {
+    label: 'Core Components',
+    components: [
+      Component.CLOUD_HIGHLIGHTER,
+      Component.ACCOUNT_SELECTION_HIGHLIGHTER,
+      Component.MAGIC_RELOGIN_HANDLER
+    ]
+  },
+  {
+    label: 'Utilities',
+    components: [
+      Component.MATCHER,
+      Component.CLOUD_MATCHER,
+      Component.CLOUD_TEMPLATES
+    ]
+  },
+  {
+    label: 'Account Selection',
+    components: [
+      Component.AWS_ACCOUNT_SELECTION,
+      Component.ALIYUN_ACCOUNT_SELECTION,
+      Component.HUAWEI_ACCOUNT_SELECTION,
+      Component.VOLCENGINE_ACCOUNT_SELECTION,
+      Component.GENERIC_ACCOUNT_SELECTION
+    ]
+  },
+  {
+    label: 'Other',
+    components: [
+      Component.UNKNOWN
+    ]
+  }
+];
+
+// 消息类型
+type LogMessage = { action: 'log-add'; entry: LogEntry } | 
+                  { action: 'log-clear' } | 
+                  { action: 'log-get-all' } | 
+                  { action: 'log-get-all-response'; entries: LogEntry[] };
+
 // 日志管理器类
 class LoggerManager {
   private static instance: LoggerManager;
@@ -46,6 +96,7 @@ class LoggerManager {
   private listeners: ((logs: LogEntry[]) => void)[] = [];
   private originalConsole: { [key in LogLevel]?: (...args: any[]) => void } = {};
   private consoleOverridden = false;
+  private initialized = false;
 
   private constructor() {}
 
@@ -54,6 +105,20 @@ class LoggerManager {
       LoggerManager.instance = new LoggerManager();
     }
     return LoggerManager.instance;
+  }
+
+  // 初始化 - 区分是否在 background 脚本中
+  initialize(isBackground: boolean = false, defaultComponent: Component = Component.UNKNOWN): void {
+    if (this.initialized) return;
+    this.initialized = true;
+
+    // 覆盖 console 方法
+    this.overrideConsole(defaultComponent);
+
+    if (isBackground) {
+      // 在 background 脚本中，设置消息监听器
+      this.setupBackgroundListener();
+    }
   }
 
   // 覆盖 console 方法
@@ -66,11 +131,8 @@ class LoggerManager {
       this.originalConsole[method] = console[method];
       
       console[method] = (...args: any[]) => {
-        // 先调用原始 console 方法
-        this.originalConsole[method]?.apply(console, args);
-        
-        // 然后记录日志
-        this.addLog(method, this.extractComponent(args), args);
+        // 只记录日志，不输出到 console
+        this.addLog(method, this.extractComponent(args, defaultComponent), args);
       };
     });
 
@@ -78,7 +140,7 @@ class LoggerManager {
   }
 
   // 从消息中提取组件名称
-  private extractComponent(args: any[]): Component {
+  private extractComponent(args: any[], defaultComponent: Component): Component {
     // 检查第一个参数是否是字符串且包含 [ComponentName] 格式
     if (args.length > 0 && typeof args[0] === 'string') {
       const firstArg = args[0] as string;
@@ -95,7 +157,7 @@ class LoggerManager {
         return componentName as Component;
       }
     }
-    return Component.UNKNOWN;
+    return defaultComponent;
   }
 
   // 添加日志
@@ -109,6 +171,7 @@ class LoggerManager {
       data: message.length > 1 ? message.slice(1) : undefined
     };
 
+    // 先添加到本地
     this.logs.unshift(entry);
 
     // 限制日志数量
@@ -116,8 +179,79 @@ class LoggerManager {
       this.logs.pop();
     }
 
+    // 发送到 background（如果不在 background 中）
+    this.sendToBackground(entry);
+
     // 通知监听器
     this.notifyListeners();
+  }
+
+  // 发送日志到 background
+  private sendToBackground(entry: LogEntry): void {
+    try {
+      // 检查是否在扩展环境中
+      if (typeof browser !== 'undefined' && browser.runtime && browser.runtime.sendMessage) {
+        // 发送消息，忽略 response
+        browser.runtime.sendMessage({
+          action: 'log-add',
+          entry
+        }).catch(() => {
+          // 忽略错误，可能是 message port 关闭了
+        });
+      }
+    } catch {
+      // 忽略错误
+    }
+  }
+
+  // 设置 background 监听器
+  private setupBackgroundListener(): void {
+    try {
+      if (typeof browser !== 'undefined' && browser.runtime && browser.runtime.onMessage) {
+        browser.runtime.onMessage.addListener((message: LogMessage, sender, sendResponse) => {
+          if (message.action === 'log-add') {
+            // 添加接收到的日志
+            this.logs.unshift(message.entry);
+            
+            // 限制日志数量
+            if (this.logs.length > this.maxLogs) {
+              this.logs.pop();
+            }
+            
+            this.notifyListeners();
+          } else if (message.action === 'log-clear') {
+            this.logs = [];
+            this.notifyListeners();
+          } else if (message.action === 'log-get-all') {
+            sendResponse({
+              action: 'log-get-all-response',
+              entries: [...this.logs]
+            });
+            return true; // 表示我们会异步回复
+          }
+          return false;
+        });
+      }
+    } catch {
+      // 忽略错误
+    }
+  }
+
+  // 从 background 获取所有日志
+  async fetchLogsFromBackground(): Promise<LogEntry[]> {
+    try {
+      if (typeof browser !== 'undefined' && browser.runtime && browser.runtime.sendMessage) {
+        const response = await browser.runtime.sendMessage({
+          action: 'log-get-all'
+        });
+        if (response && response.action === 'log-get-all-response') {
+          return response.entries;
+        }
+      }
+    } catch {
+      // 如果失败，返回本地日志
+    }
+    return [...this.logs];
   }
 
   // 格式化消息
@@ -160,6 +294,20 @@ class LoggerManager {
   // 清除日志
   clearLogs(): void {
     this.logs = [];
+    
+    // 告诉 background 也清除
+    try {
+      if (typeof browser !== 'undefined' && browser.runtime && browser.runtime.sendMessage) {
+        browser.runtime.sendMessage({
+          action: 'log-clear'
+        }).catch(() => {
+          // 忽略错误
+        });
+      }
+    } catch {
+      // 忽略错误
+    }
+    
     this.notifyListeners();
   }
 

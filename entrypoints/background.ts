@@ -29,8 +29,8 @@ const tabMatchCache = new Map<number, {
 const CACHE_TTL = 5000;
 
 export default defineBackground(() => {
-  // 初始化 logger
-  logger.overrideConsole(Component.BACKGROUND_SCRIPT);
+  // 初始化 logger - 作为 background 脚本
+  logger.initialize(true, Component.BACKGROUND_SCRIPT);
   log(Component.BACKGROUND_SCRIPT, 'Enveil: Background service worker started');
 
   // Listen for tab updates to check for matches
