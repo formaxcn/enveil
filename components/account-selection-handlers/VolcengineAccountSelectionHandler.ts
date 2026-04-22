@@ -22,8 +22,91 @@ export class VolcengineAccountSelectionHandler {
         this.removeHighlighting();
         this.createStyles();
 
-        for (const account of enabledAccounts) {
-            this.highlightAccount(account);
+        const elementToAccount = new Map<HTMLElement, CloudAccount>();
+        const selectors = environment.template?.selectors?.accountSelection;
+        
+        if (selectors) {
+            for (const account of enabledAccounts) {
+                for (const selector of selectors.accountContainers) {
+                    if (!selector) continue;
+                    
+                    try {
+                        const elements = document.querySelectorAll<HTMLElement>(selector);
+                        elements.forEach(el => {
+                            if (this.isAccountMatch(el, account)) {
+                                elementToAccount.set(el, account);
+                            }
+                        });
+                    } catch (e) {
+                        console.warn(`[VolcengineAccountSelectionHandler] Invalid selector: ${selector}`, e);
+                    }
+                }
+            }
+            
+            const allElements: HTMLElement[] = [];
+            for (const selector of selectors.accountContainers) {
+                if (!selector) continue;
+                
+                try {
+                    const elements = document.querySelectorAll<HTMLElement>(selector);
+                    elements.forEach(el => {
+                        if (!allElements.includes(el)) {
+                            allElements.push(el);
+                        }
+                    });
+                } catch (e) {
+                    console.warn(`[VolcengineAccountSelectionHandler] Invalid selector: ${selector}`, e);
+                }
+            }
+            
+            allElements.sort((a, b) => {
+                const position = a.compareDocumentPosition(b);
+                if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+                if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1;
+                return 0;
+            });
+            
+            let lastMatchedAccount: CloudAccount | null = null;
+            let inChildTable = false;
+            
+            allElements.forEach(el => {
+                const account = elementToAccount.get(el);
+                
+                if (account) {
+                    lastMatchedAccount = account;
+                    inChildTable = false;
+                } else if (lastMatchedAccount && !elementToAccount.has(el)) {
+                    const rowText = el.textContent?.trim() || '';
+                    
+                    const isChildTable = 
+                        rowText.includes('权限') || 
+                        rowText.includes('描述') ||
+                        rowText.includes('操作') ||
+                        rowText.includes('登录') ||
+                        rowText.includes('查看编程访问凭证') ||
+                        el.querySelector('table') !== null ||
+                        el.classList.contains('arco-table-expand-content');
+                    
+                    if (isChildTable || inChildTable) {
+                        inChildTable = true;
+                        elementToAccount.set(el, lastMatchedAccount);
+                    }
+                }
+            });
+            
+            elementToAccount.forEach((account, el) => {
+                this.applyAccountBackground(el, account);
+                
+                if (account.roles && account.roles.length > 0) {
+                    const highlightColor = account.highlightEnable ? account.highlightColor : undefined;
+                    this.highlightRolesInContainer(el, account.roles, highlightColor);
+                }
+                
+                if (!this.highlightedAccounts.has(account.id)) {
+                    this.highlightedAccounts.set(account.id, []);
+                }
+                this.highlightedAccounts.get(account.id)?.push(el);
+            });
         }
 
         this.setupMutationObserver();
@@ -39,6 +122,15 @@ export class VolcengineAccountSelectionHandler {
                 el.style.boxShadow = '';
                 el.removeAttribute('data-enveil-account-id');
                 el.classList.remove(VolcengineAccountSelectionHandler.ACCOUNT_HIGHLIGHT_CLASS);
+                
+                // 恢复td的背景色
+                if (el.tagName.toLowerCase() === 'tr') {
+                    const tds = el.querySelectorAll('td');
+                    tds.forEach((td: HTMLElement) => {
+                        td.style.backgroundColor = '';
+                        td.style.transition = '';
+                    });
+                }
             });
         });
         this.highlightedAccounts.clear();
@@ -66,61 +158,6 @@ export class VolcengineAccountSelectionHandler {
         }
     }
 
-    private highlightAccount(account: CloudAccount): void {
-        const selectors = this.currentEnvironment?.template?.selectors?.accountSelection;
-        if (!selectors) return;
-
-        const containers = this.findAccountContainers(selectors.accountContainers, account);
-
-        if (containers.length === 0) {
-            console.log(`[VolcengineAccountSelectionHandler] No containers found for account: ${account.name}`);
-            return;
-        }
-
-        this.highlightedAccounts.set(account.id, containers);
-
-        containers.forEach(container => {
-            this.applyAccountBackground(container, account);
-
-            if (account.roles && account.roles.length > 0) {
-                const highlightColor = account.highlightEnable ? account.highlightColor : undefined;
-                this.highlightRolesInContainer(container, account.roles, highlightColor);
-            }
-        });
-
-        console.log(`[VolcengineAccountSelectionHandler] Highlighted account: ${account.name} (${containers.length} containers)`);
-    }
-
-    private findAccountContainers(selectors: string[], account: CloudAccount): HTMLElement[] {
-        const containers: HTMLElement[] = [];
-
-        console.log(`[VolcengineAccountSelectionHandler] findAccountContainers: selectors=${JSON.stringify(selectors)}, account=${account.name}`);
-
-        for (const selector of selectors) {
-            if (!selector) continue;
-
-            try {
-                const elements = document.querySelectorAll<HTMLElement>(selector);
-                console.log(`[VolcengineAccountSelectionHandler] findAccountContainers: Selector "${selector}" found ${elements.length} elements`);
-
-                elements.forEach((el, index) => {
-                    const isMatch = this.isAccountMatch(el, account);
-                    console.log(`[VolcengineAccountSelectionHandler] findAccountContainers: Element ${index} - isMatch=${isMatch}`);
-
-                    if (isMatch) {
-                        console.log(`[VolcengineAccountSelectionHandler] findAccountContainers: -> MATCHED! Adding element ${index}`);
-                        containers.push(el);
-                    }
-                });
-            } catch (e) {
-                console.warn(`[VolcengineAccountSelectionHandler] Invalid selector: ${selector}`, e);
-            }
-        }
-
-        console.log(`[VolcengineAccountSelectionHandler] findAccountContainers: Total containers found: ${containers.length}`);
-        return containers;
-    }
-
     private isAccountMatch(element: HTMLElement, account: CloudAccount): boolean {
         const accountName = account.name?.trim();
         const patterns = account.accountPatterns || [];
@@ -132,33 +169,8 @@ export class VolcengineAccountSelectionHandler {
             return false;
         }
 
-        const accountNameSelectors = [
-            ...(this.currentEnvironment?.template?.selectors?.accountSelection?.roleElements || []),
-            '.arco-table-cell',
-            '.arco-table-cell-wrap-value',
-            'td'
-        ];
-
-        let accountNameElement: Element | null = null;
-        for (const selector of accountNameSelectors) {
-            try {
-                accountNameElement = element.querySelector(selector);
-                if (accountNameElement) {
-                    console.log(`[VolcengineAccountSelectionHandler] isAccountMatch: Found account name element with selector "${selector}"`);
-                    break;
-                }
-            } catch (e) {
-                console.warn(`[VolcengineAccountSelectionHandler] Invalid selector: ${selector}`, e);
-            }
-        }
-
-        if (!accountNameElement) {
-            console.log(`[VolcengineAccountSelectionHandler] isAccountMatch: No account name element found`);
-            return false;
-        }
-
-        const accountNameText = accountNameElement.textContent || '';
-        console.log(`[VolcengineAccountSelectionHandler] isAccountMatch: accountNameText="${accountNameText}"`);
+        const elementText = element.textContent || '';
+        console.log(`[VolcengineAccountSelectionHandler] isAccountMatch: elementText="${elementText}"`);
 
         for (const pattern of patterns) {
             if (!pattern.enable) continue;
@@ -168,25 +180,25 @@ export class VolcengineAccountSelectionHandler {
 
             console.log(`[VolcengineAccountSelectionHandler] isAccountMatch: Checking pattern "${matchValue}"`);
 
-            if (/^\d{12}$/.test(matchValue)) {
-                const accountIdPattern = new RegExp(`\\b${matchValue}\\b`);
-                const isMatch = accountIdPattern.test(accountNameText);
-                console.log(`[VolcengineAccountSelectionHandler] isAccountMatch: 12-digit ID pattern result=${isMatch}`);
-                if (isMatch) return true;
+            if (pattern.matchPattern === 'regex') {
+                try {
+                    const regex = new RegExp(matchValue, 'i');
+                    const isMatch = regex.test(elementText);
+                    console.log(`[VolcengineAccountSelectionHandler] isAccountMatch: Regex "${matchValue}" result=${isMatch}`);
+                    if (isMatch) return true;
+                } catch (e) {
+                    console.warn(`[VolcengineAccountSelectionHandler] Invalid regex: ${matchValue}`, e);
+                }
             } else {
-                const escapedMatchValue = matchValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                const matchPattern = new RegExp(escapedMatchValue, 'i');
-                const isMatch = matchPattern.test(accountNameText);
-                console.log(`[VolcengineAccountSelectionHandler] isAccountMatch: Pattern "${matchPattern}" result=${isMatch}`);
+                const isMatch = elementText.toLowerCase().includes(matchValue.toLowerCase());
+                console.log(`[VolcengineAccountSelectionHandler] isAccountMatch: Keyword "${matchValue}" result=${isMatch}`);
                 if (isMatch) return true;
             }
         }
 
         if (accountName) {
-            const escapedAccountName = accountName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const namePattern = new RegExp(escapedAccountName, 'i');
-            const isMatch = namePattern.test(accountNameText);
-            console.log(`[VolcengineAccountSelectionHandler] isAccountMatch: Account name "${accountName}" pattern "${namePattern}" result=${isMatch}`);
+            const isMatch = elementText.toLowerCase().includes(accountName.toLowerCase());
+            console.log(`[VolcengineAccountSelectionHandler] isAccountMatch: Account name "${accountName}" result=${isMatch}`);
             if (isMatch) {
                 return true;
             }
@@ -201,11 +213,20 @@ export class VolcengineAccountSelectionHandler {
             return;
         }
 
-        element.style.backgroundColor = this.hexToRgba(account.backgroundColor, 0.25);
+        element.style.backgroundColor = this.hexToRgba(account.backgroundColor, 0.5);
         element.style.border = `2px solid ${account.backgroundColor}`;
-        element.style.boxShadow = `0 0 8px ${this.hexToRgba(account.backgroundColor, 0.35)}`;
+        element.style.boxShadow = `0 0 12px ${this.hexToRgba(account.backgroundColor, 0.6)}`;
         element.style.borderRadius = '4px';
         element.style.transition = 'all 0.3s ease';
+
+        // 直接给tr里面的td也应用同样的背景色
+        if (element.tagName.toLowerCase() === 'tr') {
+            const tds = element.querySelectorAll('td');
+            tds.forEach((td: HTMLElement) => {
+                td.style.backgroundColor = this.hexToRgba(account.backgroundColor, 0.5);
+                td.style.transition = 'all 0.3s ease';
+            });
+        }
 
         element.setAttribute('data-enveil-account-id', account.id);
         element.classList.add(VolcengineAccountSelectionHandler.ACCOUNT_HIGHLIGHT_CLASS);
@@ -377,40 +398,23 @@ export class VolcengineAccountSelectionHandler {
 
     private reapplyHighlighting(): void {
         if (!this.currentEnvironment) return;
-
+        
         const accounts = this.currentEnvironment.accounts?.filter(acc => acc.enable) || [];
-
-        for (const account of accounts) {
-            const selectors = this.currentEnvironment.template?.selectors?.accountSelection;
-            if (!selectors) continue;
-
-            const existingContainers = this.highlightedAccounts.get(account.id) || [];
-
-            for (const selector of selectors.accountContainers) {
-                if (!selector) continue;
-
-                try {
-                    const elements = document.querySelectorAll<HTMLElement>(selector);
-
-                    elements.forEach(el => {
-                        if (existingContainers.includes(el)) return;
-
-                        if (this.isAccountMatch(el, account)) {
-                            existingContainers.push(el);
-                            this.applyAccountBackground(el, account);
-
-                            if (account.roles && account.roles.length > 0) {
-                                this.highlightRolesInContainer(el, account.roles);
-                            }
-                        }
-                    });
-                } catch (e) {
-                    console.warn(`[VolcengineAccountSelectionHandler] Invalid selector during reapply: ${selector}`, e);
-                }
-            }
-
-            this.highlightedAccounts.set(account.id, existingContainers);
-        }
+        
+        const tempStyles = this.styleElement;
+        this.styleElement = null;
+        this.highlightedAccounts.clear();
+        
+        document.querySelectorAll('.' + VolcengineAccountSelectionHandler.ACCOUNT_HIGHLIGHT_CLASS).forEach(el => {
+            el.classList.remove(VolcengineAccountSelectionHandler.ACCOUNT_HIGHLIGHT_CLASS);
+            el.style.backgroundColor = '';
+            el.style.border = '';
+            el.style.boxShadow = '';
+        });
+        
+        this.styleElement = tempStyles;
+        
+        this.applyHighlighting(this.currentEnvironment, accounts);
     }
 
     private hexToRgba(hex: string, alpha: number): string {
@@ -459,6 +463,6 @@ export class VolcengineAccountSelectionHandler {
     }
 
     private escapeRegExp(string: string): string {
-        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return string.replace(/[.*+?^${}()[\]\\]/g, '\\$&');
     }
 }
