@@ -27,8 +27,138 @@ export class HuaweiAccountSelectionHandler {
         this.removeHighlighting();
         this.createStyles();
 
-        for (const account of enabledAccounts) {
-            this.highlightAccount(account);
+        // 先找到所有需要高亮的元素和对应的账户
+        const elementToAccount = new Map<HTMLElement, CloudAccount>();
+        const selectors = environment.template?.selectors?.accountSelection;
+        
+        if (selectors) {
+            // 第一遍：先找到所有匹配的账户行
+            for (const account of enabledAccounts) {
+                for (const selector of selectors.accountContainers) {
+                    if (!selector) continue;
+                    
+                    try {
+                        const elements = document.querySelectorAll<HTMLElement>(selector);
+                        elements.forEach(el => {
+                            if (this.isAccountMatch(el, account)) {
+                                elementToAccount.set(el, account);
+                            }
+                        });
+                    } catch (e) {
+                        console.warn(`[HuaweiAccountSelectionHandler] Invalid selector: ${selector}`, e);
+                    }
+                }
+            }
+            
+            // 第二遍：找到子表内容并关联到前面的账户
+            // 先收集所有元素并按DOM顺序排序
+            const allElements: HTMLElement[] = [];
+            for (const selector of selectors.accountContainers) {
+                if (!selector) continue;
+                
+                try {
+                    const elements = document.querySelectorAll<HTMLElement>(selector);
+                    elements.forEach(el => {
+                        if (!allElements.includes(el)) {
+                            allElements.push(el);
+                        }
+                    });
+                } catch (e) {
+                    console.warn(`[HuaweiAccountSelectionHandler] Invalid selector: ${selector}`, e);
+                }
+            }
+            
+            // 按文档顺序排序
+            allElements.sort((a, b) => {
+                const position = a.compareDocumentPosition(b);
+                if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+                if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1;
+                return 0;
+            });
+            
+            // 按顺序处理，找到子表内容
+            let lastMatchedAccount: CloudAccount | null = null;
+            let inChildTable = false;
+            
+            allElements.forEach(el => {
+                const account = elementToAccount.get(el);
+                
+                if (account) {
+                    lastMatchedAccount = account;
+                    inChildTable = false;
+                } else if (lastMatchedAccount && !elementToAccount.has(el)) {
+                    // 检查这是不是子表行
+                    const rowText = el.textContent?.trim() || '';
+                    
+                    // 先检查是否包含展开的内容，或者距离上一个匹配的元素很近
+                    const isChildTable = 
+                        // 文本关键词判断
+                        rowText.includes('权限集') || 
+                        rowText.includes('总条数') ||
+                        rowText.includes('描述') ||
+                        rowText.includes('操作') ||
+                        // 包含表格或嵌套列表
+                        el.querySelector('table') !== null ||
+                        el.querySelector('[class*="list"]') !== null ||
+                        el.querySelector('[class*="table"]') !== null ||
+                        // 或者文本较短但不是账户名
+                        (rowText.length > 0 && rowText.length < 100 && !this.isAccountMatch(el, {name: '', accountPatterns: []} as any));
+                    
+                    if (isChildTable || inChildTable) {
+                        inChildTable = true;
+                        elementToAccount.set(el, lastMatchedAccount);
+                        console.log(`[HuaweiAccountSelectionHandler] Found child table element, linking to account: ${lastMatchedAccount.name}`);
+                    } else {
+                        // 检查这个元素是不是在最近匹配元素的附近（在同一个父容器内）
+                        let parentEl: HTMLElement | null = el.parentElement;
+                        let foundMatchParent = false;
+                        
+                        // 查找是否在匹配元素的子树内或者同一个父容器下
+                        while (parentEl) {
+                            // 检查这个父元素下有没有匹配的账户
+                            let hasMatchingSibling = false;
+                            const siblings = Array.from(parentEl.children);
+                            for (const sibling of siblings) {
+                                if (elementToAccount.has(sibling as HTMLElement)) {
+                                    hasMatchingSibling = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (hasMatchingSibling) {
+                                foundMatchParent = true;
+                                break;
+                            }
+                            parentEl = parentEl.parentElement;
+                        }
+                        
+                        if (foundMatchParent) {
+                            elementToAccount.set(el, lastMatchedAccount);
+                            console.log(`[HuaweiAccountSelectionHandler] Found related element in same container, linking to account: ${lastMatchedAccount.name}`);
+                        } else {
+                            // 遇到完全不相关的行，重置
+                            lastMatchedAccount = null;
+                            inChildTable = false;
+                        }
+                    }
+                }
+            });
+            
+            // 应用高亮
+            elementToAccount.forEach((account, el) => {
+                this.applyAccountBackground(el, account);
+                
+                if (account.roles && account.roles.length > 0) {
+                    const highlightColor = account.highlightEnable ? account.highlightColor : undefined;
+                    this.highlightRolesInContainer(el, account.roles, highlightColor);
+                }
+                
+                // 添加到高亮列表
+                if (!this.highlightedAccounts.has(account.id)) {
+                    this.highlightedAccounts.set(account.id, []);
+                }
+                this.highlightedAccounts.get(account.id)?.push(el);
+            });
         }
 
         this.setupMutationObserver();
@@ -120,9 +250,33 @@ export class HuaweiAccountSelectionHandler {
 
     private findAccountContainers(selectors: string[], account: CloudAccount): HTMLElement[] {
         const containers: HTMLElement[] = [];
+        const addedElements = new Set<HTMLElement>();
+        const matchedRows = new Set<HTMLElement>();
 
         console.log(`[HuaweiAccountSelectionHandler] findAccountContainers: selectors=${JSON.stringify(selectors)}, account=${account.name}`);
 
+        // 先找到所有匹配的行
+        for (const selector of selectors) {
+            if (!selector) continue;
+
+            try {
+                const elements = document.querySelectorAll<HTMLElement>(selector);
+
+                elements.forEach((el) => {
+                    if (addedElements.has(el)) return;
+                    
+                    const isMatch = this.isAccountMatch(el, account);
+                    
+                    if (isMatch) {
+                        matchedRows.add(el);
+                    }
+                });
+            } catch (e) {
+                console.warn(`[HuaweiAccountSelectionHandler] Invalid selector: ${selector}`, e);
+            }
+        }
+
+        // 然后处理所有行，包括子表
         for (const selector of selectors) {
             if (!selector) continue;
 
@@ -131,15 +285,16 @@ export class HuaweiAccountSelectionHandler {
                 console.log(`[HuaweiAccountSelectionHandler] findAccountContainers: Selector "${selector}" found ${elements.length} elements`);
 
                 elements.forEach((el, index) => {
-                    console.log(`[HuaweiAccountSelectionHandler] findAccountContainers: Checking element ${index}: tag=${el.tagName}, class=${el.className}, text=${el.textContent?.substring(0, 100)}`);
-                    
-                    const isMatch = this.isAccountMatch(el, account);
-                    const hasRoles = this.hasRoleElements(el);
-                    console.log(`[HuaweiAccountSelectionHandler] findAccountContainers: Element ${index} - isMatch=${isMatch}, hasRoles=${hasRoles}`);
+                    if (addedElements.has(el)) return;
+                    if (el.classList.contains(HuaweiAccountSelectionHandler.ACCOUNT_HIGHLIGHT_CLASS)) return;
 
-                    if (isMatch) {
-                        console.log(`[HuaweiAccountSelectionHandler] findAccountContainers: -> MATCHED! Adding element ${index}`);
+                    const isDirectMatch = matchedRows.has(el);
+                    const shouldHighlightWithParent = this.shouldHighlightWithParent(el, matchedRows);
+
+                    if (isDirectMatch || shouldHighlightWithParent) {
+                        console.log(`[HuaweiAccountSelectionHandler] findAccountContainers: Element ${index} - isDirectMatch=${isDirectMatch}, shouldHighlightWithParent=${shouldHighlightWithParent} - Adding`);
                         containers.push(el);
+                        addedElements.add(el);
                     }
                 });
             } catch (e) {
@@ -149,6 +304,32 @@ export class HuaweiAccountSelectionHandler {
 
         console.log(`[HuaweiAccountSelectionHandler] findAccountContainers: Total containers found: ${containers.length}`);
         return containers;
+    }
+    
+    /**
+     * 检查一个行是否应该跟随前面的匹配行高亮
+     */
+    private shouldHighlightWithParent(row: HTMLElement, matchedRows: Set<HTMLElement>): boolean {
+        let prevSibling = row.previousElementSibling;
+        
+        // 向前查找，直到找到一个匹配行或者遇到非tr元素
+        while (prevSibling) {
+            if (matchedRows.has(prevSibling as HTMLElement)) {
+                // 找到匹配的前面行，检查当前行是不是子表行（不包含账号信息）
+                const rowText = row.textContent?.trim() || '';
+                // 简单判断：如果行文本不太长，或者看起来像子表标题，就认为是子表行
+                return rowText.length < 50 || rowText.includes('权限集') || rowText.includes('总条数');
+            }
+            
+            // 如果前面遇到另一个不匹配的tr，停止（说明不是同一组）
+            if (prevSibling.tagName === 'TR') {
+                return false;
+            }
+            
+            prevSibling = prevSibling.previousElementSibling;
+        }
+        
+        return false;
     }
 
     private hasRoleElements(element: HTMLElement): boolean {
@@ -170,37 +351,9 @@ export class HuaweiAccountSelectionHandler {
             return false;
         }
 
-        const accountNameSelectors = [
-            ...(this.currentEnvironment?.template?.selectors?.accountSelection?.roleElements || []),
-            '.account-name',
-            '.account-id',
-            '[class*="account-item"] [class*="name"]',
-            'td',
-            'div[class*="name"]',
-            'span[class*="name"]',
-            'div'
-        ];
-
-        let accountNameElement: Element | null = null;
-        for (const selector of accountNameSelectors) {
-            try {
-                accountNameElement = element.querySelector(selector);
-                if (accountNameElement) {
-                    console.log(`[HuaweiAccountSelectionHandler] isAccountMatch: Found account name element with selector "${selector}"`);
-                    break;
-                }
-            } catch (e) {
-                console.warn(`[HuaweiAccountSelectionHandler] Invalid selector: ${selector}`, e);
-            }
-        }
-
-        if (!accountNameElement) {
-            console.log(`[HuaweiAccountSelectionHandler] isAccountMatch: No account name element found, falling back to entire element`);
-            accountNameElement = element;
-        }
-
-        const accountNameText = accountNameElement.textContent || '';
-        console.log(`[HuaweiAccountSelectionHandler] isAccountMatch: accountNameText="${accountNameText}"`);
+        // 直接使用整个元素的文本进行匹配，更可靠
+        const elementText = element.textContent || '';
+        console.log(`[HuaweiAccountSelectionHandler] isAccountMatch: elementText="${elementText}"`);
 
         for (const pattern of patterns) {
             if (!pattern.enable) continue;
@@ -210,25 +363,28 @@ export class HuaweiAccountSelectionHandler {
 
             console.log(`[HuaweiAccountSelectionHandler] isAccountMatch: Checking pattern "${matchValue}"`);
 
-            if (/^\d{12}$/.test(matchValue)) {
-                const accountIdPattern = new RegExp(`\\b${matchValue}\\b`);
-                const isMatch = accountIdPattern.test(accountNameText);
-                console.log(`[HuaweiAccountSelectionHandler] isAccountMatch: 12-digit ID pattern result=${isMatch}`);
-                if (isMatch) return true;
+            // 如果是正则模式，使用正则匹配
+            if (pattern.matchPattern === 'regex') {
+                try {
+                    const regex = new RegExp(matchValue, 'i');
+                    const isMatch = regex.test(elementText);
+                    console.log(`[HuaweiAccountSelectionHandler] isAccountMatch: Regex "${matchValue}" result=${isMatch}`);
+                    if (isMatch) return true;
+                } catch (e) {
+                    console.warn(`[HuaweiAccountSelectionHandler] Invalid regex: ${matchValue}`, e);
+                }
             } else {
-                const escapedMatchValue = matchValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                const matchPattern = new RegExp(escapedMatchValue, 'i');
-                const isMatch = matchPattern.test(accountNameText);
-                console.log(`[HuaweiAccountSelectionHandler] isAccountMatch: Pattern "${matchPattern}" result=${isMatch}`);
+                // 关键字模式，直接使用 includes（不转义，支持子字符串匹配）
+                const isMatch = elementText.toLowerCase().includes(matchValue.toLowerCase());
+                console.log(`[HuaweiAccountSelectionHandler] isAccountMatch: Keyword "${matchValue}" result=${isMatch}`);
                 if (isMatch) return true;
             }
         }
 
+        // 检查账户名
         if (accountName) {
-            const escapedAccountName = accountName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const namePattern = new RegExp(escapedAccountName, 'i');
-            const isMatch = namePattern.test(accountNameText);
-            console.log(`[HuaweiAccountSelectionHandler] isAccountMatch: Account name "${accountName}" pattern "${namePattern}" result=${isMatch}`);
+            const isMatch = elementText.toLowerCase().includes(accountName.toLowerCase());
+            console.log(`[HuaweiAccountSelectionHandler] isAccountMatch: Account name "${accountName}" result=${isMatch}`);
             if (isMatch) {
                 return true;
             }
@@ -419,40 +575,27 @@ export class HuaweiAccountSelectionHandler {
 
     private reapplyHighlighting(): void {
         if (!this.currentEnvironment) return;
-
+        
+        // 重新应用整个高亮流程
         const accounts = this.currentEnvironment.accounts?.filter(acc => acc.enable) || [];
-
-        for (const account of accounts) {
-            const selectors = this.currentEnvironment.template?.selectors?.accountSelection;
-            if (!selectors) continue;
-
-            const existingContainers = this.highlightedAccounts.get(account.id) || [];
-
-            for (const selector of selectors.accountContainers) {
-                if (!selector) continue;
-
-                try {
-                    const elements = document.querySelectorAll<HTMLElement>(selector);
-
-                    elements.forEach(el => {
-                        if (existingContainers.includes(el)) return;
-
-                        if (this.isAccountMatch(el, account)) {
-                            existingContainers.push(el);
-                            this.applyAccountBackground(el, account);
-
-                            if (account.roles && account.roles.length > 0) {
-                                this.highlightRolesInContainer(el, account.roles);
-                            }
-                        }
-                    });
-                } catch (e) {
-                    console.warn(`[HuaweiAccountSelectionHandler] Invalid selector during reapply: ${selector}`, e);
-                }
-            }
-
-            this.highlightedAccounts.set(account.id, existingContainers);
-        }
+        
+        // 清除现有高亮但保留样式
+        const tempStyles = this.styleElement;
+        this.styleElement = null;
+        this.highlightedAccounts.clear();
+        
+        // 清除DOM上的高亮
+        document.querySelectorAll('.' + HuaweiAccountSelectionHandler.ACCOUNT_HIGHLIGHT_CLASS).forEach(el => {
+            el.classList.remove(HuaweiAccountSelectionHandler.ACCOUNT_HIGHLIGHT_CLASS);
+            el.style.backgroundColor = '';
+            el.style.border = '';
+            el.style.boxShadow = '';
+        });
+        
+        this.styleElement = tempStyles;
+        
+        // 重新应用高亮
+        this.applyHighlighting(this.currentEnvironment, accounts);
     }
 
     private hexToRgba(hex: string, alpha: number): string {

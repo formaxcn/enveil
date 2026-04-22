@@ -217,11 +217,11 @@ export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
           '[class*="account-list"] > div',
           'ul.account-list > li',
           'div[class*="account-card"]',
-          '[class*="app-content"] div',
-          '[class*="app-content"] li',
           'tr',
-          '[class*="list"] div',
-          '[class*="card"]'
+          'tbody tr',
+          '[class*="table"] [class*="row"]',
+          '[class*="list-item"]',
+          'div[class*="item"]'
         ],
         roleElements: [
           '.account-name',
@@ -231,10 +231,8 @@ export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
           'span[class*="account-name"]',
           'div[class*="info"] [class*="name"]',
           'td',
-          'div[class*="name"]',
-          'span[class*="name"]',
-          '[class*="app-content"] td',
-          '[class*="app-content"] div'
+          'td:first-child',
+          'div[class*="cell"]'
         ]
       },
       console: {
@@ -249,8 +247,7 @@ export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
           'div[class*="account"][class*="info"]',
           'div[class*="user"][class*="info"]',
           '[class*="huawei-user"]',
-          '[class*="hwcloud-user"]',
-          '[class*="app-content"]'
+          '[class*="hwcloud-user"]'
         ],
         roleElements: [
           '[class*="header-user"] [class*="name"]',
@@ -262,8 +259,7 @@ export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
           '[class*="nick-name"]',
           '[class*="account-id"]',
           '[class*="user-id"]',
-          '[class*="tenant-id"]',
-          '[class*="app-content"] [class*="name"]'
+          '[class*="tenant-id"]'
         ]
       }
     }
