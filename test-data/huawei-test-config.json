@@ -1,0 +1,170 @@
+{
+  "id": "huawei-test",
+  "name": "华为云测试环境",
+  "enable": true,
+  "provider": "huawei",
+  "template": {
+    "provider": "huawei",
+    "name": "Huawei Cloud",
+    "accountSelectionUrl": "https://account.huaweicloud.com/saml2/login",
+    "consoleDomainPattern": "*://*.hwclouds.com/*",
+    "samlUrl": "",
+    "enableAutoRelogin": false,
+    "selectors": {
+      "accountSelection": {
+        "accountContainers": [
+          "div.account-item",
+          "div.hwui-list-item",
+          "[class*=\"account-list\"] > div",
+          "ul.account-list > li",
+          "div[class*=\"account-card\"]",
+          "[class*=\"app-content\"] div",
+          "[class*=\"app-content\"] li",
+          "tr",
+          "[class*=\"list\"] div",
+          "[class*=\"card\"]"
+        ],
+        "roleElements": [
+          ".account-name",
+          ".account-id",
+          "[class*=\"account-item\"] [class*=\"name\"]",
+          "[class*=\"role\"]",
+          "span[class*=\"account-name\"]",
+          "div[class*=\"info\"] [class*=\"name\"]",
+          "td",
+          "div[class*=\"name\"]",
+          "span[class*=\"name\"]",
+          "[class*=\"app-content\"] td",
+          "[class*=\"app-content\"] div"
+        ]
+      },
+      "console": {
+        "accountContainers": [
+          "[class*=\"header-user\"]",
+          "[class*=\"user-menu\"]",
+          "[class*=\"account-menu\"]",
+          "[class*=\"profile-dropdown\"]",
+          "[class*=\"account-dropdown\"]",
+          "[class*=\"nav-user\"]",
+          "[class*=\"header-account\"]",
+          "div[class*=\"account\"][class*=\"info\"]",
+          "div[class*=\"user\"][class*=\"info\"]",
+          "[class*=\"huawei-user\"]",
+          "[class*=\"hwcloud-user\"]",
+          "[class*=\"app-content\"]"
+        ],
+        "roleElements": [
+          "[class*=\"header-user\"] [class*=\"name\"]",
+          "[class*=\"user-menu\"] [class*=\"name\"]",
+          "[class*=\"account-menu\"] [class*=\"name\"]",
+          "[class*=\"user-name\"]",
+          "[class*=\"account-name\"]",
+          "[class*=\"display-name\"]",
+          "[class*=\"nick-name\"]",
+          "[class*=\"account-id\"]",
+          "[class*=\"user-id\"]",
+          "[class*=\"tenant-id\"]",
+          "[class*=\"app-content\"] [class*=\"name\"]"
+        ]
+      }
+    }
+  },
+  "accounts": [
+    {
+      "id": "huawei-account-1",
+      "name": "生产环境账号",
+      "enable": true,
+      "backgroundEnable": true,
+      "backgroundColor": "#1890ff",
+      "highlightEnable": true,
+      "highlightColor": "#bee3f8",
+      "accountPatterns": [
+        {
+          "id": "pattern-1",
+          "enable": true,
+          "matchPattern": "keyword",
+          "matchValue": "生产",
+          "created": 1735689600000,
+          "modified": 1735689600000
+        },
+        {
+          "id": "pattern-2",
+          "enable": true,
+          "matchPattern": "keyword",
+          "matchValue": "123456789012",
+          "created": 1735689600000,
+          "modified": 1735689600000
+        }
+      ],
+      "roles": [
+        {
+          "id": "role-1",
+          "enable": true,
+          "matchPattern": "keyword",
+          "matchValue": "Admin",
+          "created": 1735689600000,
+          "modified": 1735689600000
+        },
+        {
+          "id": "role-2",
+          "enable": true,
+          "matchPattern": "keyword",
+          "matchValue": "管理员",
+          "created": 1735689600000,
+          "modified": 1735689600000
+        }
+      ],
+      "created": 1735689600000,
+      "modified": 1735689600000
+    },
+    {
+      "id": "huawei-account-2",
+      "name": "测试环境账号",
+      "enable": true,
+      "backgroundEnable": true,
+      "backgroundColor": "#52c41a",
+      "highlightEnable": true,
+      "highlightColor": "#d4edda",
+      "accountPatterns": [
+        {
+          "id": "pattern-3",
+          "enable": true,
+          "matchPattern": "keyword",
+          "matchValue": "测试",
+          "created": 1735689600000,
+          "modified": 1735689600000
+        },
+        {
+          "id": "pattern-4",
+          "enable": true,
+          "matchPattern": "keyword",
+          "matchValue": "987654321098",
+          "created": 1735689600000,
+          "modified": 1735689600000
+        }
+      ],
+      "roles": [
+        {
+          "id": "role-3",
+          "enable": true,
+          "matchPattern": "keyword",
+          "matchValue": "Developer",
+          "created": 1735689600000,
+          "modified": 1735689600000
+        },
+        {
+          "id": "role-4",
+          "enable": true,
+          "matchPattern": "keyword",
+          "matchValue": "开发人员",
+          "created": 1735689600000,
+          "modified": 1735689600000
+        }
+      ],
+      "created": 1735689600000,
+      "modified": 1735689600000
+    }
+  ],
+  "created": 1735689600000,
+  "modified": 1735689600000
+}

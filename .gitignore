@@ -31,3 +31,5 @@ web-ext.config.ts
 extension-key.pem
 *.crx
 *.zip
+
+/tests/data

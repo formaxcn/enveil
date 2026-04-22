@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
-import { Globe, Cloudy, Cloud, FileUp, FileDown, Plus, FolderPlus, Info, ChevronRight, Zap, X, Edit3, Github, BookOpen } from 'lucide-react';
+import { Globe, Cloudy, Cloud, FileUp, FileDown, Plus, FolderPlus, Info, ChevronRight, Zap, X, Edit3, Github, BookOpen, Terminal } from 'lucide-react';
 import { Switch } from '../../components/Switch';
 import { ConfigGroup } from '../../components/ConfigGroup';
 import { CloudEnvironmentItem } from '../../components/CloudEnvironmentItem';
@@ -8,9 +8,11 @@ import { AddSiteModal } from '../../components/AddSiteModal';
 import { AddGroupModal } from '../../components/AddGroupModal';
 import { AddCloudEnvironmentModal } from '../../components/AddCloudEnvironmentModal';
 import { AddCloudAccountModal } from '../../components/AddCloudAccountModal';
+import { LogViewer } from '../../components/LogViewer';
 import { AppConfig, Setting, GroupDefaults, SiteConfig, CloudEnvironment, CloudAccount } from './types';
 import { storage } from 'wxt/utils/storage';
 import { clsx } from 'clsx';
+import { logger, Component, log } from '../../utils/logger';
 
 declare const chrome: {
   runtime: {
@@ -38,8 +40,15 @@ const DEFAULT_CONFIG: AppConfig = {
 };
 
 const App: React.FC = () => {
-    const [config, setConfig] = useState<AppConfig>(DEFAULT_CONFIG);
-    const [activeTab, setActiveTab] = useState(0);
+  const [config, setConfig] = useState<AppConfig>(DEFAULT_CONFIG);
+  const [activeTab, setActiveTab] = useState(0);
+  const [isLogViewerOpen, setIsLogViewerOpen] = useState(false);
+  
+  useEffect(() => {
+    // Initialize logger and override console
+    logger.overrideConsole(Component.OPTIONS_PAGE);
+    log(Component.OPTIONS_PAGE, 'Options page loaded');
+  }, []);
 
     // Modal states
     const [isSiteModalOpen, setIsSiteModalOpen] = useState(false);
@@ -225,6 +234,61 @@ const App: React.FC = () => {
         URL.revokeObjectURL(url);
     };
 
+    const mergeConfigs = (current: AppConfig, imported: AppConfig): AppConfig => {
+        const merged: AppConfig = {
+            browserSync: imported.browserSync ?? current.browserSync,
+            defaultColors: imported.defaultColors?.length > 0 ? imported.defaultColors : current.defaultColors,
+            settings: imported.settings?.length > 0 ? imported.settings : current.settings,
+            cloudEnvironments: mergeCloudEnvironments(
+                current.cloudEnvironments || [],
+                imported.cloudEnvironments || []
+            )
+        };
+        return merged;
+    };
+
+    const mergeCloudEnvironments = (
+        current: CloudEnvironment[],
+        imported: CloudEnvironment[]
+    ): CloudEnvironment[] => {
+        const merged = [...current];
+        const currentIds = new Set(current.map(item => item.id));
+
+        for (const item of imported) {
+            if (currentIds.has(item.id)) {
+                const existingIndex = merged.findIndex(m => m.id === item.id);
+                if (existingIndex >= 0) {
+                    merged[existingIndex] = { ...merged[existingIndex], ...item };
+                }
+            } else {
+                merged.push(item);
+            }
+        }
+
+        return merged;
+    };
+
+    const mergeSettings = (
+        current: Setting[],
+        imported: Setting[]
+    ): Setting[] => {
+        const merged = [...current];
+        const currentNames = new Set(current.map(item => item.name));
+
+        for (const item of imported) {
+            if (currentNames.has(item.name)) {
+                const existingIndex = merged.findIndex(m => m.name === item.name);
+                if (existingIndex >= 0) {
+                    merged[existingIndex] = { ...merged[existingIndex], ...item };
+                }
+            } else {
+                merged.push(item);
+            }
+        }
+
+        return merged;
+    };
+
     const importConfig = () => {
         const input = document.createElement('input');
         input.type = 'file';
@@ -248,18 +312,17 @@ const App: React.FC = () => {
                         const isCloudExport = imported.cloudEnvironments && !imported.settings && !imported.browserSync;
 
                         if (isFullConfig) {
-                            // Full config import - require confirmation
-                            if (confirm("This will overwrite all your current settings. Continue?")) {
-                                saveConfig({ ...DEFAULT_CONFIG, ...imported });
-                            }
+                            const mergedConfig = mergeConfigs(config, imported);
+                            saveConfig(mergedConfig);
                         } else if (isGroupExport) {
-                            // Config group export - append to existing settings
-                            const newSettings = [...config.settings, ...imported.settings];
+                            const newSettings = mergeSettings(config.settings, imported.settings);
                             saveConfig({ ...config, settings: newSettings });
                             alert(`Imported ${imported.settings.length} config group(s).`);
                         } else if (isCloudExport) {
-                            // Cloud provider export - append to existing cloudEnvironments
-                            const newEnvs = [...(config.cloudEnvironments || []), ...imported.cloudEnvironments];
+                            const newEnvs = mergeCloudEnvironments(
+                                config.cloudEnvironments || [],
+                                imported.cloudEnvironments
+                            );
                             saveConfig({ ...config, cloudEnvironments: newEnvs });
                             alert(`Imported ${imported.cloudEnvironments.length} cloud provider(s).`);
                         } else {
@@ -366,30 +429,37 @@ const App: React.FC = () => {
                 </div>
 
                 <div className="text-center">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-gray-100 dark:bg-slate-800/80 rounded-full text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-[0.2em] shadow-inner transition-colors">
-                        <span>Build v{chrome.runtime.getManifest().version}</span>
-                        <div className="flex items-center gap-1.5 ml-1 border-l border-gray-300 dark:border-slate-600 pl-2">
-                            <a
-                                href="https://github.com/formaxcn/enveil"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                                title="GitHub"
-                            >
-                                <Github className="w-3.5 h-3.5" />
-                            </a>
-                            <a
-                                href="https://formaxcn.github.io/enveil/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                                title="Documentation"
-                            >
-                                <BookOpen className="w-3.5 h-3.5" />
-                            </a>
-                        </div>
-                    </div>
-                </div>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-gray-100 dark:bg-slate-800/80 rounded-full text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-[0.2em] shadow-inner transition-colors">
+            <span>Build v{chrome.runtime.getManifest().version}</span>
+            <div className="flex items-center gap-1.5 ml-1 border-l border-gray-300 dark:border-slate-600 pl-2">
+              <button
+                onClick={() => setIsLogViewerOpen(true)}
+                className="text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                title="Logs"
+              >
+                <Terminal className="w-3.5 h-3.5" />
+              </button>
+              <a
+                href="https://github.com/formaxcn/enveil"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                title="GitHub"
+              >
+                <Github className="w-3.5 h-3.5" />
+              </a>
+              <a
+                href="https://formaxcn.github.io/enveil/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                title="Documentation"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          </div>
+        </div>
             </aside>
 
             {/* Main Content */}
@@ -558,18 +628,24 @@ const App: React.FC = () => {
             />
 
             {editingAccount && (
-                <AddCloudAccountModal
-                    isOpen={isAccountModalOpen}
-                    onClose={() => {
-                        setIsAccountModalOpen(false);
-                        setEditingAccount(null);
-                    }}
-                    onSave={handleSaveAccount}
-                    environment={config.cloudEnvironments!.find(e => e.id === editingAccount.envId)!}
-                    account={editingAccount.account}
-                    defaultColors={config.defaultColors}
-                />
+              <AddCloudAccountModal
+                isOpen={isAccountModalOpen}
+                onClose={() => {
+                  setIsAccountModalOpen(false);
+                  setEditingAccount(null);
+                }}
+                onSave={handleSaveAccount}
+                environment={config.cloudEnvironments!.find(e => e.id === editingAccount.envId)!}
+                account={editingAccount.account}
+                defaultColors={config.defaultColors}
+              />
             )}
+            
+            {/* 日志查看器 */}
+            <LogViewer
+              isOpen={isLogViewerOpen}
+              onClose={() => setIsLogViewerOpen(false)}
+            />
         </div>
     );
 };

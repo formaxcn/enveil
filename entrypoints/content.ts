@@ -4,6 +4,7 @@ import { AccountSelectionHighlighter } from '../components/AccountSelectionHighl
 import { MagicReloginHandler, magicReloginHandler } from '../components/MagicReloginHandler';
 import { CloudMatcher } from '../utils/cloudMatcher';
 import { getCloudTemplate } from '../utils/cloudTemplates';
+import { logger, Component, log } from '../utils/logger';
 
 // 全局变量存储当前云环境信息
 let currentCloudEnvironment: CloudEnvironment | null = null;
@@ -12,7 +13,9 @@ let currentCloudAccounts: CloudAccount[] = [];
 export default defineContentScript({
   matches: ['<all_urls>'],
   async main() {
-    console.log('Enveil: Content script loaded');
+    // 初始化 logger
+    logger.overrideConsole(Component.CONTENT_SCRIPT);
+    log(Component.CONTENT_SCRIPT, 'Enveil: Content script loaded');
 
     // Initialize cloud highlighters
     const cloudHighlighter = new CloudHighlighter();

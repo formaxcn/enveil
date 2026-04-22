@@ -3,6 +3,7 @@ import { Matcher } from '../utils/matcher';
 import { CloudMatcher } from '../utils/cloudMatcher';
 import { storage } from 'wxt/utils/storage';
 import { getCloudTemplate } from '../utils/cloudTemplates';
+import { logger, Component, log } from '../utils/logger';
 
 // Magic Relogin 状态存储
 interface MagicReloginState {
@@ -28,7 +29,9 @@ const tabMatchCache = new Map<number, {
 const CACHE_TTL = 5000;
 
 export default defineBackground(() => {
-  console.log('Enveil: Background service worker started');
+  // 初始化 logger
+  logger.overrideConsole(Component.BACKGROUND_SCRIPT);
+  log(Component.BACKGROUND_SCRIPT, 'Enveil: Background service worker started');
 
   // Listen for tab updates to check for matches
   browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {

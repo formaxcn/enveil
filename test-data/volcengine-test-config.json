@@ -1,0 +1,142 @@
+{
+  "id": "volcengine-test",
+  "name": "火山引擎测试环境",
+  "enable": true,
+  "provider": "volcengine",
+  "template": {
+    "provider": "volcengine",
+    "name": "Volcengine",
+    "accountSelectionUrl": "https://console.volcengine.com/iam/policies/role",
+    "consoleDomainPattern": "*://*.volcengine.com/*",
+    "samlUrl": "",
+    "enableAutoRelogin": false,
+    "selectors": {
+      "accountSelection": {
+        "accountContainers": [
+          "tr.arco-table-tr"
+        ],
+        "roleElements": [
+          ".arco-table-cell-wrap-value",
+          ".arco-table-cell",
+          "td:nth-child(1) .arco-table-cell",
+          "td:nth-child(2) .arco-table-cell"
+        ]
+      },
+      "console": {
+        "accountContainers": [
+          ".account-dropdown-0x3r",
+          ".account-dropdown-info_0x3r",
+          ".account-info__name_0x3r",
+          ".account-info__data_0x3r",
+          "[class*=\"account-dropdown\"]",
+          "[class*=\"account-info\"]"
+        ],
+        "roleElements": [
+          ".account-info__name_0x3r",
+          ".account-info__type_0x3r",
+          ".account-info__id_0x3r",
+          ".account-info__name_0x3r div",
+          "[class*=\"account-info__\"]"
+        ]
+      }
+    }
+  },
+  "accounts": [
+    {
+      "id": "volc-account-1",
+      "name": "生产环境账号",
+      "enable": true,
+      "backgroundEnable": true,
+      "backgroundColor": "#1890ff",
+      "highlightEnable": true,
+      "highlightColor": "#bee3f8",
+      "accountPatterns": [
+        {
+          "id": "pattern-1",
+          "enable": true,
+          "matchPattern": "keyword",
+          "matchValue": "生产",
+          "created": 1735689600000,
+          "modified": 1735689600000
+        },
+        {
+          "id": "pattern-2",
+          "enable": true,
+          "matchPattern": "keyword",
+          "matchValue": "123456789012",
+          "created": 1735689600000,
+          "modified": 1735689600000
+        }
+      ],
+      "roles": [
+        {
+          "id": "role-1",
+          "enable": true,
+          "matchPattern": "keyword",
+          "matchValue": "Admin",
+          "created": 1735689600000,
+          "modified": 1735689600000
+        },
+        {
+          "id": "role-2",
+          "enable": true,
+          "matchPattern": "keyword",
+          "matchValue": "管理员",
+          "created": 1735689600000,
+          "modified": 1735689600000
+        }
+      ],
+      "created": 1735689600000,
+      "modified": 1735689600000
+    },
+    {
+      "id": "volc-account-2",
+      "name": "测试环境账号",
+      "enable": true,
+      "backgroundEnable": true,
+      "backgroundColor": "#52c41a",
+      "highlightEnable": true,
+      "highlightColor": "#d4edda",
+      "accountPatterns": [
+        {
+          "id": "pattern-3",
+          "enable": true,
+          "matchPattern": "keyword",
+          "matchValue": "测试",
+          "created": 1735689600000,
+          "modified": 1735689600000
+        },
+        {
+          "id": "pattern-4",
+          "enable": true,
+          "matchPattern": "keyword",
+          "matchValue": "987654321098",
+          "created": 1735689600000,
+          "modified": 1735689600000
+        }
+      ],
+      "roles": [
+        {
+          "id": "role-3",
+          "enable": true,
+          "matchPattern": "keyword",
+          "matchValue": "Developer",
+          "created": 1735689600000,
+          "modified": 1735689600000
+        },
+        {
+          "id": "role-4",
+          "enable": true,
+          "matchPattern": "keyword",
+          "matchValue": "开发人员",
+          "created": 1735689600000,
+          "modified": 1735689600000
+        }
+      ],
+      "created": 1735689600000,
+      "modified": 1735689600000
+    }
+  ],
+  "created": 1735689600000,
+  "modified": 1735689600000
+}

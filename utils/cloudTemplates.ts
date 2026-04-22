@@ -201,6 +201,72 @@ export const HARDCODED_CLOUD_TEMPLATES: Record<CloudProvider, CloudTemplate> = {
         ]
       }
     }
+  },
+  [CloudProvider.HUAWEI]: {
+    provider: CloudProvider.HUAWEI,
+    name: 'Huawei Cloud',
+    accountSelectionUrl: 'https://account.huaweicloud.com/saml2/login',
+    consoleDomainPattern: '*://*.hwclouds.com/*',
+    samlUrl: '',
+    enableAutoRelogin: false,
+    selectors: {
+      accountSelection: {
+        accountContainers: [
+          'div.account-item',
+          'div.hwui-list-item',
+          '[class*="account-list"] > div',
+          'ul.account-list > li',
+          'div[class*="account-card"]',
+          '[class*="app-content"] div',
+          '[class*="app-content"] li',
+          'tr',
+          '[class*="list"] div',
+          '[class*="card"]'
+        ],
+        roleElements: [
+          '.account-name',
+          '.account-id',
+          '[class*="account-item"] [class*="name"]',
+          '[class*="role"]',
+          'span[class*="account-name"]',
+          'div[class*="info"] [class*="name"]',
+          'td',
+          'div[class*="name"]',
+          'span[class*="name"]',
+          '[class*="app-content"] td',
+          '[class*="app-content"] div'
+        ]
+      },
+      console: {
+        accountContainers: [
+          '[class*="header-user"]',
+          '[class*="user-menu"]',
+          '[class*="account-menu"]',
+          '[class*="profile-dropdown"]',
+          '[class*="account-dropdown"]',
+          '[class*="nav-user"]',
+          '[class*="header-account"]',
+          'div[class*="account"][class*="info"]',
+          'div[class*="user"][class*="info"]',
+          '[class*="huawei-user"]',
+          '[class*="hwcloud-user"]',
+          '[class*="app-content"]'
+        ],
+        roleElements: [
+          '[class*="header-user"] [class*="name"]',
+          '[class*="user-menu"] [class*="name"]',
+          '[class*="account-menu"] [class*="name"]',
+          '[class*="user-name"]',
+          '[class*="account-name"]',
+          '[class*="display-name"]',
+          '[class*="nick-name"]',
+          '[class*="account-id"]',
+          '[class*="user-id"]',
+          '[class*="tenant-id"]',
+          '[class*="app-content"] [class*="name"]'
+        ]
+      }
+    }
   }
 };
 
