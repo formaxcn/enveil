@@ -1,4 +1,5 @@
 import { CloudAccount, CloudRole, CloudEnvironment, CloudProvider } from '../../entrypoints/options/types';
+import { logger, Component, log, warn, error } from '../../utils/logger';
 
 /**
  * AWS Account Selection Page Handler
@@ -46,7 +47,7 @@ export class AWSAccountSelectionHandler {
         // Setup mutation observer for dynamic content
         this.setupMutationObserver();
 
-        console.log(`[AWSAccountSelectionHandler] Applied highlighting for ${enabledAccounts.length} accounts`);
+        log(Component.AWS_ACCOUNT_SELECTION, `Applied highlighting for ${enabledAccounts.length} accounts`);
     }
 
     /**
@@ -104,7 +105,7 @@ export class AWSAccountSelectionHandler {
         const containers = this.findAccountContainers(accountContainerSelectors, account);
 
         if (containers.length === 0) {
-            console.log(`[AWSAccountSelectionHandler] No containers found for account: ${account.name}`);
+            log(Component.AWS_ACCOUNT_SELECTION, `No containers found for account: ${account.name}`);
             return;
         }
 
@@ -120,7 +121,7 @@ export class AWSAccountSelectionHandler {
             }
         });
 
-        console.log(`[AWSAccountSelectionHandler] Highlighted account: ${account.name} (${containers.length} containers)`);
+        log(Component.AWS_ACCOUNT_SELECTION, `Highlighted account: ${account.name} (${containers.length} containers)`);
     }
 
     /**
@@ -129,14 +130,14 @@ export class AWSAccountSelectionHandler {
     private findAccountContainers(selectors: string[], account: CloudAccount): HTMLElement[] {
         const containers: HTMLElement[] = [];
 
-        console.log(`[AWSAccountSelectionHandler] Finding containers for account: ${account.name}, patterns: ${account.accountPatterns?.length || 0}`);
+        log(Component.AWS_ACCOUNT_SELECTION, `Finding containers for account: ${account.name}, patterns: ${account.accountPatterns?.length || 0}`);
 
         for (const selector of selectors) {
             if (!selector) continue;
 
             try {
                 const elements = document.querySelectorAll<HTMLElement>(selector);
-                console.log(`[AWSAccountSelectionHandler] Selector "${selector}" found ${elements.length} elements`);
+                log(Component.AWS_ACCOUNT_SELECTION, `Selector "${selector}" found ${elements.length} elements`);
 
                 elements.forEach((el, index) => {
                     // Check if it's an actual account container
@@ -144,22 +145,22 @@ export class AWSAccountSelectionHandler {
                     // Check if it matches the account
                     const isMatch = this.isAccountMatch(el, account);
 
-                    console.log(`[AWSAccountSelectionHandler] Element ${index}: isActualContainer=${isActualContainer}, isMatch=${isMatch}`);
+                    log(Component.AWS_ACCOUNT_SELECTION, `Element ${index}: isActualContainer=${isActualContainer}, isMatch=${isMatch}`);
 
                     // Only match elements that:
                     // 1. Contain the account identifier (account ID or name)
                     // 2. Have radio buttons for roles (actual account container)
                     if (isMatch && isActualContainer) {
-                        console.log(`[AWSAccountSelectionHandler] -> MATCHED! Adding container ${index}`);
+                        log(Component.AWS_ACCOUNT_SELECTION, `-> MATCHED! Adding container ${index}`);
                         containers.push(el);
                     }
                 });
             } catch (e) {
-                console.warn(`[AWSAccountSelectionHandler] Invalid selector: ${selector}`, e);
+                warn(Component.AWS_ACCOUNT_SELECTION, `Invalid selector: ${selector}`, e);
             }
         }
 
-        console.log(`[AWSAccountSelectionHandler] Total containers found: ${containers.length}`);
+        log(Component.AWS_ACCOUNT_SELECTION, `Total containers found: ${containers.length}`);
         return containers;
     }
 
@@ -172,7 +173,7 @@ export class AWSAccountSelectionHandler {
         const radioButtons = element.querySelectorAll('input[type="radio"]');
         const hasSamlAccountClass = element.classList.contains('saml-account');
 
-        console.log(`[AWSAccountSelectionHandler] isActualAccountContainer: radioButtons=${radioButtons.length}, hasSamlAccountClass=${hasSamlAccountClass}`);
+        log(Component.AWS_ACCOUNT_SELECTION, `isActualAccountContainer: radioButtons=${radioButtons.length}, hasSamlAccountClass=${hasSamlAccountClass}`);
 
         // Must have at least one radio button (for role selection)
         if (radioButtons.length === 0) {
@@ -195,10 +196,10 @@ export class AWSAccountSelectionHandler {
         const accountName = account.name?.trim();
         const patterns = account.accountPatterns || [];
 
-        console.log(`[AWSAccountSelectionHandler] isAccountMatch: accountName="${accountName}", patterns=${patterns.length}`);
+        log(Component.AWS_ACCOUNT_SELECTION, `isAccountMatch: accountName="${accountName}", patterns=${patterns.length}`);
 
         if (!accountName && patterns.length === 0) {
-            console.log(`[AWSAccountSelectionHandler] isAccountMatch: No accountName or patterns, returning false`);
+            log(Component.AWS_ACCOUNT_SELECTION, `isAccountMatch: No accountName or patterns, returning false`);
             return false;
         }
 
@@ -206,13 +207,13 @@ export class AWSAccountSelectionHandler {
         // AWS SAML pages have .saml-account-name element with the account info
         const accountNameElement = element.querySelector('.saml-account-name');
         if (!accountNameElement) {
-            console.log(`[AWSAccountSelectionHandler] isAccountMatch: No .saml-account-name element found`);
+            log(Component.AWS_ACCOUNT_SELECTION, `isAccountMatch: No .saml-account-name element found`);
             return false;
         }
 
         // Get the text content of the account name element only
         const accountNameText = accountNameElement.textContent || '';
-        console.log(`[AWSAccountSelectionHandler] isAccountMatch: accountNameText="${accountNameText}"`);
+        log(Component.AWS_ACCOUNT_SELECTION, `isAccountMatch: accountNameText="${accountNameText}"`);
 
         // Check all account patterns
         for (const pattern of patterns) {
@@ -225,7 +226,7 @@ export class AWSAccountSelectionHandler {
             if (/^\d{12}$/.test(matchValue)) {
                 const accountIdPattern = new RegExp(`\\b${matchValue}\\b`);
                 const isMatch = accountIdPattern.test(accountNameText);
-                console.log(`[AWSAccountSelectionHandler] isAccountMatch: Checking 12-digit ID "${matchValue}" against "${accountNameText}", result=${isMatch}`);
+                log(Component.AWS_ACCOUNT_SELECTION, `isAccountMatch: Checking 12-digit ID "${matchValue}" against "${accountNameText}", result=${isMatch}`);
                 if (isMatch) return true;
             } else {
                 // For non-numeric match values, use word boundary matching
@@ -235,7 +236,7 @@ export class AWSAccountSelectionHandler {
                     'i'
                 );
                 const isMatch = matchPattern.test(accountNameText);
-                console.log(`[AWSAccountSelectionHandler] isAccountMatch: Checking pattern "${matchPattern}" against "${accountNameText}", result=${isMatch}`);
+                log(Component.AWS_ACCOUNT_SELECTION, `isAccountMatch: Checking pattern "${matchPattern}" against "${accountNameText}", result=${isMatch}`);
                 if (isMatch) return true;
             }
         }
@@ -245,13 +246,13 @@ export class AWSAccountSelectionHandler {
             const escapedAccountName = accountName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const namePattern = new RegExp(`\\b${escapedAccountName}\\b`, 'i');
             const isMatch = namePattern.test(accountNameText);
-            console.log(`[AWSAccountSelectionHandler] isAccountMatch: Checking account name "${accountName}" against "${accountNameText}", result=${isMatch}`);
+            log(Component.AWS_ACCOUNT_SELECTION, `isAccountMatch: Checking account name "${accountName}" against "${accountNameText}", result=${isMatch}`);
             if (isMatch) {
                 return true;
             }
         }
 
-        console.log(`[AWSAccountSelectionHandler] isAccountMatch: No match found, returning false`);
+        log(Component.AWS_ACCOUNT_SELECTION, `isAccountMatch: No match found, returning false`);
         return false;
     }
 
@@ -329,7 +330,7 @@ export class AWSAccountSelectionHandler {
                 try {
                     regex = new RegExp(`(${matchValue})`, 'gi');
                 } catch (e) {
-                    console.error('[Enveil] Invalid role regex:', matchValue);
+                    error(Component.AWS_ACCOUNT_SELECTION, 'Invalid role regex:', matchValue);
                     continue;
                 }
             } else {
@@ -542,7 +543,7 @@ export class AWSAccountSelectionHandler {
                         }
                     });
                 } catch (e) {
-                    console.warn(`[AWSAccountSelectionHandler] Invalid selector during reapply: ${selector}`, e);
+                    warn(Component.AWS_ACCOUNT_SELECTION, `Invalid selector during reapply: ${selector}`, e);
                 }
             }
 

@@ -3,7 +3,7 @@ import { Matcher } from '../utils/matcher';
 import { CloudMatcher } from '../utils/cloudMatcher';
 import { storage } from 'wxt/utils/storage';
 import { getCloudTemplate } from '../utils/cloudTemplates';
-import { logger, Component, log } from '../utils/logger';
+import { logger, Component, log, warn, error } from '../utils/logger';
 
 // Magic Relogin 状态存储
 interface MagicReloginState {
@@ -55,7 +55,7 @@ export default defineBackground(() => {
   // Listen for tab removal (用户关闭 SAML 登录页)
   browser.tabs.onRemoved.addListener(async (tabId) => {
     if (magicReloginState?.samlTabId === tabId) {
-      console.log('[Enveil Background] SAML tab closed, cleaning up relogin state');
+      log(Component.BACKGROUND_SCRIPT, 'SAML tab closed, cleaning up relogin state');
       magicReloginState = null;
       await browser.storage.local.remove('enveil_magic_relogin_state');
     }
@@ -64,16 +64,14 @@ export default defineBackground(() => {
   // Listen for messages from content scripts
   browser.runtime.onMessage.addListener(async (message, sender) => {
     if (message.action === 'MAGIC_RELOGIN_START') {
-      console.log('[Enveil Background] Received MAGIC_RELOGIN_START:', message);
+      log(Component.BACKGROUND_SCRIPT, 'Received MAGIC_RELOGIN_START:', message);
 
-      // 保存源标签页信息
       const sourceTabId = sender.tab?.id;
       if (!sourceTabId) {
-        console.error('[Enveil Background] No source tab ID');
+        error(Component.BACKGROUND_SCRIPT, 'No source tab ID');
         return { success: false, error: 'No source tab ID' };
       }
 
-      // 保存状态
       magicReloginState = {
         sourceTabId: sourceTabId,
         sourceUrl: message.sourceUrl,
@@ -82,12 +80,10 @@ export default defineBackground(() => {
         isWaitingForLogin: true
       };
 
-      // 保存到 storage
       await browser.storage.local.set({
         'enveil_magic_relogin_state': magicReloginState
       });
 
-      // 打开 SAML 登录页面
       try {
         const samlTab = await browser.tabs.create({
           url: message.samlUrl,
@@ -97,45 +93,40 @@ export default defineBackground(() => {
         if (samlTab.id) {
           magicReloginState.samlTabId = samlTab.id;
 
-          // 更新 storage
           await browser.storage.local.set({
             'enveil_magic_relogin_state': magicReloginState
           });
 
-          console.log('[Enveil Background] Opened SAML tab:', samlTab.id);
+          log(Component.BACKGROUND_SCRIPT, 'Opened SAML tab:', samlTab.id);
           return { success: true, samlTabId: samlTab.id };
         }
-      } catch (error) {
-        console.error('[Enveil Background] Failed to open SAML tab:', error);
-        return { success: false, error: String(error) };
+      } catch (err) {
+        error(Component.BACKGROUND_SCRIPT, 'Failed to open SAML tab:', err);
+        return { success: false, error: String(err) };
       }
     }
 
     if (message.action === 'MAGIC_RELOGIN_SUCCESS') {
-      console.log('[Enveil Background] Received MAGIC_RELOGIN_SUCCESS');
+      log(Component.BACKGROUND_SCRIPT, 'Received MAGIC_RELOGIN_SUCCESS');
 
-      // 重新登录成功，刷新源页面
       if (magicReloginState?.sourceTabId) {
         try {
-          // 发送消息给源页面的 content script 刷新页面
           await browser.tabs.sendMessage(magicReloginState.sourceTabId, {
             action: 'MAGIC_RELOGIN_REFRESH_SOURCE'
           });
-          console.log('[Enveil Background] Sent refresh message to source tab:', magicReloginState.sourceTabId);
-        } catch (error) {
-          console.error('[Enveil Background] Failed to send refresh message:', error);
+          log(Component.BACKGROUND_SCRIPT, 'Sent refresh message to source tab:', magicReloginState.sourceTabId);
+        } catch (err) {
+          error(Component.BACKGROUND_SCRIPT, 'Failed to send refresh message:', err);
 
-          // 如果消息发送失败，直接刷新标签页
           try {
             await browser.tabs.reload(magicReloginState.sourceTabId);
-            console.log('[Enveil Background] Reloaded source tab directly');
+            log(Component.BACKGROUND_SCRIPT, 'Reloaded source tab directly');
           } catch (reloadError) {
-            console.error('[Enveil Background] Failed to reload source tab:', reloadError);
+            error(Component.BACKGROUND_SCRIPT, 'Failed to reload source tab:', reloadError);
           }
         }
 
-        // 清理状态（包括 isMagicRelogin 标记）
-        console.log('[Enveil Background] Cleaning up relogin state, isMagicRelogin was:', magicReloginState.isMagicRelogin);
+        log(Component.BACKGROUND_SCRIPT, 'Cleaning up relogin state, isMagicRelogin was:', magicReloginState.isMagicRelogin);
         magicReloginState = null;
         await browser.storage.local.remove('enveil_magic_relogin_state');
       }
@@ -146,7 +137,7 @@ export default defineBackground(() => {
 
   // Listen for configuration changes
   storage.watch<AppConfig>('sync:appConfig', async (newConfig) => {
-    console.log('[Enveil Background] Config changed via WXT Storage, re-evaluating all tabs');
+    log(Component.BACKGROUND_SCRIPT, 'Config changed via WXT Storage, re-evaluating all tabs');
     const tabs = await browser.tabs.query({});
     for (const tab of tabs) {
       if (tab.id && tab.url) {
@@ -161,17 +152,14 @@ export default defineBackground(() => {
  * 如果是，更新状态中的 samlTabId
  */
 async function checkMagicReloginSamlPage(tabId: number, url: string): Promise<void> {
-  // 检查是否是 SAML 登录页面
   const isSamlPage = url.includes('signin.amazonaws.cn/saml') ||
                      url.includes('signin.aws.amazon.com/saml');
 
   if (isSamlPage && magicReloginState?.isWaitingForLogin) {
-    // 检查是否是从 Magic Relogin 打开的
     const state = await browser.storage.local.get('enveil_magic_relogin_state');
     const savedState = state['enveil_magic_relogin_state'] as MagicReloginState | undefined;
 
     if (savedState?.isWaitingForLogin && !savedState.samlTabId) {
-      // 更新 SAML tab ID
       magicReloginState.samlTabId = tabId;
       savedState.samlTabId = tabId;
 
@@ -179,7 +167,7 @@ async function checkMagicReloginSamlPage(tabId: number, url: string): Promise<vo
         'enveil_magic_relogin_state': savedState
       });
 
-      console.log('[Enveil Background] Updated SAML tab ID:', tabId);
+      log(Component.BACKGROUND_SCRIPT, 'Updated SAML tab ID:', tabId);
     }
   }
 }
@@ -253,12 +241,12 @@ async function checkAndNotifyTab(tabId: number, url: string) {
         // Check if this is an account selection page
         isAccountSelectionPage = isSamlPage;
         
-        console.log(`[Enveil Background] Found ${matchedCloudAccounts.length} cloud account matches:`, 
+        log(Component.BACKGROUND_SCRIPT, `Found ${matchedCloudAccounts.length} cloud account matches:`, 
           matchedCloudAccounts.map(acc => CloudMatcher.getCloudAccountMatchInfo(acc)).join(', '));
-        console.log(`[Enveil Background] Is account selection page:`, isAccountSelectionPage);
-        console.log(`[Enveil Background] Account selection URL:`, fullTemplate.accountSelectionUrl);
-        console.log(`[Enveil Background] Current URL:`, url);
-        console.log(`[Enveil Background] Merged template:`, {
+        log(Component.BACKGROUND_SCRIPT, `Is account selection page:`, isAccountSelectionPage);
+        log(Component.BACKGROUND_SCRIPT, `Account selection URL:`, fullTemplate.accountSelectionUrl);
+        log(Component.BACKGROUND_SCRIPT, `Current URL:`, url);
+        log(Component.BACKGROUND_SCRIPT, `Merged template:`, {
           samlUrl: mergedTemplate.samlUrl,
           enableAutoRelogin: mergedTemplate.enableAutoRelogin
         });
@@ -290,13 +278,12 @@ async function updateTabState(
     });
 
     if (site) {
-      console.log(`[Enveil Background] Sent MATCH_UPDATE to tab ${tabId} (site):`, Matcher.getMatchInfo(site));
+      log(Component.BACKGROUND_SCRIPT, `Sent MATCH_UPDATE to tab ${tabId} (site):`, Matcher.getMatchInfo(site));
     } else {
-      console.log(`[Enveil Background] Sent MATCH_UPDATE to tab ${tabId}: No site match`);
+      log(Component.BACKGROUND_SCRIPT, `Sent MATCH_UPDATE to tab ${tabId}: No site match`);
     }
   } catch (error) {
     // Content script might not be ready or injected on some pages (e.g. chrome://)
-    // console.debug(`[Enveil Background] Failed to send site message to tab ${tabId}`, error);
   }
 
   // Notify Content Script for cloud matches (new functionality)
@@ -318,25 +305,24 @@ async function updateTabState(
     });
 
     if (cloudAccounts.length > 0) {
-      console.log(`[Enveil Background] Sent CLOUD_MATCH_UPDATE to tab ${tabId} with ${cloudAccounts.length} accounts (cloud):`,
+      log(Component.BACKGROUND_SCRIPT, `Sent CLOUD_MATCH_UPDATE to tab ${tabId} with ${cloudAccounts.length} accounts (cloud):`,
         cloudAccounts.map(acc => CloudMatcher.getCloudAccountMatchInfo(acc)).join(', '));
       if (allMatchingRoles.length > 0) {
-        console.log(`[Enveil Background] Sent ${allMatchingRoles.length} cloud roles for keyword matching`);
+        log(Component.BACKGROUND_SCRIPT, `Sent ${allMatchingRoles.length} cloud roles for keyword matching`);
       }
     } else {
-      console.log(`[Enveil Background] Sent CLOUD_MATCH_UPDATE to tab ${tabId}: No cloud match`);
+      log(Component.BACKGROUND_SCRIPT, `Sent CLOUD_MATCH_UPDATE to tab ${tabId}: No cloud match`);
     }
   } catch (error) {
     // Content script might not be ready or injected on some pages (e.g. chrome://)
-    // console.debug(`[Enveil Background] Failed to send cloud message to tab ${tabId}`, error);
   }
 }
 
 async function loadConfig(): Promise<AppConfig | null> {
   try {
     return await storage.getItem<AppConfig>('sync:appConfig');
-  } catch (error) {
-    console.error('Enveil: Failed to load config in background', error);
+  } catch (err) {
+    error(Component.BACKGROUND_SCRIPT, 'Failed to load config in background', err);
     return null;
   }
 }
@@ -361,7 +347,7 @@ async function setIconForTab(tabId: number, isMatch: boolean): Promise<void> {
       tabId: tabId,
       path: iconPath
     });
-  } catch (error) {
-    console.error(`[Enveil Background] Failed to set icon for tab ${tabId}:`, error);
+  } catch (err) {
+    error(Component.BACKGROUND_SCRIPT, `Failed to set icon for tab ${tabId}:`, err);
   }
 }

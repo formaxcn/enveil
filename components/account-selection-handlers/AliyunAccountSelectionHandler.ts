@@ -1,4 +1,5 @@
 import { CloudAccount, CloudRole, CloudEnvironment, CloudProvider } from '../../entrypoints/options/types';
+import { logger, Component, log, warn, error } from '../../utils/logger';
 
 /**
  * Aliyun Account Selection Page Handler
@@ -35,7 +36,7 @@ export class AliyunAccountSelectionHandler {
 
         this.setupMutationObserver();
 
-        console.log(`[AliyunAccountSelectionHandler] Applied highlighting for ${enabledAccounts.length} accounts`);
+        log(Component.ALIYUN_ACCOUNT_SELECTION, `Applied highlighting for ${enabledAccounts.length} accounts`);
     }
 
     /**
@@ -86,7 +87,7 @@ export class AliyunAccountSelectionHandler {
         const containers = this.findAccountContainers(selectors.accountContainers, account);
 
         if (containers.length === 0) {
-            console.log(`[AliyunAccountSelectionHandler] No containers found for account: ${account.name}`);
+            log(Component.ALIYUN_ACCOUNT_SELECTION, `No containers found for account: ${account.name}`);
             return;
         }
 
@@ -101,7 +102,7 @@ export class AliyunAccountSelectionHandler {
             }
         });
 
-        console.log(`[AliyunAccountSelectionHandler] Highlighted account: ${account.name} (${containers.length} containers)`);
+        log(Component.ALIYUN_ACCOUNT_SELECTION, `Highlighted account: ${account.name} (${containers.length} containers)`);
     }
 
     /**
@@ -110,34 +111,33 @@ export class AliyunAccountSelectionHandler {
     private findAccountContainers(selectors: string[], account: CloudAccount): HTMLElement[] {
         const containers: HTMLElement[] = [];
 
-        console.log(`[AliyunAccountSelectionHandler] findAccountContainers: selectors=${JSON.stringify(selectors)}, account=${account.name}`);
+        log(Component.ALIYUN_ACCOUNT_SELECTION, `findAccountContainers: selectors=${JSON.stringify(selectors)}, account=${account.name}`);
 
         for (const selector of selectors) {
             if (!selector) continue;
 
             try {
                 const elements = document.querySelectorAll<HTMLElement>(selector);
-                console.log(`[AliyunAccountSelectionHandler] findAccountContainers: Selector "${selector}" found ${elements.length} elements`);
+                log(Component.ALIYUN_ACCOUNT_SELECTION, `findAccountContainers: Selector "${selector}" found ${elements.length} elements`);
 
                 elements.forEach((el, index) => {
-                    console.log(`[AliyunAccountSelectionHandler] findAccountContainers: Checking element ${index}`);
+                    log(Component.ALIYUN_ACCOUNT_SELECTION, `findAccountContainers: Checking element ${index}`);
                     const isMatch = this.isAccountMatch(el, account);
                     const hasRoles = this.hasRoleElements(el);
-                    console.log(`[AliyunAccountSelectionHandler] findAccountContainers: Element ${index} - isMatch=${isMatch}, hasRoles=${hasRoles}`);
+                    log(Component.ALIYUN_ACCOUNT_SELECTION, `findAccountContainers: Element ${index} - isMatch=${isMatch}, hasRoles=${hasRoles}`);
                     
-                    // Only match elements that contain account identifier
                     // and have role elements as children (to avoid matching wrapper/parent elements)
                     if (isMatch && hasRoles) {
-                        console.log(`[AliyunAccountSelectionHandler] findAccountContainers: -> MATCHED! Adding element ${index}`);
+                        log(Component.ALIYUN_ACCOUNT_SELECTION, `findAccountContainers: -> MATCHED! Adding element ${index}`);
                         containers.push(el);
                     }
                 });
             } catch (e) {
-                console.warn(`[AliyunAccountSelectionHandler] Invalid selector: ${selector}`, e);
+                warn(Component.ALIYUN_ACCOUNT_SELECTION, `Invalid selector: ${selector}`, e);
             }
         }
 
-        console.log(`[AliyunAccountSelectionHandler] findAccountContainers: Total containers found: ${containers.length}`);
+        log(Component.ALIYUN_ACCOUNT_SELECTION, `findAccountContainers: Total containers found: ${containers.length}`);
         return containers;
     }
 
@@ -160,7 +160,7 @@ export class AliyunAccountSelectionHandler {
             }
         }
         
-        console.log(`[AliyunAccountSelectionHandler] hasRoleElements: hasRadioButtons=${hasRadioButtons} (${radioButtons.length} buttons), hasRoleNames=${hasRoleNames}`);
+        log(Component.ALIYUN_ACCOUNT_SELECTION, `hasRoleElements: hasRadioButtons=${hasRadioButtons} (${radioButtons.length} buttons), hasRoleNames=${hasRoleNames}`);
         
         // For Alibaba Cloud, account containers may not have role elements
         // until expanded, so we accept elements that have account name elements
@@ -174,10 +174,10 @@ export class AliyunAccountSelectionHandler {
         const accountName = account.name?.trim();
         const patterns = account.accountPatterns || [];
 
-        console.log(`[AliyunAccountSelectionHandler] isAccountMatch: accountName="${accountName}", patterns=${patterns.length}`);
+        log(Component.ALIYUN_ACCOUNT_SELECTION, `isAccountMatch: accountName="${accountName}", patterns=${patterns.length}`);
 
         if (!accountName && patterns.length === 0) {
-            console.log(`[AliyunAccountSelectionHandler] isAccountMatch: No accountName or patterns, returning false`);
+            log(Component.ALIYUN_ACCOUNT_SELECTION, `isAccountMatch: No accountName or patterns, returning false`);
             return false;
         }
 
@@ -205,22 +205,22 @@ export class AliyunAccountSelectionHandler {
             try {
                 accountNameElement = element.querySelector(selector);
                 if (accountNameElement) {
-                    console.log(`[AliyunAccountSelectionHandler] isAccountMatch: Found account name element with selector "${selector}"`);
+                    log(Component.ALIYUN_ACCOUNT_SELECTION, `isAccountMatch: Found account name element with selector "${selector}"`);
                     break;
                 }
             } catch (e) {
-                console.warn(`[AliyunAccountSelectionHandler] Invalid selector: ${selector}`, e);
+                warn(Component.ALIYUN_ACCOUNT_SELECTION, `Invalid selector: ${selector}`, e);
             }
         }
         
         if (!accountNameElement) {
-            console.log(`[AliyunAccountSelectionHandler] isAccountMatch: No account name element found`);
+            log(Component.ALIYUN_ACCOUNT_SELECTION, `isAccountMatch: No account name element found`);
             return false;
         }
 
         // Get the text content of the account name element only
         const accountNameText = accountNameElement.textContent || '';
-        console.log(`[AliyunAccountSelectionHandler] isAccountMatch: accountNameText="${accountNameText}"`);
+        log(Component.ALIYUN_ACCOUNT_SELECTION, `isAccountMatch: accountNameText="${accountNameText}"`);
 
         // Check all account patterns
         for (const pattern of patterns) {
@@ -229,20 +229,20 @@ export class AliyunAccountSelectionHandler {
             const matchValue = pattern.matchValue?.trim();
             if (!matchValue) continue;
             
-            console.log(`[AliyunAccountSelectionHandler] isAccountMatch: Checking pattern "${matchValue}"`);
+            log(Component.ALIYUN_ACCOUNT_SELECTION, `isAccountMatch: Checking pattern "${matchValue}"`);
             
             // For AWS, check for 12-digit account ID pattern with word boundaries
             if (/^\d{12}$/.test(matchValue)) {
                 const accountIdPattern = new RegExp(`\\b${matchValue}\\b`);
                 const isMatch = accountIdPattern.test(accountNameText);
-                console.log(`[AliyunAccountSelectionHandler] isAccountMatch: 12-digit ID pattern result=${isMatch}`);
+                log(Component.ALIYUN_ACCOUNT_SELECTION, `isAccountMatch: 12-digit ID pattern result=${isMatch}`);
                 if (isMatch) return true;
             } else {
                 // For non-numeric match values, use flexible matching (no word boundaries)
                 const escapedMatchValue = matchValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 const matchPattern = new RegExp(escapedMatchValue, 'i');
                 const isMatch = matchPattern.test(accountNameText);
-                console.log(`[AliyunAccountSelectionHandler] isAccountMatch: Pattern "${matchPattern}" result=${isMatch}`);
+                log(Component.ALIYUN_ACCOUNT_SELECTION, `isAccountMatch: Pattern "${matchPattern}" result=${isMatch}`);
                 if (isMatch) return true;
             }
         }
@@ -252,13 +252,13 @@ export class AliyunAccountSelectionHandler {
             const escapedAccountName = accountName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const namePattern = new RegExp(escapedAccountName, 'i');
             const isMatch = namePattern.test(accountNameText);
-            console.log(`[AliyunAccountSelectionHandler] isAccountMatch: Account name "${accountName}" pattern "${namePattern}" result=${isMatch}`);
+            log(Component.ALIYUN_ACCOUNT_SELECTION, `isAccountMatch: Account name "${accountName}" pattern "${namePattern}" result=${isMatch}`);
             if (isMatch) {
                 return true;
             }
         }
 
-        console.log(`[AliyunAccountSelectionHandler] isAccountMatch: No match found, returning false`);
+        log(Component.ALIYUN_ACCOUNT_SELECTION, `isAccountMatch: No match found, returning false`);
         return false;
     }
 
@@ -318,7 +318,7 @@ export class AliyunAccountSelectionHandler {
                 try {
                     regex = new RegExp(`(${matchValue})`, 'gi');
                 } catch (e) {
-                    console.error('[Enveil] Invalid role regex:', matchValue);
+                    error(Component.ALIYUN_ACCOUNT_SELECTION, 'Invalid role regex:', matchValue);
                     continue;
                 }
             } else {
@@ -493,7 +493,7 @@ export class AliyunAccountSelectionHandler {
                         }
                     });
                 } catch (e) {
-                    console.warn(`[AliyunAccountSelectionHandler] Invalid selector during reapply: ${selector}`, e);
+                    warn(Component.ALIYUN_ACCOUNT_SELECTION, `Invalid selector during reapply: ${selector}`, e);
                 }
             }
 

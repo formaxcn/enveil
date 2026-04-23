@@ -1,4 +1,5 @@
 import { CloudAccount, CloudRole, RoleHighlightStyle, CloudEnvironment } from '../entrypoints/options/types';
+import { logger, Component, log, warn, error } from '../utils/logger';
 
 /**
  * CloudHighlighter handles the visual highlighting of cloud accounts and roles.
@@ -32,27 +33,22 @@ export class CloudHighlighter {
      * @param accounts Array of cloud account configurations
      */
     public applyAccountHighlighting(accounts: CloudAccount[]): void {
-        console.log('[CloudHighlighter] applyAccountHighlighting called with accounts:', accounts.length);
+        log(Component.CLOUD_HIGHLIGHTER, 'applyAccountHighlighting called with accounts:', accounts.length);
 
-        // Remove existing account overlay if present
         this.removeAccountHighlighting();
 
-        // Filter enabled accounts with background
         const enabledAccounts = accounts.filter(acc => acc.enable && acc.backgroundEnable && acc.backgroundColor);
-        console.log('[CloudHighlighter] Enabled accounts with background:', enabledAccounts.length);
+        log(Component.CLOUD_HIGHLIGHTER, 'Enabled accounts with background:', enabledAccounts.length);
 
         if (enabledAccounts.length === 0) {
-            console.log('[CloudHighlighter] No enabled accounts with background');
+            log(Component.CLOUD_HIGHLIGHTER, 'No enabled accounts with background');
             return;
         }
 
-        // Use the first account's color for the global overlay
         const primaryAccount = enabledAccounts[0];
 
-        // Create new account overlay
         this.currentAccountOverlay = this.createAccountOverlay(primaryAccount.backgroundColor);
 
-        // Add to shadow root if available, otherwise to document
         const shadowRoot = this.getShadowRoot();
         if (shadowRoot) {
             shadowRoot.appendChild(this.currentAccountOverlay);
@@ -60,7 +56,7 @@ export class CloudHighlighter {
             document.body.appendChild(this.currentAccountOverlay);
         }
 
-        console.log(`[CloudHighlighter] Applied account background highlighting for: ${primaryAccount.name} (${primaryAccount.backgroundColor})`);
+        log(Component.CLOUD_HIGHLIGHTER, `Applied account background highlighting for: ${primaryAccount.name} (${primaryAccount.backgroundColor})`);
     }
 
     /**
@@ -96,7 +92,7 @@ export class CloudHighlighter {
 
         this.roleHighlightingActive = true;
 
-        console.log(`[CloudHighlighter] Applied role text highlighting for ${enabledRoles.length} roles`);
+        log(Component.CLOUD_HIGHLIGHTER, `Applied role text highlighting for ${enabledRoles.length} roles`);
     }
 
     /**
@@ -106,7 +102,7 @@ export class CloudHighlighter {
         this.removeAccountHighlighting();
         this.removeRoleHighlighting();
         this.removeAccountContainerHighlighting();
-        console.log('[CloudHighlighter] Removed all cloud highlighting');
+        log(Component.CLOUD_HIGHLIGHTER, 'Removed all cloud highlighting');
     }
 
     /**
@@ -117,7 +113,7 @@ export class CloudHighlighter {
      * @param accounts Array of cloud accounts to highlight
      */
     public applyAccountContainerHighlighting(environment: CloudEnvironment, accounts: CloudAccount[]): void {
-        console.log('[CloudHighlighter] applyAccountContainerHighlighting called:', {
+        log(Component.CLOUD_HIGHLIGHTER, 'applyAccountContainerHighlighting called:', {
             environment: environment?.name,
             provider: environment?.provider,
             accountsCount: accounts?.length,
@@ -125,7 +121,7 @@ export class CloudHighlighter {
         });
 
         if (!environment || !accounts || accounts.length === 0) {
-            console.log('[CloudHighlighter] Early return - no environment or accounts');
+            log(Component.CLOUD_HIGHLIGHTER, 'Early return - no environment or accounts');
             return;
         }
 
@@ -152,7 +148,7 @@ export class CloudHighlighter {
         // Setup mutation observer for dynamic content
         this.setupAccountMutationObserver();
 
-        console.log(`[CloudHighlighter] Applied account container highlighting for ${enabledAccounts.length} accounts`);
+        log(Component.CLOUD_HIGHLIGHTER, `Applied account container highlighting for ${enabledAccounts.length} accounts`);
     }
 
     /**
@@ -162,34 +158,34 @@ export class CloudHighlighter {
         const selectors = this.currentEnvironment?.template?.selectors?.console;
         const accountContainerSelectors = selectors?.accountContainers || [];
 
-        console.log(`[CloudHighlighter] highlightAccountContainers for ${account.name}:`, {
+        log(Component.CLOUD_HIGHLIGHTER, `highlightAccountContainers for ${account.name}:`, {
             selectorsCount: accountContainerSelectors.length,
             selectors: accountContainerSelectors,
             patterns: account.accountPatterns
         });
 
         if (accountContainerSelectors.length === 0) {
-            console.log(`[CloudHighlighter] No console account container selectors configured`);
+            log(Component.CLOUD_HIGHLIGHTER, `No console account container selectors configured`);
             return;
         }
 
         const containers = this.findAccountContainers(accountContainerSelectors, account);
 
-        console.log(`[CloudHighlighter] Found ${containers.length} containers for account ${account.name}`);
+        log(Component.CLOUD_HIGHLIGHTER, `Found ${containers.length} containers for account ${account.name}`);
 
         if (containers.length === 0) {
-            console.log(`[CloudHighlighter] No containers found for account: ${account.name}`);
+            log(Component.CLOUD_HIGHLIGHTER, `No containers found for account: ${account.name}`);
             return;
         }
 
         this.highlightedAccountContainers.set(account.id, containers);
 
         containers.forEach((container, idx) => {
-            console.log(`[CloudHighlighter] Applying styles to container ${idx}:`, container.tagName, container.className);
+            log(Component.CLOUD_HIGHLIGHTER, `Applying styles to container ${idx}:`, container.tagName, container.className);
             this.applyAccountContainerStyles(container, account);
         });
 
-        console.log(`[CloudHighlighter] Highlighted account containers for: ${account.name} (${containers.length} containers)`);
+        log(Component.CLOUD_HIGHLIGHTER, `Highlighted account containers for: ${account.name} (${containers.length} containers)`);
     }
 
     /**
@@ -203,11 +199,11 @@ export class CloudHighlighter {
 
             try {
                 const elements = document.querySelectorAll<HTMLElement>(selector);
-                console.log(`[CloudHighlighter] Selector "${selector}" found ${elements.length} elements`);
+                log(Component.CLOUD_HIGHLIGHTER, `Selector "${selector}" found ${elements.length} elements`);
 
                 elements.forEach((el, idx) => {
                     const textContent = el.textContent?.substring(0, 100) || '';
-                    console.log(`[CloudHighlighter] Element ${idx}:`, {
+                    log(Component.CLOUD_HIGHLIGHTER, `Element ${idx}:`, {
                         tagName: el.tagName,
                         className: el.className,
                         id: el.id,
@@ -216,20 +212,20 @@ export class CloudHighlighter {
 
                     // Skip if already processed by another account
                     if (el.hasAttribute('data-enveil-account-id')) {
-                        console.log(`[CloudHighlighter] Element ${idx} already processed, skipping`);
+                        log(Component.CLOUD_HIGHLIGHTER, `Element ${idx} already processed, skipping`);
                         return;
                     }
 
                     // Check if container matches the account patterns
                     const isMatch = this.isAccountContainerMatch(el, account);
-                    console.log(`[CloudHighlighter] Element ${idx} match result:`, isMatch);
+                    log(Component.CLOUD_HIGHLIGHTER, `Element ${idx} match result:`, isMatch);
 
                     if (isMatch) {
                         containers.push(el);
                     }
                 });
             } catch (e) {
-                console.warn(`[CloudHighlighter] Invalid selector: ${selector}`, e);
+                warn(Component.CLOUD_HIGHLIGHTER, `Invalid selector: ${selector}`, e);
             }
         }
 
@@ -249,7 +245,7 @@ export class CloudHighlighter {
         const patterns = account.accountPatterns || [];
         const elementText = element.textContent || '';
 
-        console.log(`[CloudHighlighter] isAccountContainerMatch:`, {
+        log(Component.CLOUD_HIGHLIGHTER, `isAccountContainerMatch:`, {
             accountName: account.name,
             patternsCount: patterns.length,
             elementTextPreview: elementText.substring(0, 100)
@@ -257,24 +253,24 @@ export class CloudHighlighter {
 
         if (patterns.length === 0) {
             // If no patterns, match all containers (for template-based matching)
-            console.log(`[CloudHighlighter] No patterns, matching all containers`);
+            log(Component.CLOUD_HIGHLIGHTER, `No patterns, matching all containers`);
             return true;
         }
 
         // Check all account patterns
         for (const pattern of patterns) {
             if (!pattern.enable) {
-                console.log(`[CloudHighlighter] Pattern disabled, skipping`);
+                log(Component.CLOUD_HIGHLIGHTER, `Pattern disabled, skipping`);
                 continue;
             }
 
             const matchValue = pattern.matchValue?.trim();
             if (!matchValue) {
-                console.log(`[CloudHighlighter] Empty matchValue, skipping`);
+                log(Component.CLOUD_HIGHLIGHTER, `Empty matchValue, skipping`);
                 continue;
             }
 
-            console.log(`[CloudHighlighter] Checking pattern:`, {
+            log(Component.CLOUD_HIGHLIGHTER, `Checking pattern:`, {
                 matchPattern: pattern.matchPattern,
                 matchValue: matchValue
             });
@@ -288,7 +284,7 @@ export class CloudHighlighter {
 
                 const accountIdPattern = new RegExp(`\\b(${normalizedMatchValue}|${hyphenatedMatchValue})\\b`);
                 const isMatch = accountIdPattern.test(elementText);
-                console.log(`[CloudHighlighter] ID check: ${matchValue} -> ${isMatch}`);
+                log(Component.CLOUD_HIGHLIGHTER, `ID check: ${matchValue} -> ${isMatch}`);
                 if (isMatch) return true;
             } else {
                 // For non-numeric match values, use word boundary matching
@@ -298,7 +294,7 @@ export class CloudHighlighter {
                     'i'
                 );
                 const isMatch = matchPattern.test(elementText);
-                console.log(`[CloudHighlighter] Keyword check: ${matchPattern} -> ${isMatch}`);
+                log(Component.CLOUD_HIGHLIGHTER, `Keyword check: ${matchPattern} -> ${isMatch}`);
                 if (isMatch) return true;
             }
         }
@@ -309,13 +305,13 @@ export class CloudHighlighter {
             const escapedAccountName = accountName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const namePattern = new RegExp(`\\b${escapedAccountName}\\b`, 'i');
             const isMatch = namePattern.test(elementText);
-            console.log(`[CloudHighlighter] Account name check: ${accountName} -> ${isMatch}`);
+            log(Component.CLOUD_HIGHLIGHTER, `Account name check: ${accountName} -> ${isMatch}`);
             if (isMatch) {
                 return true;
             }
         }
 
-        console.log(`[CloudHighlighter] No match found`);
+        log(Component.CLOUD_HIGHLIGHTER, `No match found`);
         return false;
     }
 
@@ -334,14 +330,14 @@ export class CloudHighlighter {
         // Check if an ancestor is already highlighted (avoid double highlighting)
         const ancestorHighlighted = element.closest('[data-enveil-account-id]');
         if (ancestorHighlighted) {
-            console.log('[CloudHighlighter] Skipping element - ancestor already highlighted:', element);
+            log(Component.CLOUD_HIGHLIGHTER, 'Skipping element - ancestor already highlighted:', element);
             return;
         }
 
         // Check if a descendant is already highlighted (prefer the outer element)
         const descendantHighlighted = element.querySelector('[data-enveil-account-id]');
         if (descendantHighlighted) {
-            console.log('[CloudHighlighter] Skipping element - descendant already highlighted:', element);
+            log(Component.CLOUD_HIGHLIGHTER, 'Skipping element - descendant already highlighted:', element);
             return;
         }
 
@@ -459,7 +455,7 @@ export class CloudHighlighter {
                         }
                     });
                 } catch (e) {
-                    console.warn(`[CloudHighlighter] Invalid selector during reapply: ${selector}`, e);
+                    warn(Component.CLOUD_HIGHLIGHTER, `Invalid selector during reapply: ${selector}`, e);
                 }
             }
 
@@ -485,7 +481,7 @@ export class CloudHighlighter {
         const enabledRoles = roles.filter(role => role.enable && role.matchValue && role.matchValue.trim().length > 0);
         if (enabledRoles.length === 0) return;
 
-        console.log(`[CloudHighlighter] Highlighting ${enabledRoles.length} roles in container`, container);
+        log(Component.CLOUD_HIGHLIGHTER, `Highlighting ${enabledRoles.length} roles in container`, container);
 
         for (const role of enabledRoles) {
             this.highlightRoleTextInElement(container, role, highlightColor);
@@ -928,7 +924,7 @@ export class CloudHighlighter {
             try {
                 regex = new RegExp(`(${matchValue})`, 'gi');
             } catch (e) {
-                console.error('[CloudHighlighter] Invalid role regex:', matchValue);
+                error(Component.CLOUD_HIGHLIGHTER, 'Invalid role regex:', matchValue);
                 return;
             }
         } else {

@@ -1,4 +1,5 @@
 import { CloudEnvironment, CloudAccount, CloudRole, CloudProvider } from '../entrypoints/options/types';
+import { logger, Component, log, warn, error } from '../utils/logger';
 
 /**
  * MagicReloginHandler - 处理 AWS 重新登录的 Magic 功能
@@ -42,7 +43,7 @@ export class MagicReloginHandler {
    * 开始监听注销弹窗
    */
   public startWatching(environment: CloudEnvironment | null, accounts: CloudAccount[]): void {
-    console.log('[MagicRelogin] startWatching called', {
+    log(Component.MAGIC_RELOGIN_HANDLER, 'startWatching called', {
       hasEnvironment: !!environment,
       environmentName: environment?.name,
       provider: environment?.provider,
@@ -53,16 +54,16 @@ export class MagicReloginHandler {
     });
 
     if (!environment) {
-      console.log('[MagicRelogin] No environment provided, skipping');
+      log(Component.MAGIC_RELOGIN_HANDLER, 'No environment provided, skipping');
       return;
     }
 
     if (!this.isAutoReloginEnabled(environment)) {
-      console.log('[MagicRelogin] Auto relogin not enabled for this environment');
+      log(Component.MAGIC_RELOGIN_HANDLER, 'Auto relogin not enabled for this environment');
       return;
     }
 
-    console.log('[MagicRelogin] Starting to watch for logout dialog');
+    log(Component.MAGIC_RELOGIN_HANDLER, 'Starting to watch for logout dialog');
 
     // 立即检查一次
     this.checkForLogoutDialog(environment, accounts);
@@ -77,7 +78,7 @@ export class MagicReloginHandler {
             const containsSigninModal = node.querySelector('#awsc-nav-signin-again-modal-root') !== null;
 
             if (isSigninAgainModal || containsSigninModal) {
-              console.log('[MagicRelogin] Detected signin again modal element');
+              log(Component.MAGIC_RELOGIN_HANDLER, 'Detected signin again modal element');
               return true;
             }
           }
@@ -86,7 +87,7 @@ export class MagicReloginHandler {
       );
 
       if (hasModalChange) {
-        console.log('[MagicRelogin] Detected modal change, checking for logout dialog');
+        log(Component.MAGIC_RELOGIN_HANDLER, 'Detected modal change, checking for logout dialog');
         this.checkForLogoutDialog(environment, accounts);
       }
     });
@@ -96,7 +97,7 @@ export class MagicReloginHandler {
       subtree: true
     });
 
-    console.log('[MagicRelogin] MutationObserver started');
+    log(Component.MAGIC_RELOGIN_HANDLER, 'MutationObserver started');
   }
 
   /**
@@ -108,14 +109,14 @@ export class MagicReloginHandler {
       this.observer = null;
     }
     this.removeMagicButton();
-    console.log('[MagicRelogin] Stopped watching');
+    log(Component.MAGIC_RELOGIN_HANDLER, 'Stopped watching');
   }
 
   /**
    * 检查是否启用了自动重新登录
    */
   private isAutoReloginEnabled(environment: CloudEnvironment): boolean {
-    console.log('[MagicRelogin] Checking if auto relogin is enabled:', {
+    log(Component.MAGIC_RELOGIN_HANDLER, 'Checking if auto relogin is enabled:', {
       template: !!environment.template,
       enableAutoRelogin: environment.template?.enableAutoRelogin,
       samlUrl: environment.template?.samlUrl,
@@ -124,17 +125,17 @@ export class MagicReloginHandler {
 
     // 检查环境配置中的 enableAutoRelogin 标志
     if (environment.template?.enableAutoRelogin) {
-      console.log('[MagicRelogin] Auto relogin enabled via enableAutoRelogin flag');
+      log(Component.MAGIC_RELOGIN_HANDLER, 'Auto relogin enabled via enableAutoRelogin flag');
       return true;
     }
 
     // 检查是否有配置 SAML URL
     if (environment.template?.samlUrl && environment.template.samlUrl.trim() !== '') {
-      console.log('[MagicRelogin] Auto relogin enabled via samlUrl configuration');
+      log(Component.MAGIC_RELOGIN_HANDLER, 'Auto relogin enabled via samlUrl configuration');
       return true;
     }
 
-    console.log('[MagicRelogin] Auto relogin NOT enabled');
+    log(Component.MAGIC_RELOGIN_HANDLER, 'Auto relogin NOT enabled');
     return false;
   }
 
@@ -142,24 +143,24 @@ export class MagicReloginHandler {
    * 检查是否存在注销弹窗
    */
   private checkForLogoutDialog(environment: CloudEnvironment, accounts: CloudAccount[]): void {
-    console.log('[MagicRelogin] checkForLogoutDialog called');
+    log(Component.MAGIC_RELOGIN_HANDLER, 'checkForLogoutDialog called');
 
     // 使用 document.getElementById 查找 AWS 注销弹窗
     const signinAgainModal = document.getElementById('awsc-nav-signin-again-modal-root');
-    console.log('[MagicRelogin] Checking for awsc-nav-signin-again-modal-root:', !!signinAgainModal);
+    log(Component.MAGIC_RELOGIN_HANDLER, 'Checking for awsc-nav-signin-again-modal-root:', !!signinAgainModal);
 
     if (!signinAgainModal) {
-      console.log('[MagicRelogin] No logout dialog found');
+      log(Component.MAGIC_RELOGIN_HANDLER, 'No logout dialog found');
       return;
     }
 
-    console.log('[MagicRelogin] Found awsc-nav-signin-again-modal-root');
+    log(Component.MAGIC_RELOGIN_HANDLER, 'Found awsc-nav-signin-again-modal-root');
 
     // 查找弹窗内容容器
     const modalContent = signinAgainModal.querySelector('[class*="awsui_dialog"]') as HTMLElement;
     const logoutDialog = modalContent || signinAgainModal;
 
-    console.log('[MagicRelogin] Using dialog element:', {
+    log(Component.MAGIC_RELOGIN_HANDLER, 'Using dialog element:', {
       className: logoutDialog.className,
       id: logoutDialog.id
     });
@@ -183,11 +184,11 @@ export class MagicReloginHandler {
     // 查找重新登录按钮
     const reloginButton = this.findReloginButton(logoutDialog);
     if (!reloginButton) {
-      console.log('[MagicRelogin] Could not find relogin button');
+      log(Component.MAGIC_RELOGIN_HANDLER, 'Could not find relogin button');
       return;
     }
 
-    console.log('[MagicRelogin] Found relogin button, injecting Magic button');
+    log(Component.MAGIC_RELOGIN_HANDLER, 'Found relogin button, injecting Magic button');
 
     // 创建 Magic 按钮
     this.magicButton = this.createMagicButton(environment, accounts);
@@ -205,7 +206,7 @@ export class MagicReloginHandler {
       reloginButton.parentNode?.insertBefore(this.magicButton, reloginButton.nextSibling);
     }
 
-    console.log('[MagicRelogin] Magic button injected successfully');
+    log(Component.MAGIC_RELOGIN_HANDLER, 'Magic button injected successfully');
   }
 
   /**
@@ -300,16 +301,16 @@ export class MagicReloginHandler {
    * 处理 Magic 按钮点击
    */
   private async handleMagicClick(environment: CloudEnvironment, accounts: CloudAccount[]): Promise<void> {
-    console.log('[MagicRelogin] Magic button clicked');
+    log(Component.MAGIC_RELOGIN_HANDLER, 'Magic button clicked');
 
     // 1. 获取当前页面的 account 和 role 信息
     const currentInfo = this.extractCurrentAccountInfo(accounts);
-    console.log('[MagicRelogin] Current account info:', currentInfo);
+    log(Component.MAGIC_RELOGIN_HANDLER, 'Current account info:', currentInfo);
 
     // 2. 获取 SAML URL
     const samlUrl = this.getSamlUrl(environment);
     if (!samlUrl) {
-      console.error('[MagicRelogin] No SAML URL configured');
+      error(Component.MAGIC_RELOGIN_HANDLER, 'No SAML URL configured');
       alert('请先配置 SAML 登录地址');
       return;
     }
@@ -338,9 +339,9 @@ export class MagicReloginHandler {
         sourceUrl: window.location.href
       });
 
-      console.log('[MagicRelogin] Sent MAGIC_RELOGIN_START message');
-    } catch (error) {
-      console.error('[MagicRelogin] Failed to send message:', error);
+      log(Component.MAGIC_RELOGIN_HANDLER, 'Sent MAGIC_RELOGIN_START message');
+    } catch (err) {
+      error(Component.MAGIC_RELOGIN_HANDLER, 'Failed to send message:', err);
 
       // 如果消息发送失败，直接打开 SAML URL
       window.open(samlUrl, '_blank');
@@ -354,10 +355,10 @@ export class MagicReloginHandler {
   private extractCurrentAccountInfo(accounts: CloudAccount[]): { accountId?: string; roleArn?: string } {
     const result: { accountId?: string; roleArn?: string } = {};
 
-    console.log('[MagicRelogin] Extracting current account info from page...');
+    log(Component.MAGIC_RELOGIN_HANDLER, 'Extracting current account info from page...');
 
     const url = window.location.href;
-    console.log('[MagicRelogin] Current URL:', url);
+    log(Component.MAGIC_RELOGIN_HANDLER, 'Current URL:', url);
 
     // ========== 优先从界面元素中提取 Account ID ==========
     // AWS Console 的账户信息通常在顶部导航栏的 account info tile 中
@@ -373,13 +374,13 @@ export class MagicReloginHandler {
       const elements = document.querySelectorAll(selector);
       for (const element of Array.from(elements)) {
         const text = element.textContent || '';
-        console.log('[MagicRelogin] Checking account element:', selector, 'text:', text.substring(0, 100));
+        log(Component.MAGIC_RELOGIN_HANDLER, 'Checking account element:', selector, 'text:', text.substring(0, 100));
 
         // 匹配带连字符的格式（如 0663-2217-6721）- AWS 标准显示格式
         const dashedAccountMatch = text.match(/(\d{4}-\d{4}-\d{4})/);
         if (dashedAccountMatch) {
           result.accountId = dashedAccountMatch[1].replace(/-/g, '');
-          console.log('[MagicRelogin] Found accountId from UI element:', dashedAccountMatch[1], '->', result.accountId);
+          log(Component.MAGIC_RELOGIN_HANDLER, 'Found accountId from UI element:', dashedAccountMatch[1], '->', result.accountId);
           break;
         }
 
@@ -387,7 +388,7 @@ export class MagicReloginHandler {
         const accountMatch = text.match(/(\d{12})/);
         if (accountMatch) {
           result.accountId = accountMatch[1];
-          console.log('[MagicRelogin] Found accountId from UI element:', accountMatch[1]);
+          log(Component.MAGIC_RELOGIN_HANDLER, 'Found accountId from UI element:', accountMatch[1]);
           break;
         }
       }
@@ -401,13 +402,13 @@ export class MagicReloginHandler {
         const elements = document.querySelectorAll(selector);
         for (const element of Array.from(elements)) {
           const text = element.textContent || '';
-          console.log('[MagicRelogin] Checking role in element:', selector, 'text:', text.substring(0, 150));
+          log(Component.MAGIC_RELOGIN_HANDLER, 'Checking role in element:', selector, 'text:', text.substring(0, 150));
 
           // 尝试匹配完整的 ARN
           const arnMatch = text.match(/(arn:aws(?:-cn)?:iam::\d{12}:role\/[^\s\/]+)/);
           if (arnMatch && !result.roleArn) {
             result.roleArn = arnMatch[1];
-            console.log('[MagicRelogin] Found roleArn from UI element:', arnMatch[1]);
+            log(Component.MAGIC_RELOGIN_HANDLER, 'Found roleArn from UI element:', arnMatch[1]);
             break;
           }
 
@@ -417,7 +418,7 @@ export class MagicReloginHandler {
           if (roleWithPrefixMatch && !result.roleArn) {
             const partition = url.includes('amazonaws.cn') ? 'aws-cn' : 'aws';
             result.roleArn = `arn:${partition}:iam::${result.accountId}:role/${roleWithPrefixMatch[1]}`;
-            console.log('[MagicRelogin] Constructed roleArn from UI text:', result.roleArn);
+            log(Component.MAGIC_RELOGIN_HANDLER, 'Constructed roleArn from UI text:', result.roleArn);
             break;
           }
 
@@ -426,7 +427,7 @@ export class MagicReloginHandler {
           const userMatch = text.match(/(r-aad-[^\s]+)/);
           if (userMatch && !result.roleArn) {
             result.roleArn = userMatch[1];
-            console.log('[MagicRelogin] Found roleArn from UI text:', result.roleArn);
+            log(Component.MAGIC_RELOGIN_HANDLER, 'Found roleArn from UI text:', result.roleArn);
             break;
           }
         }
@@ -434,7 +435,7 @@ export class MagicReloginHandler {
       }
     }
 
-    console.log('[MagicRelogin] Final extracted account info:', result);
+    log(Component.MAGIC_RELOGIN_HANDLER, 'Final extracted account info:', result);
     return result;
   }
 
@@ -467,8 +468,8 @@ export class MagicReloginHandler {
       await browser.storage.local.set({
         'enveil_magic_relogin_state': state
       });
-    } catch (error) {
-      console.error('[MagicRelogin] Failed to save state:', error);
+    } catch (err) {
+      error(Component.MAGIC_RELOGIN_HANDLER, 'Failed to save state:', err);
     }
   }
 
@@ -483,8 +484,8 @@ export class MagicReloginHandler {
         return state as ReloginState;
       }
       return null;
-    } catch (error) {
-      console.error('[MagicRelogin] Failed to load state:', error);
+    } catch (err) {
+      error(Component.MAGIC_RELOGIN_HANDLER, 'Failed to load state:', err);
       return null;
     }
   }
@@ -496,8 +497,8 @@ export class MagicReloginHandler {
     try {
       await browser.storage.local.remove('enveil_magic_relogin_state');
       this.reloginState = null;
-    } catch (error) {
-      console.error('[MagicRelogin] Failed to clear state:', error);
+    } catch (err) {
+      error(Component.MAGIC_RELOGIN_HANDLER, 'Failed to clear state:', err);
     }
   }
 

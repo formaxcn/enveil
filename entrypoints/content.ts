@@ -4,7 +4,7 @@ import { AccountSelectionHighlighter } from '../components/AccountSelectionHighl
 import { MagicReloginHandler, magicReloginHandler } from '../components/MagicReloginHandler';
 import { CloudMatcher } from '../utils/cloudMatcher';
 import { getCloudTemplate } from '../utils/cloudTemplates';
-import { logger, Component, log } from '../utils/logger';
+import { logger, Component, log, warn, error } from '../utils/logger';
 
 // 全局变量存储当前云环境信息
 let currentCloudEnvironment: CloudEnvironment | null = null;
@@ -32,10 +32,10 @@ export default defineContentScript({
       if (message.action === 'MATCH_UPDATE') {
         const site = message.site as SiteConfig | null;
         if (site) {
-          console.log('[Enveil Content] Received MATCH_UPDATE: Match found', site);
+          log(Component.CONTENT_SCRIPT, 'Received MATCH_UPDATE: Match found', site);
           mountUI(site);
         } else {
-          console.log('[Enveil Content] Received MATCH_UPDATE: No match, unmounting UI');
+          log(Component.CONTENT_SCRIPT, 'Received MATCH_UPDATE: No match, unmounting UI');
           unmountUI();
         }
       } else if (message.action === 'CLOUD_MATCH_UPDATE') {
@@ -44,7 +44,7 @@ export default defineContentScript({
         const cloudEnvironment = message.cloudEnvironment as CloudEnvironment | null;
         const isAccountSelectionPage = message.isAccountSelectionPage as boolean;
 
-        console.log('[Enveil Content] Received CLOUD_MATCH_UPDATE:', {
+        log(Component.CONTENT_SCRIPT, 'Received CLOUD_MATCH_UPDATE:', {
           hasCloudAccounts: !!(cloudAccounts && cloudAccounts.length > 0),
           accountsCount: cloudAccounts?.length || 0,
           hasCloudEnvironment: !!cloudEnvironment,
@@ -54,11 +54,10 @@ export default defineContentScript({
           currentUrl: window.location.href
         });
 
-        // 保存当前云环境信息（供 Magic Relogin 使用）
         if (cloudEnvironment) {
           currentCloudEnvironment = cloudEnvironment;
           currentCloudAccounts = cloudAccounts || [];
-          console.log('[Enveil Content] Saved cloud environment for Magic Relogin:', {
+          log(Component.CONTENT_SCRIPT, 'Saved cloud environment for Magic Relogin:', {
             name: cloudEnvironment.name,
             provider: cloudEnvironment.provider,
             templateSamlUrl: cloudEnvironment.template?.samlUrl,
@@ -67,26 +66,21 @@ export default defineContentScript({
         }
 
         if (cloudAccounts && cloudAccounts.length > 0) {
-          console.log('[Enveil Content] Processing cloud matches:', {
+          log(Component.CONTENT_SCRIPT, 'Processing cloud matches:', {
             accounts: cloudAccounts.map(acc => acc.name),
             rolesCount: cloudRoles?.length || 0,
             isAccountSelectionPage
           });
 
-          // Use AccountSelectionHighlighter for account selection pages
           if (cloudEnvironment) {
             if (isAccountSelectionPage) {
-              // Get full template with selectors for account selection pages
               const fullTemplate = getCloudTemplate(cloudEnvironment.provider);
               
-              // 合并模板：优先使用用户配置的选择器，否则使用模板默认值
               const mergedTemplate = {
                 ...fullTemplate,
-                // 用户配置的 URL 和开关
                 accountSelectionUrl: cloudEnvironment.template?.accountSelectionUrl || fullTemplate.accountSelectionUrl,
                 samlUrl: cloudEnvironment.template?.samlUrl || fullTemplate.samlUrl,
                 enableAutoRelogin: cloudEnvironment.template?.enableAutoRelogin ?? fullTemplate.enableAutoRelogin,
-                // 合并选择器：优先使用用户配置的选择器
                 selectors: {
                   accountSelection: {
                     accountContainers: cloudEnvironment.template?.selectors?.accountSelection?.accountContainers?.length 
@@ -107,7 +101,7 @@ export default defineContentScript({
                 }
               };
               
-              console.log('[Enveil Content] Merged template for account selection:', {
+              log(Component.CONTENT_SCRIPT, 'Merged template for account selection:', {
                 accountContainers: mergedTemplate.selectors.accountSelection.accountContainers,
                 roleElements: mergedTemplate.selectors.accountSelection.roleElements
               });
@@ -118,24 +112,19 @@ export default defineContentScript({
               };
               mountAccountSelectionUI(environmentWithFullTemplate, cloudAccounts, cloudRoles, accountSelectionHighlighter);
 
-              // 检查是否需要自动选择角色（Magic Relogin 流程）
-              console.log('[Enveil Content] Account selection page detected, calling handleAutoRoleSelection...');
+              log(Component.CONTENT_SCRIPT, 'Account selection page detected, calling handleAutoRoleSelection...');
               handleAutoRoleSelection(environmentWithFullTemplate, cloudAccounts);
             } else {
-              // Use CloudHighlighter for console pages - pass all matching accounts and environment
-              // Get full template with selectors since stored template may be incomplete
               const fullTemplate = getCloudTemplate(cloudEnvironment.provider);
-              console.log('[Enveil Content] Full template selectors:', fullTemplate.selectors);
+              log(Component.CONTENT_SCRIPT, 'Full template selectors:', fullTemplate.selectors);
 
-              // 合并模板：保留用户配置的 samlUrl 和 enableAutoRelogin，使用硬编码的选择器
               const mergedTemplate = {
                 ...fullTemplate,
-                // 优先使用用户配置的值
                 samlUrl: cloudEnvironment.template?.samlUrl || fullTemplate.samlUrl,
                 enableAutoRelogin: cloudEnvironment.template?.enableAutoRelogin ?? fullTemplate.enableAutoRelogin
               };
 
-              console.log('[Enveil Content] Merged template:', {
+              log(Component.CONTENT_SCRIPT, 'Merged template:', {
                 samlUrl: mergedTemplate.samlUrl,
                 enableAutoRelogin: mergedTemplate.enableAutoRelogin,
                 hasUserSamlUrl: !!cloudEnvironment.template?.samlUrl,
@@ -148,16 +137,13 @@ export default defineContentScript({
               };
               mountCloudUI(cloudAccounts, cloudRoles, cloudHighlighter, environmentWithFullTemplate);
 
-              // 启动 Magic Relogin 监听（用于 Console 页面的注销弹窗）
-              console.log('[Enveil Content] Starting Magic Relogin watcher for console page');
+              log(Component.CONTENT_SCRIPT, 'Starting Magic Relogin watcher for console page');
               magicReloginHandler.startWatching(environmentWithFullTemplate, cloudAccounts);
             }
           }
         } else {
-          console.log('[Enveil Content] No cloud match for current URL');
+          log(Component.CONTENT_SCRIPT, 'No cloud match for current URL');
 
-          // 只在当前页面确实不是云环境页面时才卸载
-          // 避免在 SPA 路由变化或 tab 切换时误卸载
           const currentUrl = window.location.href;
           const isAwsConsole = currentUrl.includes('console.amazonaws.cn') ||
                                currentUrl.includes('console.aws.amazon.com');
@@ -165,15 +151,14 @@ export default defineContentScript({
                             currentUrl.includes('signin.aws.amazon.com/saml');
 
           if (!isAwsConsole && !isSamlPage) {
-            console.log('[Enveil Content] Not an AWS page, unmounting cloud UI');
+            log(Component.CONTENT_SCRIPT, 'Not an AWS page, unmounting cloud UI');
             unmountCloudUI(cloudHighlighter);
             unmountAccountSelectionUI(accountSelectionHighlighter);
 
-            // 停止 Magic Relogin 监听
-            console.log('[Enveil Content] Stopping Magic Relogin watcher');
+            log(Component.CONTENT_SCRIPT, 'Stopping Magic Relogin watcher');
             magicReloginHandler.stopWatching();
           } else {
-            console.log('[Enveil Content] Still on AWS page, keeping UI mounted:', {
+            log(Component.CONTENT_SCRIPT, 'Still on AWS page, keeping UI mounted:', {
               isAwsConsole,
               isSamlPage,
               currentUrl
@@ -181,8 +166,7 @@ export default defineContentScript({
           }
         }
       } else if (message.action === 'MAGIC_RELOGIN_REFRESH_SOURCE') {
-        // 收到刷新源页面的消息（SAML 登录成功后）
-        console.log('[Enveil Content] Received MAGIC_RELOGIN_REFRESH_SOURCE, refreshing page');
+        log(Component.CONTENT_SCRIPT, 'Received MAGIC_RELOGIN_REFRESH_SOURCE, refreshing page');
         handleReloginComplete();
       }
     });
@@ -194,31 +178,27 @@ export default defineContentScript({
  * 检查是否是从 SAML 登录页面返回的
  */
 async function initMagicRelogin(): Promise<void> {
-  // 检查是否有重新登录状态
   const reloginState = await magicReloginHandler.loadReloginState();
 
   if (reloginState?.isWaitingForLogin) {
-    console.log('[Enveil Content] Found relogin state:', reloginState);
+    log(Component.CONTENT_SCRIPT, 'Found relogin state:', reloginState);
 
-    // 检查当前页面是否是 AWS Console（登录成功）
     const currentUrl = window.location.href;
     const isAwsConsole = currentUrl.includes('console.amazonaws.cn') ||
                          currentUrl.includes('console.aws.amazon.com');
 
     if (isAwsConsole) {
-      console.log('[Enveil Content] Detected AWS Console, relogin successful');
+      log(Component.CONTENT_SCRIPT, 'Detected AWS Console, relogin successful');
 
-      // 清除重新登录状态
       await magicReloginHandler.clearReloginState();
 
-      // 通知 background 刷新源页面
       try {
         await browser.runtime.sendMessage({
           action: 'MAGIC_RELOGIN_SUCCESS',
           sourceUrl: reloginState.sourceUrl
         });
-      } catch (error) {
-        console.error('[Enveil Content] Failed to notify relogin success:', error);
+      } catch (err) {
+        error(Component.CONTENT_SCRIPT, 'Failed to notify relogin success:', err);
       }
     }
   }
@@ -234,53 +214,46 @@ class AutoLoginManager {
   private markStartTime: number = 0;
 
   async start(accountId?: string, roleArn?: string): Promise<void> {
-    console.log('[AutoLoginManager] Starting auto login', { accountId, roleArn });
+    log(Component.CONTENT_SCRIPT, 'Starting auto login', { accountId, roleArn });
 
     if (!accountId && !roleArn) {
-      console.log('[AutoLoginManager] No accountId or roleArn, skipping');
+      log(Component.CONTENT_SCRIPT, 'No accountId or roleArn, skipping');
       return;
     }
 
-    // 重置状态
     this.isCancelled = false;
     this.cleanup();
     this.markStartTime = Date.now();
 
-    // 先从页面中获取已渲染的高亮颜色
     const renderedColor = getRenderedHighlightColor();
-    console.log('[AutoLoginManager] Detected rendered highlight color:', renderedColor);
+    log(Component.CONTENT_SCRIPT, 'Detected rendered highlight color:', renderedColor);
 
-    // 计算对比色
     const contrastColor = renderedColor ? getContrastColor(renderedColor) : '#e74c3c';
-    console.log('[AutoLoginManager] Using contrast color:', contrastColor);
+    log(Component.CONTENT_SCRIPT, 'Using contrast color:', contrastColor);
 
-    // 查找并标记上次使用的 account 和 role（使用对比色）
     this.accountContainer = findAndMarkLastUsedAccount(accountId, contrastColor);
     this.roleElement = findAndMarkLastUsedRole(roleArn, contrastColor);
 
-    console.log('[AutoLoginManager] Found accountContainer:', this.accountContainer ? 'YES' : 'NO');
-    console.log('[AutoLoginManager] Found roleElement:', this.roleElement ? 'YES' : 'NO');
+    log(Component.CONTENT_SCRIPT, 'Found accountContainer:', this.accountContainer ? 'YES' : 'NO');
+    log(Component.CONTENT_SCRIPT, 'Found roleElement:', this.roleElement ? 'YES' : 'NO');
 
     if (!this.accountContainer && !this.roleElement) {
-      console.log('[AutoLoginManager] Could not find account or role to auto select');
+      log(Component.CONTENT_SCRIPT, 'Could not find account or role to auto select');
       return;
     }
 
-    console.log('[AutoLoginManager] Marked last used account/role at:', new Date(this.markStartTime).toISOString());
+    log(Component.CONTENT_SCRIPT, 'Marked last used account/role at:', new Date(this.markStartTime).toISOString());
 
-    // 立即设置取消监听（让用户可以在任何时候取消）
     this.setupCancellation();
 
-    // 立即开始 10 秒倒计时（与高亮同步）
     await this.runCountdown(10, accountId, roleArn);
   }
 
   private async runCountdown(seconds: number, accountId?: string, roleArn?: string): Promise<void> {
-    console.log('[AutoLoginManager] Starting countdown:', seconds);
+    log(Component.CONTENT_SCRIPT, 'Starting countdown:', seconds);
 
     let remaining = seconds;
 
-    // 只为 role 创建倒计时 badge（不为 account 创建）
     if (this.roleElement) {
       createCountdownBadge(this.roleElement, remaining, 'role');
     }
@@ -290,7 +263,7 @@ class AutoLoginManager {
         remaining--;
         updateCountdownBadges(remaining);
 
-        console.log('[AutoLoginManager] Countdown:', remaining);
+        log(Component.CONTENT_SCRIPT, 'Countdown:', remaining);
 
         if (remaining <= 0 || this.isCancelled) {
           if (this.countdownInterval) {
@@ -301,15 +274,14 @@ class AutoLoginManager {
           if (!this.isCancelled) {
             const now = Date.now();
             const totalTime = now - this.markStartTime;
-            console.log('[AutoLoginManager] === EXECUTING LOGIN NOW ===');
-            console.log('[AutoLoginManager] Mark time:', new Date(this.markStartTime).toISOString());
-            console.log('[AutoLoginManager] Current time:', new Date(now).toISOString());
-            console.log('[AutoLoginManager] Total elapsed time:', totalTime, 'ms (', totalTime/1000, 's)');
-            console.log('[AutoLoginManager] Logging in with:', { accountId, roleArn });
-            // 执行真正的登录
+            log(Component.CONTENT_SCRIPT, '=== EXECUTING LOGIN NOW ===');
+            log(Component.CONTENT_SCRIPT, 'Mark time:', new Date(this.markStartTime).toISOString());
+            log(Component.CONTENT_SCRIPT, 'Current time:', new Date(now).toISOString());
+            log(Component.CONTENT_SCRIPT, 'Total elapsed time:', totalTime, 'ms (', totalTime/1000, 's)');
+            log(Component.CONTENT_SCRIPT, 'Logging in with:', { accountId, roleArn });
             executeAutoLogin(accountId, roleArn);
           } else {
-            console.log('[AutoLoginManager] Auto login was cancelled');
+            log(Component.CONTENT_SCRIPT, 'Auto login was cancelled');
           }
 
           resolve();
@@ -323,7 +295,7 @@ class AutoLoginManager {
 
     this.cancelHandler = () => {
       if (!this.isCancelled) {
-        console.log('[AutoLoginManager] User interaction detected, cancelling auto login');
+        log(Component.CONTENT_SCRIPT, 'User interaction detected, cancelling auto login');
         this.cancel();
       }
     };
@@ -365,55 +337,47 @@ class AutoLoginManager {
 // 全局自动登录管理器实例
 const autoLoginManager = new AutoLoginManager();
 
-// 防止 handleAutoRoleSelection 被重复调用的标志
 let isAutoRoleSelectionStarted = false;
 
-/**
- * 处理自动角色选择（在 SAML 登录页面）
- */
 async function handleAutoRoleSelection(
   environment: CloudEnvironment,
   accounts: CloudAccount[]
 ): Promise<void> {
-  // 防止重复调用
   if (isAutoRoleSelectionStarted) {
-    console.log('[Enveil Content] handleAutoRoleSelection already started, skipping');
+    log(Component.CONTENT_SCRIPT, 'handleAutoRoleSelection already started, skipping');
     return;
   }
   isAutoRoleSelectionStarted = true;
 
-  // 清理可能存在的旧倒计时
   cleanupAllEnveilBadges();
 
-  console.log('[Enveil Content] handleAutoRoleSelection called');
-  console.log('[Enveil Content] Environment:', environment.name, environment.provider);
-  console.log('[Enveil Content] Accounts:', accounts.map(acc => acc.name));
+  log(Component.CONTENT_SCRIPT, 'handleAutoRoleSelection called');
+  log(Component.CONTENT_SCRIPT, 'Environment:', environment.name, environment.provider);
+  log(Component.CONTENT_SCRIPT, 'Accounts:', accounts.map(acc => acc.name));
 
   const reloginState = await magicReloginHandler.loadReloginState();
 
-  console.log('[Enveil Content] Loaded reloginState:', reloginState);
-  console.log('[Enveil Content] Full reloginState details:');
+  log(Component.CONTENT_SCRIPT, 'Loaded reloginState:', reloginState);
+  log(Component.CONTENT_SCRIPT, 'Full reloginState details:');
   if (reloginState) {
-    console.log('  - sourceTabId:', reloginState.sourceTabId);
-    console.log('  - sourceUrl:', reloginState.sourceUrl);
-    console.log('  - accountId:', reloginState.accountId);
-    console.log('  - roleArn:', reloginState.roleArn);
-    console.log('  - isWaitingForLogin:', reloginState.isWaitingForLogin);
-    console.log('  - isMagicRelogin:', reloginState.isMagicRelogin);
-    console.log('  - typeof isMagicRelogin:', typeof reloginState.isMagicRelogin);
+    log(Component.CONTENT_SCRIPT, '  - sourceTabId:', reloginState.sourceTabId);
+    log(Component.CONTENT_SCRIPT, '  - sourceUrl:', reloginState.sourceUrl);
+    log(Component.CONTENT_SCRIPT, '  - accountId:', reloginState.accountId);
+    log(Component.CONTENT_SCRIPT, '  - roleArn:', reloginState.roleArn);
+    log(Component.CONTENT_SCRIPT, '  - isWaitingForLogin:', reloginState.isWaitingForLogin);
+    log(Component.CONTENT_SCRIPT, '  - isMagicRelogin:', reloginState.isMagicRelogin);
+    log(Component.CONTENT_SCRIPT, '  - typeof isMagicRelogin:', typeof reloginState.isMagicRelogin);
   }
 
-  // 优先检查 isMagicRelogin，如果没有则检查 isWaitingForLogin（兼容旧状态）
   const shouldAutoLogin = reloginState?.isMagicRelogin === true || reloginState?.isWaitingForLogin === true;
 
   if (!shouldAutoLogin) {
-    console.log('[Enveil Content] No auto relogin needed (isMagicRelogin or isWaitingForLogin not true), skipping auto selection');
+    log(Component.CONTENT_SCRIPT, 'No auto relogin needed (isMagicRelogin or isWaitingForLogin not true), skipping auto selection');
     return;
   }
 
-  // 等待页面加载完成，然后使用倒计时模式（只标记高亮，不真正登录）
   setTimeout(() => {
-    console.log('[Enveil Content] Starting countdown mode for:', {
+    log(Component.CONTENT_SCRIPT, 'Starting countdown mode for:', {
       accountId: reloginState.accountId,
       roleArn: reloginState.roleArn
     });
@@ -427,30 +391,27 @@ async function handleAutoRoleSelection(
 function findAndMarkLastUsedAccount(accountId?: string, userColor?: string): HTMLElement | null {
   if (!accountId) return null;
 
-  console.log('[Enveil Content] Finding account:', accountId);
+  log(Component.CONTENT_SCRIPT, 'Finding account:', accountId);
 
-  // 查找所有 account 名称元素
   const accountNameElements = document.querySelectorAll('.saml-account-name');
-  console.log('[Enveil Content] Found', accountNameElements.length, 'account name elements');
+  log(Component.CONTENT_SCRIPT, 'Found', accountNameElements.length, 'account name elements');
 
   for (const element of Array.from(accountNameElements)) {
     const text = element.textContent || '';
-    console.log('[Enveil Content] Checking account:', text);
+    log(Component.CONTENT_SCRIPT, 'Checking account:', text);
 
     if (text.includes(accountId)) {
-      console.log('[Enveil Content] Account matched!');
-      // 找到匹配的 account，获取其容器
+      log(Component.CONTENT_SCRIPT, 'Account matched!');
       const container = element.closest('.saml-account') as HTMLElement;
       if (container) {
-        // 添加特殊样式标记（使用用户配置的颜色）
         markAsLastUsedAccount(container, userColor);
-        console.log('[Enveil Content] Marked account with color:', userColor);
+        log(Component.CONTENT_SCRIPT, 'Marked account with color:', userColor);
         return container;
       }
     }
   }
 
-  console.log('[Enveil Content] Could not find account:', accountId);
+  log(Component.CONTENT_SCRIPT, 'Could not find account:', accountId);
   return null;
 }
 
@@ -459,23 +420,21 @@ function findAndMarkLastUsedAccount(accountId?: string, userColor?: string): HTM
  * 查找带有 enveil-cloud-role-highlight 类的元素
  */
 function getRenderedHighlightColor(): string | null {
-  // 查找高亮元素
   const highlightElement = document.querySelector('.enveil-cloud-role-highlight');
-  console.log('[Enveil Content] Looking for highlight element:', highlightElement ? 'FOUND' : 'NOT FOUND');
+  log(Component.CONTENT_SCRIPT, 'Looking for highlight element:', highlightElement ? 'FOUND' : 'NOT FOUND');
 
   if (highlightElement) {
     const computedStyle = window.getComputedStyle(highlightElement);
     const bgColor = computedStyle.backgroundColor;
-    console.log('[Enveil Content] Highlight element bg color:', bgColor);
+    log(Component.CONTENT_SCRIPT, 'Highlight element bg color:', bgColor);
 
-    // 将 rgb(r, g, b) 转换为十六进制
     const rgbMatch = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
     if (rgbMatch) {
       const r = parseInt(rgbMatch[1]);
       const g = parseInt(rgbMatch[2]);
       const b = parseInt(rgbMatch[3]);
       const hexColor = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-      console.log('[Enveil Content] Converted to hex:', hexColor);
+      log(Component.CONTENT_SCRIPT, 'Converted to hex:', hexColor);
       return hexColor;
     }
   }
@@ -518,7 +477,7 @@ function cleanupAllEnveilBadges(): void {
   const lastUsedLabels = document.querySelectorAll('.enveil-last-used-label');
   lastUsedLabels.forEach(label => label.remove());
 
-  console.log('[Enveil Content] Cleaned up all Enveil badges and containers');
+  log(Component.CONTENT_SCRIPT, 'Cleaned up all Enveil badges and containers');
 }
 
 /**
@@ -565,65 +524,56 @@ function markAsLastUsedAccount(_container: HTMLElement, _userColor?: string): vo
 function findAndMarkLastUsedRole(roleArn?: string, userColor?: string): HTMLElement | null {
   if (!roleArn) return null;
 
-  console.log('[Enveil Content] Finding role:', roleArn);
+  log(Component.CONTENT_SCRIPT, 'Finding role:', roleArn);
 
-  // 提取 role 名称（处理两种格式）
   let roleName = roleArn;
 
-  // 尝试从 ARN 格式提取
   const arnMatch = roleArn.match(/:role\/(.+)$/);
   if (arnMatch) {
     roleName = arnMatch[1];
   }
 
-  // 移除 @ 后面的部分（如果有）
   roleName = roleName.split('/')[0];
 
-  console.log('[Enveil Content] Extracted role name:', roleName);
+  log(Component.CONTENT_SCRIPT, 'Extracted role name:', roleName);
 
-  // 查找所有 radio 按钮
   const radioButtons = document.querySelectorAll('input[type="radio"][name="roleIndex"]');
-  console.log('[Enveil Content] Found', radioButtons.length, 'radio buttons');
+  log(Component.CONTENT_SCRIPT, 'Found', radioButtons.length, 'radio buttons');
 
   for (const radio of Array.from(radioButtons)) {
     const value = (radio as HTMLInputElement).value;
 
-    console.log('[Enveil Content] Checking radio value:', value);
+    log(Component.CONTENT_SCRIPT, 'Checking radio value:', value);
 
-    // 检查是否匹配（value 包含 roleName 或 roleName 包含 value 的一部分）
     const valueRoleName = value.match(/:role\/(.+)$/)?.[1] || value;
 
     if (value === roleArn ||
         value.includes(roleName) ||
         roleName.includes(valueRoleName) ||
         valueRoleName.includes(roleName)) {
-      // 找到匹配的 role，标记它
-      console.log('[Enveil Content] Found matching role:', value);
+      log(Component.CONTENT_SCRIPT, 'Found matching role:', value);
 
-      // 尝试获取 label 容器
       const label = radio.closest('label') as HTMLElement;
       if (label) {
-        console.log('[Enveil Content] Found label element');
+        log(Component.CONTENT_SCRIPT, 'Found label element');
         markAsLastUsedRole(label, userColor);
         return label;
       }
 
-      // 如果找不到 label，尝试获取父级的 saml-role 或 saml-role-description
       const samlRole = radio.closest('.saml-role') as HTMLElement;
       if (samlRole) {
-        console.log('[Enveil Content] Found saml-role element');
+        log(Component.CONTENT_SCRIPT, 'Found saml-role element');
         markAsLastUsedRole(samlRole, userColor);
         return samlRole;
       }
 
-      // 如果都找不到，直接标记 radio 按钮本身
-      console.log('[Enveil Content] Marking radio element directly');
+      log(Component.CONTENT_SCRIPT, 'Marking radio element directly');
       markAsLastUsedRole(radio as HTMLElement, userColor);
       return radio as HTMLElement;
     }
   }
 
-  console.log('[Enveil Content] Could not find matching role for:', roleName);
+  log(Component.CONTENT_SCRIPT, 'Could not find matching role for:', roleName);
   return null;
 }
 
@@ -780,14 +730,12 @@ function updateCountdownBadges(seconds: number): void {
  * 执行自动登录
  */
 function executeAutoLogin(accountId?: string, roleArn?: string): void {
-  console.log('[Enveil Content] === EXECUTING LOGIN ===');
-  console.log('[Enveil Content] Logging in with:', { accountId, roleArn });
+  log(Component.CONTENT_SCRIPT, '=== EXECUTING LOGIN ===');
+  log(Component.CONTENT_SCRIPT, 'Logging in with:', { accountId, roleArn });
 
-  // 移除倒计时 badge
   const badges = document.querySelectorAll('.enveil-countdown-badge');
   badges.forEach(badge => badge.remove());
 
-  // 执行真正的登录
   if (roleArn) {
     selectRoleOnSamlPage(roleArn);
   } else if (accountId) {
@@ -799,46 +747,37 @@ function executeAutoLogin(accountId?: string, roleArn?: string): void {
  * 在 SAML 页面上选择指定的 role
  */
 function selectRoleOnSamlPage(roleArn: string): void {
-  console.log('[Enveil Content] Selecting role:', roleArn);
+  log(Component.CONTENT_SCRIPT, 'Selecting role:', roleArn);
 
-  // 使用与 findAndMarkLastUsedRole 相同的逻辑来提取 role 名称
   let roleName = roleArn;
 
-  // 尝试从 ARN 格式提取
   const arnMatch = roleArn.match(/:role\/(.+)$/);
   if (arnMatch) {
     roleName = arnMatch[1];
   }
 
-  // 移除 @ 后面的部分（如果有）
   roleName = roleName.split('/')[0];
 
-  console.log('[Enveil Content] Extracted role name for selection:', roleName);
+  log(Component.CONTENT_SCRIPT, 'Extracted role name for selection:', roleName);
 
-  // 查找所有 radio 按钮
   const radioButtons = document.querySelectorAll('input[type="radio"][name="roleIndex"]');
-  console.log('[Enveil Content] Found', radioButtons.length, 'role radio buttons');
+  log(Component.CONTENT_SCRIPT, 'Found', radioButtons.length, 'role radio buttons');
 
   for (const radio of Array.from(radioButtons)) {
     const value = (radio as HTMLInputElement).value;
 
-    // 提取 value 中的 role 名称
     const valueRoleName = value.match(/:role\/(.+)$/)?.[1] || value;
 
-    // 使用与 findAndMarkLastUsedRole 相同的匹配逻辑
     if (value === roleArn ||
         value.includes(roleName) ||
         roleName.includes(valueRoleName) ||
         valueRoleName.includes(roleName)) {
-      console.log('[Enveil Content] Found matching role radio button:', value);
+      log(Component.CONTENT_SCRIPT, 'Found matching role radio button:', value);
 
-      // 选中该 role
       (radio as HTMLInputElement).checked = true;
 
-      // 触发 change 事件
       radio.dispatchEvent(new Event('change', { bubbles: true }));
 
-      // 自动点击登录按钮
       setTimeout(() => {
         clickSignInButton();
       }, 500);
@@ -847,61 +786,55 @@ function selectRoleOnSamlPage(roleArn: string): void {
     }
   }
 
-  console.log('[Enveil Content] Could not find role radio button for:', roleName);
+  log(Component.CONTENT_SCRIPT, 'Could not find role radio button for:', roleName);
 }
 
 /**
  * 在 SAML 页面上展开指定的 account
  */
 function expandAccountOnSamlPage(accountId: string): void {
-  console.log('[Enveil Content] Expanding account:', accountId);
+  log(Component.CONTENT_SCRIPT, 'Expanding account:', accountId);
 
-  // 查找所有 account 名称元素
   const accountNameElements = document.querySelectorAll('.saml-account-name');
-  console.log('[Enveil Content] Found', accountNameElements.length, 'account name elements');
+  log(Component.CONTENT_SCRIPT, 'Found', accountNameElements.length, 'account name elements');
 
   for (const element of Array.from(accountNameElements)) {
     const text = element.textContent || '';
-    console.log('[Enveil Content] Checking account:', text);
+    log(Component.CONTENT_SCRIPT, 'Checking account:', text);
 
-    // 检查是否包含 account ID
-    // Account 格式: "Account: {account-name} ({account-id})"
     if (text.includes(accountId)) {
-      console.log('[Enveil Content] Found matching account:', text);
+      log(Component.CONTENT_SCRIPT, 'Found matching account:', text);
 
-      // 查找父级的 expandable-container 并点击
       const expandableContainer = element.closest('.expandable-container');
 
       if (expandableContainer) {
         (expandableContainer as HTMLElement).click();
-        console.log('[Enveil Content] Clicked expandable container for account:', accountId);
+        log(Component.CONTENT_SCRIPT, 'Clicked expandable container for account:', accountId);
       } else {
-        // 如果没有找到 expandable-container，尝试点击元素本身
         (element as HTMLElement).click();
-        console.log('[Enveil Content] Clicked account name element');
+        log(Component.CONTENT_SCRIPT, 'Clicked account name element');
       }
 
       return;
     }
   }
 
-  console.log('[Enveil Content] Could not find account container for:', accountId);
+  log(Component.CONTENT_SCRIPT, 'Could not find account container for:', accountId);
 }
 
 /**
  * 点击登录按钮
  */
 function clickSignInButton(): void {
-  console.log('[Enveil Content] Clicking sign in button');
+  log(Component.CONTENT_SCRIPT, 'Clicking sign in button');
 
-  // 查找登录按钮
   const signInButton = document.querySelector('#signin_button, input[type="submit"], button[type="submit"]');
 
   if (signInButton) {
     (signInButton as HTMLElement).click();
-    console.log('[Enveil Content] Sign in button clicked');
+    log(Component.CONTENT_SCRIPT, 'Sign in button clicked');
   } else {
-    console.log('[Enveil Content] Could not find sign in button');
+    log(Component.CONTENT_SCRIPT, 'Could not find sign in button');
   }
 }
 
@@ -909,7 +842,7 @@ function clickSignInButton(): void {
  * 处理重新登录完成
  */
 function handleReloginComplete(): void {
-  console.log('[Enveil Content] Relogin complete, refreshing page');
+  log(Component.CONTENT_SCRIPT, 'Relogin complete, refreshing page');
   window.location.reload();
 }
 
@@ -1065,7 +998,7 @@ function mountCloudUI(
   cloudHighlighter: CloudHighlighter,
   cloudEnvironment: CloudEnvironment | null = null
 ) {
-  console.log('[Enveil Content] mountCloudUI called:', {
+  log(Component.CONTENT_SCRIPT, 'mountCloudUI called:', {
     accountsCount: cloudAccounts.length,
     rolesCount: cloudRoles?.length || 0,
     hasEnvironment: !!cloudEnvironment,
@@ -1073,24 +1006,19 @@ function mountCloudUI(
     currentUrl: window.location.href
   });
 
-  // Remove any existing cloud highlighting first
   cloudHighlighter.removeHighlighting();
 
-  // Apply account-level background highlighting for all matching accounts
-  // Uses the first enabled account's background color for the global overlay
   cloudHighlighter.applyAccountHighlighting(cloudAccounts);
 
-  // Apply account container highlighting for console pages
   if (cloudEnvironment && cloudAccounts.length > 0) {
-    console.log('[Enveil Content] Scheduling account container highlighting');
+    log(Component.CONTENT_SCRIPT, 'Scheduling account container highlighting');
     setTimeout(() => {
-      console.log('[Enveil Content] Applying account container highlighting now');
+      log(Component.CONTENT_SCRIPT, 'Applying account container highlighting now');
       cloudHighlighter.applyAccountContainerHighlighting(cloudEnvironment, cloudAccounts);
     }, 100);
 
-    // 启动 Magic Relogin 监听（用于 Console 页面的注销弹窗）
-    console.log('[Enveil Content] [MOUNT_CLOUD_UI] Starting Magic Relogin watcher');
-    console.log('[Enveil Content] [MOUNT_CLOUD_UI] Environment:', {
+    log(Component.CONTENT_SCRIPT, '[MOUNT_CLOUD_UI] Starting Magic Relogin watcher');
+    log(Component.CONTENT_SCRIPT, '[MOUNT_CLOUD_UI] Environment:', {
       name: cloudEnvironment.name,
       provider: cloudEnvironment.provider,
       samlUrl: cloudEnvironment.template?.samlUrl,
@@ -1098,16 +1026,11 @@ function mountCloudUI(
     });
     magicReloginHandler.startWatching(cloudEnvironment, cloudAccounts);
   } else {
-    console.log('[Enveil Content] Skipping account container highlighting:', {
+    log(Component.CONTENT_SCRIPT, 'Skipping account container highlighting:', {
       hasEnvironment: !!cloudEnvironment,
       accountsCount: cloudAccounts.length
     });
   }
-
-  // Apply role-level text highlighting if roles are provided
-  // Note: For console pages, we don't apply global role highlighting
-  // Role highlighting is only applied on account selection pages
-  // Console page only shows account container highlighting
 }
 
 /**

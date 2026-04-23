@@ -331,14 +331,14 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose }) => {
                         </Fragment>
                       ))}
 
-                      {availableComponents.some(c => !ComponentGroups.flatMap(g => g.components).includes(c)) && (
+                      {availableComponents.some(c => !ComponentGroups.flatMap(g => g.components).includes(c as Component)) && (
                         <>
                           <div className="border-t border-gray-200 dark:border-slate-700 my-1" />
                           <div className="px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-700/50">
                             Other
                           </div>
                           {availableComponents
-                            .filter(c => !ComponentGroups.flatMap(g => g.components).includes(c))
+                            .filter(c => !ComponentGroups.flatMap(g => g.components).includes(c as Component))
                             .map((component) => (
                               <Listbox.Option
                                 key={component}

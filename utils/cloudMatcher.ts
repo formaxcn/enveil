@@ -1,3 +1,4 @@
+import { logger, Component, log, warn, error } from './logger';
 import { Matcher } from './matcher';
 import { CloudAccount, CloudRole, CloudEnvironment, CloudAccountPattern } from '../entrypoints/options/types';
 
@@ -87,7 +88,7 @@ export class CloudMatcher extends Matcher {
                     const regex = new RegExp(matchValue, 'i');
                     isMatch = regex.test(pageContent);
                 } catch (e) {
-                    console.error('[Enveil] Invalid role regex:', matchValue);
+                    error(Component.CLOUD_MATCHER, 'Invalid role regex:', matchValue);
                 }
             } else {
                 const lowerMatchValue = matchValue.toLowerCase();
@@ -137,7 +138,7 @@ export class CloudMatcher extends Matcher {
                         });
                     }
                 } catch (e) {
-                    console.error('[Enveil] Invalid role regex:', matchValue);
+                    error(Component.CLOUD_MATCHER, 'Invalid role regex:', matchValue);
                 }
             } else {
                 const lowerMatchValue = matchValue.toLowerCase();

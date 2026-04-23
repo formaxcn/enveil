@@ -1,4 +1,5 @@
 import { CloudAccount, CloudRole, CloudEnvironment, CloudProvider } from '../../entrypoints/options/types';
+import { logger, Component, log, warn, error } from '../../utils/logger';
 
 export class HuaweiAccountSelectionHandler {
     private static readonly ACCOUNT_HIGHLIGHT_CLASS = 'enveil-huawei-account-highlight';
@@ -16,7 +17,7 @@ export class HuaweiAccountSelectionHandler {
             return;
         }
 
-        console.log('[HuaweiAccountSelectionHandler] Starting applyHighlighting');
+        log(Component.HUAWEI_ACCOUNT_SELECTION, 'Starting applyHighlighting');
         
         // 先打印页面基本结构，帮助调试
         this.logPageStructure();
@@ -45,7 +46,7 @@ export class HuaweiAccountSelectionHandler {
                             }
                         });
                     } catch (e) {
-                        console.warn(`[HuaweiAccountSelectionHandler] Invalid selector: ${selector}`, e);
+                        warn(Component.HUAWEI_ACCOUNT_SELECTION, `Invalid selector: ${selector}`, e);
                     }
                 }
             }
@@ -64,7 +65,7 @@ export class HuaweiAccountSelectionHandler {
                         }
                     });
                 } catch (e) {
-                    console.warn(`[HuaweiAccountSelectionHandler] Invalid selector: ${selector}`, e);
+                    warn(Component.HUAWEI_ACCOUNT_SELECTION, `Invalid selector: ${selector}`, e);
                 }
             }
             
@@ -107,7 +108,7 @@ export class HuaweiAccountSelectionHandler {
                     if (isChildTable || inChildTable) {
                         inChildTable = true;
                         elementToAccount.set(el, lastMatchedAccount);
-                        console.log(`[HuaweiAccountSelectionHandler] Found child table element, linking to account: ${lastMatchedAccount.name}`);
+                        log(Component.HUAWEI_ACCOUNT_SELECTION, `Found child table element, linking to account: ${lastMatchedAccount.name}`);
                     } else {
                         // 检查这个元素是不是在最近匹配元素的附近（在同一个父容器内）
                         let parentEl: HTMLElement | null = el.parentElement;
@@ -134,7 +135,7 @@ export class HuaweiAccountSelectionHandler {
                         
                         if (foundMatchParent) {
                             elementToAccount.set(el, lastMatchedAccount);
-                            console.log(`[HuaweiAccountSelectionHandler] Found related element in same container, linking to account: ${lastMatchedAccount.name}`);
+                            log(Component.HUAWEI_ACCOUNT_SELECTION, `Found related element in same container, linking to account: ${lastMatchedAccount.name}`);
                         } else {
                             // 遇到完全不相关的行，重置
                             lastMatchedAccount = null;
@@ -163,29 +164,29 @@ export class HuaweiAccountSelectionHandler {
 
         this.setupMutationObserver();
 
-        console.log(`[HuaweiAccountSelectionHandler] Applied highlighting for ${enabledAccounts.length} accounts`);
+        log(Component.HUAWEI_ACCOUNT_SELECTION, `Applied highlighting for ${enabledAccounts.length} accounts`);
     }
 
     private logPageStructure(): void {
-        console.log('[HuaweiAccountSelectionHandler] === Page Structure ===');
-        console.log('[HuaweiAccountSelectionHandler] document.body:', document.body);
-        console.log('[HuaweiAccountSelectionHandler] document.body.children count:', document.body.children.length);
-        console.log('[HuaweiAccountSelectionHandler] document.body.innerHTML preview:', document.body.innerHTML?.substring(0, 1000));
-        console.log('[HuaweiAccountSelectionHandler] ==============');
+        log(Component.HUAWEI_ACCOUNT_SELECTION, '=== Page Structure ===');
+        log(Component.HUAWEI_ACCOUNT_SELECTION, 'document.body:', document.body);
+        log(Component.HUAWEI_ACCOUNT_SELECTION, 'document.body.children count:', document.body.children.length);
+        log(Component.HUAWEI_ACCOUNT_SELECTION, 'document.body.innerHTML preview:', document.body.innerHTML?.substring(0, 1000));
+        log(Component.HUAWEI_ACCOUNT_SELECTION, '==============');
         
         // 尝试找一些常见元素帮助调试
         const allDivs = document.querySelectorAll('div');
-        console.log('[HuaweiAccountSelectionHandler] Found', allDivs.length, 'divs');
+        log(Component.HUAWEI_ACCOUNT_SELECTION, 'Found', allDivs.length, 'divs');
         const allLi = document.querySelectorAll('li');
-        console.log('[HuaweiAccountSelectionHandler] Found', allLi.length, 'li');
+        log(Component.HUAWEI_ACCOUNT_SELECTION, 'Found', allLi.length, 'li');
         const allA = document.querySelectorAll('a');
-        console.log('[HuaweiAccountSelectionHandler] Found', allA.length, 'a');
+        log(Component.HUAWEI_ACCOUNT_SELECTION, 'Found', allA.length, 'a');
         const allCards = document.querySelectorAll('[class*="card"]');
-        console.log('[HuaweiAccountSelectionHandler] Found', allCards.length, 'elements with "card" in class');
+        log(Component.HUAWEI_ACCOUNT_SELECTION, 'Found', allCards.length, 'elements with "card" in class');
         const allItems = document.querySelectorAll('[class*="item"]');
-        console.log('[HuaweiAccountSelectionHandler] Found', allItems.length, 'elements with "item" in class');
+        log(Component.HUAWEI_ACCOUNT_SELECTION, 'Found', allItems.length, 'elements with "item" in class');
         const allApps = document.querySelectorAll('[class*="app"]');
-        console.log('[HuaweiAccountSelectionHandler] Found', allApps.length, 'elements with "app" in class');
+        log(Component.HUAWEI_ACCOUNT_SELECTION, 'Found', allApps.length, 'elements with "app" in class');
     }
 
     public removeHighlighting(): void {
@@ -230,7 +231,7 @@ export class HuaweiAccountSelectionHandler {
         const containers = this.findAccountContainers(selectors.accountContainers, account);
 
         if (containers.length === 0) {
-            console.log(`[HuaweiAccountSelectionHandler] No containers found for account: ${account.name}`);
+            log(Component.HUAWEI_ACCOUNT_SELECTION, `No containers found for account: ${account.name}`);
             return;
         }
 
@@ -245,7 +246,7 @@ export class HuaweiAccountSelectionHandler {
             }
         });
 
-        console.log(`[HuaweiAccountSelectionHandler] Highlighted account: ${account.name} (${containers.length} containers)`);
+        log(Component.HUAWEI_ACCOUNT_SELECTION, `Highlighted account: ${account.name} (${containers.length} containers)`);
     }
 
     private findAccountContainers(selectors: string[], account: CloudAccount): HTMLElement[] {
@@ -253,7 +254,7 @@ export class HuaweiAccountSelectionHandler {
         const addedElements = new Set<HTMLElement>();
         const matchedRows = new Set<HTMLElement>();
 
-        console.log(`[HuaweiAccountSelectionHandler] findAccountContainers: selectors=${JSON.stringify(selectors)}, account=${account.name}`);
+        log(Component.HUAWEI_ACCOUNT_SELECTION, `findAccountContainers: selectors=${JSON.stringify(selectors)}, account=${account.name}`);
 
         // 先找到所有匹配的行
         for (const selector of selectors) {
@@ -272,7 +273,7 @@ export class HuaweiAccountSelectionHandler {
                     }
                 });
             } catch (e) {
-                console.warn(`[HuaweiAccountSelectionHandler] Invalid selector: ${selector}`, e);
+                warn(Component.HUAWEI_ACCOUNT_SELECTION, `Invalid selector: ${selector}`, e);
             }
         }
 
@@ -282,7 +283,7 @@ export class HuaweiAccountSelectionHandler {
 
             try {
                 const elements = document.querySelectorAll<HTMLElement>(selector);
-                console.log(`[HuaweiAccountSelectionHandler] findAccountContainers: Selector "${selector}" found ${elements.length} elements`);
+                log(Component.HUAWEI_ACCOUNT_SELECTION, `findAccountContainers: Selector "${selector}" found ${elements.length} elements`);
 
                 elements.forEach((el, index) => {
                     if (addedElements.has(el)) return;
@@ -292,17 +293,17 @@ export class HuaweiAccountSelectionHandler {
                     const shouldHighlightWithParent = this.shouldHighlightWithParent(el, matchedRows);
 
                     if (isDirectMatch || shouldHighlightWithParent) {
-                        console.log(`[HuaweiAccountSelectionHandler] findAccountContainers: Element ${index} - isDirectMatch=${isDirectMatch}, shouldHighlightWithParent=${shouldHighlightWithParent} - Adding`);
+                        log(Component.HUAWEI_ACCOUNT_SELECTION, `findAccountContainers: Element ${index} - isDirectMatch=${isDirectMatch}, shouldHighlightWithParent=${shouldHighlightWithParent} - Adding`);
                         containers.push(el);
                         addedElements.add(el);
                     }
                 });
             } catch (e) {
-                console.warn(`[HuaweiAccountSelectionHandler] Invalid selector: ${selector}`, e);
+                warn(Component.HUAWEI_ACCOUNT_SELECTION, `Invalid selector: ${selector}`, e);
             }
         }
 
-        console.log(`[HuaweiAccountSelectionHandler] findAccountContainers: Total containers found: ${containers.length}`);
+        log(Component.HUAWEI_ACCOUNT_SELECTION, `findAccountContainers: Total containers found: ${containers.length}`);
         return containers;
     }
     
@@ -336,7 +337,7 @@ export class HuaweiAccountSelectionHandler {
         // 简化逻辑，只要有内容即可
         const textContent = element.textContent?.trim() || '';
         const hasContent = textContent.length > 0;
-        console.log(`[HuaweiAccountSelectionHandler] hasRoleElements: hasContent=${hasContent}, text="${textContent.substring(0, 100)}"`);
+        log(Component.HUAWEI_ACCOUNT_SELECTION, `hasRoleElements: hasContent=${hasContent}, text="${textContent.substring(0, 100)}"`);
         return true; // 总是返回 true，简化逻辑
     }
 
@@ -344,16 +345,16 @@ export class HuaweiAccountSelectionHandler {
         const accountName = account.name?.trim();
         const patterns = account.accountPatterns || [];
 
-        console.log(`[HuaweiAccountSelectionHandler] isAccountMatch: accountName="${accountName}", patterns=${patterns.length}`);
+        log(Component.HUAWEI_ACCOUNT_SELECTION, `isAccountMatch: accountName="${accountName}", patterns=${patterns.length}`);
 
         if (!accountName && patterns.length === 0) {
-            console.log(`[HuaweiAccountSelectionHandler] isAccountMatch: No accountName or patterns, returning false`);
+            log(Component.HUAWEI_ACCOUNT_SELECTION, `isAccountMatch: No accountName or patterns, returning false`);
             return false;
         }
 
         // 直接使用整个元素的文本进行匹配，更可靠
         const elementText = element.textContent || '';
-        console.log(`[HuaweiAccountSelectionHandler] isAccountMatch: elementText="${elementText}"`);
+        log(Component.HUAWEI_ACCOUNT_SELECTION, `isAccountMatch: elementText="${elementText}"`);
 
         for (const pattern of patterns) {
             if (!pattern.enable) continue;
@@ -361,22 +362,22 @@ export class HuaweiAccountSelectionHandler {
             const matchValue = pattern.matchValue?.trim();
             if (!matchValue) continue;
 
-            console.log(`[HuaweiAccountSelectionHandler] isAccountMatch: Checking pattern "${matchValue}"`);
+            log(Component.HUAWEI_ACCOUNT_SELECTION, `isAccountMatch: Checking pattern "${matchValue}"`);
 
             // 如果是正则模式，使用正则匹配
             if (pattern.matchPattern === 'regex') {
                 try {
                     const regex = new RegExp(matchValue, 'i');
                     const isMatch = regex.test(elementText);
-                    console.log(`[HuaweiAccountSelectionHandler] isAccountMatch: Regex "${matchValue}" result=${isMatch}`);
+                    log(Component.HUAWEI_ACCOUNT_SELECTION, `isAccountMatch: Regex "${matchValue}" result=${isMatch}`);
                     if (isMatch) return true;
                 } catch (e) {
-                    console.warn(`[HuaweiAccountSelectionHandler] Invalid regex: ${matchValue}`, e);
+                    warn(Component.HUAWEI_ACCOUNT_SELECTION, `Invalid regex: ${matchValue}`, e);
                 }
             } else {
                 // 关键字模式，直接使用 includes（不转义，支持子字符串匹配）
                 const isMatch = elementText.toLowerCase().includes(matchValue.toLowerCase());
-                console.log(`[HuaweiAccountSelectionHandler] isAccountMatch: Keyword "${matchValue}" result=${isMatch}`);
+                log(Component.HUAWEI_ACCOUNT_SELECTION, `isAccountMatch: Keyword "${matchValue}" result=${isMatch}`);
                 if (isMatch) return true;
             }
         }
@@ -384,13 +385,13 @@ export class HuaweiAccountSelectionHandler {
         // 检查账户名
         if (accountName) {
             const isMatch = elementText.toLowerCase().includes(accountName.toLowerCase());
-            console.log(`[HuaweiAccountSelectionHandler] isAccountMatch: Account name "${accountName}" result=${isMatch}`);
+            log(Component.HUAWEI_ACCOUNT_SELECTION, `isAccountMatch: Account name "${accountName}" result=${isMatch}`);
             if (isMatch) {
                 return true;
             }
         }
 
-        console.log(`[HuaweiAccountSelectionHandler] isAccountMatch: No match found, returning false`);
+        log(Component.HUAWEI_ACCOUNT_SELECTION, `isAccountMatch: No match found, returning false`);
         return false;
     }
 
@@ -441,7 +442,7 @@ export class HuaweiAccountSelectionHandler {
                 try {
                     regex = new RegExp(`(${matchValue})`, 'gi');
                 } catch (e) {
-                    console.error('[Enveil] Invalid role regex:', matchValue);
+                    error(Component.HUAWEI_ACCOUNT_SELECTION, 'Invalid role regex:', matchValue);
                     continue;
                 }
             } else {
@@ -587,9 +588,9 @@ export class HuaweiAccountSelectionHandler {
         // 清除DOM上的高亮
         document.querySelectorAll('.' + HuaweiAccountSelectionHandler.ACCOUNT_HIGHLIGHT_CLASS).forEach(el => {
             el.classList.remove(HuaweiAccountSelectionHandler.ACCOUNT_HIGHLIGHT_CLASS);
-            el.style.backgroundColor = '';
-            el.style.border = '';
-            el.style.boxShadow = '';
+            (el as HTMLElement).style.backgroundColor = '';
+            (el as HTMLElement).style.border = '';
+            (el as HTMLElement).style.boxShadow = '';
         });
         
         this.styleElement = tempStyles;

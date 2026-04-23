@@ -58,7 +58,7 @@ export class Matcher {
                     const regex = new RegExp(site.matchValue);
                     return regex.test(currentUrl);
                 } catch (e) {
-                    console.error('[Enveil] Invalid regex:', site.matchValue);
+                    error(Component.MATCHER, 'Invalid regex:', site.matchValue);
                     return false;
                 }
 

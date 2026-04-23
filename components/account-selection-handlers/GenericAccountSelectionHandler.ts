@@ -1,4 +1,5 @@
 import { CloudAccount, CloudRole, CloudEnvironment, CloudProvider } from '../../entrypoints/options/types';
+import { logger, Component, log, warn, error } from '../../utils/logger';
 
 /**
  * Generic Account Selection Handler
@@ -35,7 +36,7 @@ export class GenericAccountSelectionHandler {
 
         this.setupMutationObserver();
 
-        console.log(`[GenericAccountSelectionHandler] Applied highlighting for ${enabledAccounts.length} accounts`);
+        log(Component.GENERIC_ACCOUNT_SELECTION, `Applied highlighting for ${enabledAccounts.length} accounts`);
     }
 
     /**
@@ -86,7 +87,7 @@ export class GenericAccountSelectionHandler {
         const containers = this.findAccountContainers(selectors.accountContainers, account);
 
         if (containers.length === 0) {
-            console.log(`[GenericAccountSelectionHandler] No containers found for account: ${account.name}`);
+            log(Component.GENERIC_ACCOUNT_SELECTION, `No containers found for account: ${account.name}`);
             return;
         }
 
@@ -101,7 +102,7 @@ export class GenericAccountSelectionHandler {
             }
         });
 
-        console.log(`[GenericAccountSelectionHandler] Highlighted account: ${account.name} (${containers.length} containers)`);
+        log(Component.GENERIC_ACCOUNT_SELECTION, `Highlighted account: ${account.name} (${containers.length} containers)`);
     }
 
     /**
@@ -110,34 +111,34 @@ export class GenericAccountSelectionHandler {
     private findAccountContainers(selectors: string[], account: CloudAccount): HTMLElement[] {
         const containers: HTMLElement[] = [];
 
-        console.log(`[GenericAccountSelectionHandler] findAccountContainers: selectors=${JSON.stringify(selectors)}, account=${account.name}`);
+        log(Component.GENERIC_ACCOUNT_SELECTION, `findAccountContainers: selectors=${JSON.stringify(selectors)}, account=${account.name}`);
 
         for (const selector of selectors) {
             if (!selector) continue;
 
             try {
                 const elements = document.querySelectorAll<HTMLElement>(selector);
-                console.log(`[GenericAccountSelectionHandler] findAccountContainers: Selector "${selector}" found ${elements.length} elements`);
+                log(Component.GENERIC_ACCOUNT_SELECTION, `findAccountContainers: Selector "${selector}" found ${elements.length} elements`);
 
                 elements.forEach((el, index) => {
-                    console.log(`[GenericAccountSelectionHandler] findAccountContainers: Checking element ${index}`);
+                    log(Component.GENERIC_ACCOUNT_SELECTION, `findAccountContainers: Checking element ${index}`);
                     const isMatch = this.isAccountMatch(el, account);
                     const hasRoles = this.hasRoleElements(el);
-                    console.log(`[GenericAccountSelectionHandler] findAccountContainers: Element ${index} - isMatch=${isMatch}, hasRoles=${hasRoles}`);
+                    log(Component.GENERIC_ACCOUNT_SELECTION, `findAccountContainers: Element ${index} - isMatch=${isMatch}, hasRoles=${hasRoles}`);
                     
                     // Only match elements that contain account identifier
                     // and have role elements as children (to avoid matching wrapper/parent elements)
                     if (isMatch && hasRoles) {
-                        console.log(`[GenericAccountSelectionHandler] findAccountContainers: -> MATCHED! Adding element ${index}`);
+                        log(Component.GENERIC_ACCOUNT_SELECTION, `findAccountContainers: -> MATCHED! Adding element ${index}`);
                         containers.push(el);
                     }
                 });
             } catch (e) {
-                console.warn(`[GenericAccountSelectionHandler] Invalid selector: ${selector}`, e);
+                warn(Component.GENERIC_ACCOUNT_SELECTION, `Invalid selector: ${selector}`, e);
             }
         }
 
-        console.log(`[GenericAccountSelectionHandler] findAccountContainers: Total containers found: ${containers.length}`);
+        log(Component.GENERIC_ACCOUNT_SELECTION, `findAccountContainers: Total containers found: ${containers.length}`);
         return containers;
     }
 
@@ -160,7 +161,7 @@ export class GenericAccountSelectionHandler {
             }
         }
         
-        console.log(`[GenericAccountSelectionHandler] hasRoleElements: hasRadioButtons=${hasRadioButtons} (${radioButtons.length} buttons), hasRoleNames=${hasRoleNames}`);
+        log(Component.GENERIC_ACCOUNT_SELECTION, `hasRoleElements: hasRadioButtons=${hasRadioButtons} (${radioButtons.length} buttons), hasRoleNames=${hasRoleNames}`);
         
         // For generic providers, be flexible about role elements
         return hasRadioButtons || hasRoleNames || true;
@@ -173,10 +174,10 @@ export class GenericAccountSelectionHandler {
         const accountName = account.name?.trim();
         const patterns = account.accountPatterns || [];
 
-        console.log(`[GenericAccountSelectionHandler] isAccountMatch: accountName="${accountName}", patterns=${patterns.length}`);
+        log(Component.GENERIC_ACCOUNT_SELECTION, `isAccountMatch: accountName="${accountName}", patterns=${patterns.length}`);
 
         if (!accountName && patterns.length === 0) {
-            console.log(`[GenericAccountSelectionHandler] isAccountMatch: No accountName or patterns, returning false`);
+            log(Component.GENERIC_ACCOUNT_SELECTION, `isAccountMatch: No accountName or patterns, returning false`);
             return false;
         }
 
@@ -200,22 +201,22 @@ export class GenericAccountSelectionHandler {
             try {
                 accountNameElement = element.querySelector(selector);
                 if (accountNameElement) {
-                    console.log(`[GenericAccountSelectionHandler] isAccountMatch: Found account name element with selector "${selector}"`);
+                    log(Component.GENERIC_ACCOUNT_SELECTION, `isAccountMatch: Found account name element with selector "${selector}"`);
                     break;
                 }
             } catch (e) {
-                console.warn(`[GenericAccountSelectionHandler] Invalid selector: ${selector}`, e);
+                warn(Component.GENERIC_ACCOUNT_SELECTION, `Invalid selector: ${selector}`, e);
             }
         }
         
         if (!accountNameElement) {
-            console.log(`[GenericAccountSelectionHandler] isAccountMatch: No account name element found`);
+            log(Component.GENERIC_ACCOUNT_SELECTION, `isAccountMatch: No account name element found`);
             return false;
         }
 
         // Get the text content of the account name element only
         const accountNameText = accountNameElement.textContent || '';
-        console.log(`[GenericAccountSelectionHandler] isAccountMatch: accountNameText="${accountNameText}"`);
+        log(Component.GENERIC_ACCOUNT_SELECTION, `isAccountMatch: accountNameText="${accountNameText}"`);
 
         // Check all account patterns
         for (const pattern of patterns) {
@@ -224,20 +225,20 @@ export class GenericAccountSelectionHandler {
             const matchValue = pattern.matchValue?.trim();
             if (!matchValue) continue;
             
-            console.log(`[GenericAccountSelectionHandler] isAccountMatch: Checking pattern "${matchValue}"`);
+            log(Component.GENERIC_ACCOUNT_SELECTION, `isAccountMatch: Checking pattern "${matchValue}"`);
             
             // For AWS, check for 12-digit account ID pattern with word boundaries
             if (/^\d{12}$/.test(matchValue)) {
                 const accountIdPattern = new RegExp(`\\b${matchValue}\\b`);
                 const isMatch = accountIdPattern.test(accountNameText);
-                console.log(`[GenericAccountSelectionHandler] isAccountMatch: 12-digit ID pattern result=${isMatch}`);
+                log(Component.GENERIC_ACCOUNT_SELECTION, `isAccountMatch: 12-digit ID pattern result=${isMatch}`);
                 if (isMatch) return true;
             } else {
                 // For non-numeric match values, use flexible matching (no word boundaries)
                 const escapedMatchValue = matchValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 const matchPattern = new RegExp(escapedMatchValue, 'i');
                 const isMatch = matchPattern.test(accountNameText);
-                console.log(`[GenericAccountSelectionHandler] isAccountMatch: Pattern "${matchPattern}" result=${isMatch}`);
+                log(Component.GENERIC_ACCOUNT_SELECTION, `isAccountMatch: Pattern "${matchPattern}" result=${isMatch}`);
                 if (isMatch) return true;
             }
         }
@@ -247,13 +248,13 @@ export class GenericAccountSelectionHandler {
             const escapedAccountName = accountName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const namePattern = new RegExp(escapedAccountName, 'i');
             const isMatch = namePattern.test(accountNameText);
-            console.log(`[GenericAccountSelectionHandler] isAccountMatch: Account name "${accountName}" pattern "${namePattern}" result=${isMatch}`);
+            log(Component.GENERIC_ACCOUNT_SELECTION, `isAccountMatch: Account name "${accountName}" pattern "${namePattern}" result=${isMatch}`);
             if (isMatch) {
                 return true;
             }
         }
 
-        console.log(`[GenericAccountSelectionHandler] isAccountMatch: No match found, returning false`);
+        log(Component.GENERIC_ACCOUNT_SELECTION, `isAccountMatch: No match found, returning false`);
         return false;
     }
 
@@ -313,7 +314,7 @@ export class GenericAccountSelectionHandler {
                 try {
                     regex = new RegExp(`(${matchValue})`, 'gi');
                 } catch (e) {
-                    console.error('[Enveil] Invalid role regex:', matchValue);
+                    error(Component.GENERIC_ACCOUNT_SELECTION, 'Invalid role regex:', matchValue);
                     continue;
                 }
             } else {
@@ -488,7 +489,7 @@ export class GenericAccountSelectionHandler {
                         }
                     });
                 } catch (e) {
-                    console.warn(`[GenericAccountSelectionHandler] Invalid selector during reapply: ${selector}`, e);
+                    warn(Component.GENERIC_ACCOUNT_SELECTION, `Invalid selector during reapply: ${selector}`, e);
                 }
             }
 
