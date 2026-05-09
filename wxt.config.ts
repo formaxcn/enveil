@@ -4,7 +4,7 @@ import path from 'node:path';
 
 function generateVersion(): string {
   const mainVersion1 = 2;
-  const mainVersion2 = 1;
+  const mainVersion2 = 2;
   const now = new Date();
   const year = now.getFullYear() % 100; // 0-99
   const month = now.getMonth() + 1; // 1-12
