@@ -1,5 +1,6 @@
 import { defineConfig } from 'wxt';
 import tailwindcss from '@tailwindcss/vite';
+import path from 'node:path';
 
 function generateVersion(): string {
   const mainVersion1 = 2;
@@ -22,10 +23,22 @@ function generateVersion(): string {
   return `${mainVersion1}.${mainVersion2}.${part3}.${part4}`;
 }
 
+const profileDir = path.resolve('.chrome-profile');
+
 export default defineConfig({
   vite: () => ({
     plugins: [tailwindcss()],
   }),
+  webExt: {
+    startUrls: ['chrome://extensions/'],
+    chromiumArgs: [
+      '--remote-debugging-port=9222',
+      `--user-data-dir=${profileDir}`,
+      '--profile-directory=enveil-debug',
+      '--no-first-run',
+      '--no-default-browser-check',
+    ],
+  },
   manifest: {
     name: "Enveil",
     version: generateVersion(),

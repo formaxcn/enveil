@@ -66,29 +66,48 @@ export class VolcengineAccountSelectionHandler {
                 if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1;
                 return 0;
             });
-            
+
             let lastMatchedAccount: CloudAccount | null = null;
             let inChildTable = false;
-            
+
             allElements.forEach(el => {
-                const account = elementToAccount.get(el);
-                
-                if (account) {
-                    lastMatchedAccount = account;
+                // 如果已经在 map 中（匹配的账户行），直接更新状态
+                if (elementToAccount.has(el)) {
+                    lastMatchedAccount = elementToAccount.get(el) || null;
                     inChildTable = false;
-                } else if (lastMatchedAccount && !elementToAccount.has(el)) {
-                    const rowText = el.textContent?.trim() || '';
-                    
-                    const isChildTable = 
-                        rowText.includes('权限') || 
+                    return;
+                }
+
+                const rowText = el.textContent?.trim() || '';
+
+                // 检查这是不是一个账户行
+                // 账户行特征：有"展示详情"或"隐藏详情"按钮，或者有账号ID格式（xxx/1234567890）
+                const hasExpandButton = rowText.includes('展示详情') || rowText.includes('隐藏详情');
+                const hasAccountId = /\/\d{10,}/.test(rowText);  // 账号/10位以上数字
+                const isAccountRow = hasExpandButton || hasAccountId;
+
+                if (isAccountRow) {
+                    // 这是一个账户行（不管有没有匹配到）
+                    // 如果没有匹配到（不在 map 中），重置状态，避免子内容被错误高亮
+                    lastMatchedAccount = null;
+                    inChildTable = false;
+                    return;
+                }
+
+                // 只有当有正在处理的匹配账户时，才考虑是不是子表
+                if (lastMatchedAccount) {
+                    // 检查是不是子表特征行
+                    const isChildTableRow =
+                        rowText.includes('权限') ||
                         rowText.includes('描述') ||
                         rowText.includes('操作') ||
                         rowText.includes('登录') ||
                         rowText.includes('查看编程访问凭证') ||
                         el.querySelector('table') !== null ||
                         el.classList.contains('arco-table-expand-content');
-                    
-                    if (isChildTable || inChildTable) {
+
+                    // 如果在子表模式中，或者这是子表特征行
+                    if (isChildTableRow || inChildTable) {
                         inChildTable = true;
                         elementToAccount.set(el, lastMatchedAccount);
                     }
@@ -165,8 +184,11 @@ export class VolcengineAccountSelectionHandler {
 
         log(Component.VOLCENGINE_ACCOUNT_SELECTION, `isAccountMatch: accountName="${accountName}", patterns=${patterns.length}`);
 
-        if (!accountName && patterns.length === 0) {
-            log(Component.VOLCENGINE_ACCOUNT_SELECTION, `isAccountMatch: No accountName or patterns, returning false`);
+        // 如果没有配置任何匹配模式，直接返回 false - 不进行默认的账户名称匹配
+        // 这样可以避免没有配置的账户被意外高亮
+        const hasValidPatterns = patterns.some(p => p.enable && p.matchValue?.trim());
+        if (!hasValidPatterns) {
+            log(Component.VOLCENGINE_ACCOUNT_SELECTION, `isAccountMatch: No valid patterns configured for account "${accountName}", returning false`);
             return false;
         }
 
@@ -194,14 +216,6 @@ export class VolcengineAccountSelectionHandler {
                 const isMatch = elementText.toLowerCase().includes(matchValue.toLowerCase());
                 log(Component.VOLCENGINE_ACCOUNT_SELECTION, `isAccountMatch: Keyword "${matchValue}" result=${isMatch}`);
                 if (isMatch) return true;
-            }
-        }
-
-        if (accountName) {
-            const isMatch = elementText.toLowerCase().includes(accountName.toLowerCase());
-            log(Component.VOLCENGINE_ACCOUNT_SELECTION, `isAccountMatch: Account name "${accountName}" result=${isMatch}`);
-            if (isMatch) {
-                return true;
             }
         }
 
