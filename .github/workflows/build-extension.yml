@@ -28,11 +28,16 @@ jobs:
         with:
           node-version: '20'
       
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+      
       - name: Install dependencies
-        run: npm install
+        run: bun install
       
       - name: Install crx-cli locally
-        run: npm install crx-cli
+        run: bun add crx-cli
       
       - name: Determine version and release type
         id: version
@@ -50,7 +55,7 @@ jobs:
           fi
       
       - name: Build extension
-        run: npm run build
+        run: bun run build
       
       - name: Write private key to file (if exists)
         if: env.PRIVATE_KEY != ''
