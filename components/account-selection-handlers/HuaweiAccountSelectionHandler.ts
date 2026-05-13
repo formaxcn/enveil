@@ -375,19 +375,15 @@ export class HuaweiAccountSelectionHandler {
                     warn(Component.HUAWEI_ACCOUNT_SELECTION, `Invalid regex: ${matchValue}`, e);
                 }
             } else {
-                // 关键字模式，直接使用 includes（不转义，支持子字符串匹配）
-                const isMatch = elementText.toLowerCase().includes(matchValue.toLowerCase());
-                log(Component.HUAWEI_ACCOUNT_SELECTION, `isAccountMatch: Keyword "${matchValue}" result=${isMatch}`);
+                // 关键字模式：使用灵活边界匹配（允许数字、连字符等作为分隔符）
+                const escapedMatchValue = matchValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const matchPattern = new RegExp(
+                    `(^|[^a-zA-Z])${escapedMatchValue}([^a-zA-Z]|$)`,
+                    'i'
+                );
+                const isMatch = matchPattern.test(elementText);
+                log(Component.HUAWEI_ACCOUNT_SELECTION, `isAccountMatch: Keyword "${matchPattern}" result=${isMatch}`);
                 if (isMatch) return true;
-            }
-        }
-
-        // 检查账户名
-        if (accountName) {
-            const isMatch = elementText.toLowerCase().includes(accountName.toLowerCase());
-            log(Component.HUAWEI_ACCOUNT_SELECTION, `isAccountMatch: Account name "${accountName}" result=${isMatch}`);
-            if (isMatch) {
-                return true;
             }
         }
 

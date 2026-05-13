@@ -225,12 +225,12 @@ export class AliyunAccountSelectionHandler {
         // Check all account patterns
         for (const pattern of patterns) {
             if (!pattern.enable) continue;
-            
+
             const matchValue = pattern.matchValue?.trim();
             if (!matchValue) continue;
-            
+
             log(Component.ALIYUN_ACCOUNT_SELECTION, `isAccountMatch: Checking pattern "${matchValue}"`);
-            
+
             // For AWS, check for 12-digit account ID pattern with word boundaries
             if (/^\d{12}$/.test(matchValue)) {
                 const accountIdPattern = new RegExp(`\\b${matchValue}\\b`);
@@ -238,23 +238,15 @@ export class AliyunAccountSelectionHandler {
                 log(Component.ALIYUN_ACCOUNT_SELECTION, `isAccountMatch: 12-digit ID pattern result=${isMatch}`);
                 if (isMatch) return true;
             } else {
-                // For non-numeric match values, use flexible matching (no word boundaries)
+                // For non-numeric match values, use flexible boundary matching
                 const escapedMatchValue = matchValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                const matchPattern = new RegExp(escapedMatchValue, 'i');
+                const matchPattern = new RegExp(
+                    `(^|[^a-zA-Z])${escapedMatchValue}([^a-zA-Z]|$)`,
+                    'i'
+                );
                 const isMatch = matchPattern.test(accountNameText);
                 log(Component.ALIYUN_ACCOUNT_SELECTION, `isAccountMatch: Pattern "${matchPattern}" result=${isMatch}`);
                 if (isMatch) return true;
-            }
-        }
-
-        // Check account name with flexible matching (no word boundaries)
-        if (accountName) {
-            const escapedAccountName = accountName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const namePattern = new RegExp(escapedAccountName, 'i');
-            const isMatch = namePattern.test(accountNameText);
-            log(Component.ALIYUN_ACCOUNT_SELECTION, `isAccountMatch: Account name "${accountName}" pattern "${namePattern}" result=${isMatch}`);
-            if (isMatch) {
-                return true;
             }
         }
 
