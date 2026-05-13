@@ -13,7 +13,7 @@ Enveil provides comprehensive environment identification through visual indicato
 ### ☁️ Cloud Environment Highlighting
 **Advanced cloud platform environment and role identification**
 
-Enveil now supports intelligent cloud environment visualization for AWS, with support for other cloud providers coming soon.
+Enveil supports intelligent cloud environment visualization for multiple cloud providers with unified configuration and highlighting system.
 
 #### Three-Tier Cloud Configuration
 - **Cloud Providers**: Top-level grouping for cloud platforms (AWS China, AWS Global)
@@ -31,7 +31,10 @@ Enveil now supports intelligent cloud environment visualization for AWS, with su
 #### Cloud Provider Templates
 - **AWS China (CN)**: Pre-configured for `https://signin.amazonaws.cn/saml` and `*.amazonaws.cn/*`
 - **AWS Global**: Support for global AWS environments with `https://signin.aws.amazon.com/saml`
-- **Custom Providers**: Flexible configuration for any cloud platform
+- **Aliyun (Alibaba Cloud)**: Support for Alibaba Cloud with SSO account selection and console highlighting
+- **Volcengine**: Support for Volcengine cloud platform
+- **Huawei Cloud**: Support for Huawei Cloud with SAML login and console highlighting
+- **Custom Providers**: Flexible configuration for any cloud platform with custom selectors
 
 #### Smart Cloud Detection
 - **Account Selection Pages**: Enhanced visual indicators on SAML login pages with account container highlighting
@@ -44,6 +47,35 @@ Enveil now supports intelligent cloud environment visualization for AWS, with su
 
 ![AWS Console Highlighting](./assets/images/clouds-example-aws-console.png)
 *AWS Console navigation bar with account information and role highlighting*
+
+### ✨ Magic Relogin
+**One-click automatic re-login for expired cloud sessions**
+
+When your cloud console session expires, Enveil detects the logout dialog and injects a "Magic Relogin" button for seamless re-authentication.
+
+#### Key Features
+- **Automatic Detection**: Monitors for session expiration dialogs in real-time
+- **One-Click Relogin**: Single button to trigger SAML re-authentication
+- **Account & Role Preservation**: Automatically selects the same account and role you were using
+- **Cross-Tab Communication**: Coordinates between SAML login page and console tab
+- **SAML URL Configuration**: Customizable IdP login URL per environment
+
+#### How It Works
+1. **Detection Phase**: Mutation observer continuously monitors the page for logout dialogs
+2. **UI Injection**: When detected, injects a gradient "Relogin" button alongside the native login button
+3. **State Preservation**: Extracts current account ID and role information from the page
+4. **Cross-Tab Flow**:
+   - Opens configured SAML IdP login page in new tab
+   - Passes account/role information via local storage
+   - Account selection handler automatically selects the correct account
+   - Automatically selects the matching role
+   - Triggers login and returns to original console page
+5. **Completion**: Refreshes the original console tab with restored session
+
+#### Supported Platforms
+- **AWS China**: Full support with account/role preservation
+- **AWS Global**: Full support with account/role preservation
+- **Generic Platforms**: Extensible architecture for other cloud providers
 
 ### 🎯 Intelligent URL Matching
 **Five sophisticated matching strategies for maximum flexibility**
@@ -126,6 +158,42 @@ The configuration page features two main tabs:
 - **Contrast Optimization**: Automatic text color selection
 
 ## Management Features
+
+### 📋 Log Viewer
+**Built-in diagnostic logging system for troubleshooting**
+
+Enveil includes a comprehensive logging system that records all extension activities for debugging and monitoring purposes.
+
+#### Logging Features
+- **Multi-Level Logging**: Supports 5 log levels: `log`, `info`, `warn`, `error`, `debug`
+- **Component-Based Tagging**: Each log entry is tagged by source component for easy filtering
+- **Structured Data Logging**: Supports additional data payloads with each log entry
+- **Timestamps**: Millisecond precision timestamps for all log entries
+- **Persistent Storage**: Logs are stored in memory and synced with background script
+
+#### Log Viewer Interface
+- **Slide-in Panel**: Full-height modal panel from the right side of the screen
+- **Real-Time Updates**: Logs stream in automatically as events occur
+- **Search Functionality**: Full-text search across all log messages and components
+- **Level Filtering**: Filter by log severity level
+- **Component Filtering**: Filter by source component with grouped component categories
+- **Auto-Scroll**: Optional auto-scroll to newest log entries
+- **Expandable Details**: Click to expand and view structured data payloads
+- **Color-Coded**: Visual color coding for quick severity identification
+
+#### Management Actions
+- **Export Logs**: Download all logs as JSON file with timestamped filename
+- **Clear Logs**: One-click to clear all log entries (with confirmation)
+- **Background Sync**: Logs are fetched from background service worker for complete visibility
+
+#### Component Categories
+- **Cloud Highlighter**: Cloud environment highlighting operations
+- **Account Selection Handlers**: Account selection page processing
+- **Magic Relogin Handler**: Re-login flow operations
+- **Content Script**: Page injection and DOM manipulation
+- **Background Script**: Service worker events
+- **Options UI**: Configuration interface operations
+- **Configuration Management**: Import/export/sync operations
 
 ### 📤 Import/Export System
 **Flexible configuration sharing and backup**
@@ -322,10 +390,12 @@ When in AWS Console, the highlighting persists in the navigation bar:
 ### 🚀 Upcoming Enhancements
 **Features in development or planned**
 
-#### Shadow DOM Complete
-- **Full Isolation**: Complete style isolation implementation
-- **Performance**: Optimized rendering performance
-- **Compatibility**: Enhanced compatibility with complex sites
+#### ✅ Completed
+- **Alibaba Cloud (Aliyun)**: Aliyun support (Implemented)
+- **Volcengine**: Volcengine cloud platform support (Implemented)
+- **Huawei Cloud**: Huawei Cloud support (Implemented)
+- **Magic Relogin**: Automatic session re-login (Implemented)
+- **Log Viewer**: Built-in diagnostic logging system (Implemented)
 
 #### Testing Suite
 - **Unit Tests**: Comprehensive test coverage
@@ -347,7 +417,6 @@ When in AWS Console, the highlighting persists in the navigation bar:
 #### More Cloud Providers
 - **Azure**: Microsoft Azure cloud platform support
 - **Google Cloud Platform**: GCP environment configuration
-- **Alibaba Cloud**: Aliyun support
 - **Custom Providers**: User-defined provider templates
 
 ## Feature Comparison

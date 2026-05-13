@@ -13,12 +13,19 @@ A powerful Chrome extension for developers, DevOps engineers, and QA teams to vi
 - **Shadow DOM Isolation**: UI elements don't interfere with page functionality
 - **Real-time Updates**: Changes apply immediately without page refresh
 
-### Cloud Environment Highlighting ⭐ NEW
-- **AWS Support**: Pre-configured templates for AWS China and AWS Global
-- **Account Highlighting**: Visual distinction between different cloud accounts
-- **Role Highlighting**: Keyword-based text emphasis for role names
-- **Account Selection Pages**: Enhanced indicators on SAML login pages
-- **Console Page Highlighting**: Persistent account and role highlighting in AWS Console navigation bar
+### Cloud Environment Highlighting ⭐
+- **Multi-Cloud Support**: AWS China, AWS Global, Aliyun, Volcengine, Huawei Cloud
+- **Account Highlighting**: Visual distinction between different cloud accounts with background colors
+- **Role Highlighting**: Keyword-based text emphasis for role names with custom highlighting styles
+- **Account Selection Pages**: Enhanced indicators on SAML login pages with account container highlighting
+- **Console Page Highlighting**: Persistent account and role highlighting in cloud console navigation bars
+
+### Magic Relogin ✨
+- **Session Expiration Detection**: Automatically detects logout dialogs in cloud consoles
+- **One-Click Re-Authentication**: Injected "Magic Relogin" button for seamless re-login
+- **Account & Role Preservation**: Automatically restores the same account and role
+- **SAML Integration**: Configurable IdP SAML URL per cloud environment
+- **Cross-Tab Coordination**: Smart communication between login and console tabs
 
 ### **Intelligent URL Matching**
 - **5 Matching Strategies**: Domain, URL Prefix, Exact URL, Regex, and smart "Everything" mode
@@ -33,6 +40,14 @@ A powerful Chrome extension for developers, DevOps engineers, and QA teams to vi
 - **Import/Export**: Share configurations as JSON files (full, groups, or cloud)
 - **Browser Sync**: Cross-device synchronization with conflict resolution
 - **10 Default Colors**: Carefully chosen palette optimized for different environments
+
+### **Diagnostics & Debugging**
+- **Built-in Log Viewer**: Slide-in panel with real-time streaming logs
+- **Multi-Level Logging**: log, info, warn, error, debug levels
+- **Component-Based Filtering**: Filter logs by source component (Cloud Highlighter, Magic Relogin, etc.)
+- **Search & Filter**: Full-text search and severity level filtering
+- **Export Logs**: Download diagnostic logs as JSON files
+- **Debug Mode**: Chrome DevTools integration for advanced troubleshooting
 
 ## 📸 Screenshots
 
@@ -265,11 +280,17 @@ URL Matching → Content Script → Visual Indicators
 - ✅ Configuration groups with defaults
 - ✅ Import/export system
 - ✅ Browser synchronization
-- ✅ Cloud environment highlighting (AWS)
+- ✅ Cloud environment highlighting (AWS China, AWS Global)
 - ✅ Account selection page highlighting
 - ✅ Role keyword highlighting
 
-### **Near Term (v1.1)**
+### **Current (v1.1) - New**
+- ✅ Multi-cloud provider support (Aliyun, Volcengine, Huawei Cloud)
+- ✅ Magic Relogin - one-click automatic session re-login
+- ✅ Built-in Log Viewer with filtering and export
+- ✅ Debug mode with Chrome DevTools integration
+
+### **Near Term (v1.2)**
 - 🔄 Complete Shadow DOM implementation
 - 🔄 Unit and E2E test coverage
 - 🔄 Enhanced Options page UX
