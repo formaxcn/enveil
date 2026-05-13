@@ -213,8 +213,14 @@ export class VolcengineAccountSelectionHandler {
                     warn(Component.VOLCENGINE_ACCOUNT_SELECTION, `Invalid regex: ${matchValue}`, e);
                 }
             } else {
-                const isMatch = elementText.toLowerCase().includes(matchValue.toLowerCase());
-                log(Component.VOLCENGINE_ACCOUNT_SELECTION, `isAccountMatch: Keyword "${matchValue}" result=${isMatch}`);
+                // 关键字模式：使用灵活边界匹配（允许数字、连字符等作为分隔符）
+                const escapedMatchValue = matchValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const matchPattern = new RegExp(
+                    `(^|[^a-zA-Z])${escapedMatchValue}([^a-zA-Z]|$)`,
+                    'i'
+                );
+                const isMatch = matchPattern.test(elementText);
+                log(Component.VOLCENGINE_ACCOUNT_SELECTION, `isAccountMatch: Keyword "${matchPattern}" result=${isMatch}`);
                 if (isMatch) return true;
             }
         }

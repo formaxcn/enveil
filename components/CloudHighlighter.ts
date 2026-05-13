@@ -287,27 +287,17 @@ export class CloudHighlighter {
                 log(Component.CLOUD_HIGHLIGHTER, `ID check: ${matchValue} -> ${isMatch}`);
                 if (isMatch) return true;
             } else {
-                // For non-numeric match values, use word boundary matching
+                // For non-numeric match values, use flexible matching
+                // Allow matching at word boundaries OR before/after digits, hyphens, and underscores
                 const escapedMatchValue = matchValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                // Pattern: match value appears at boundary, or before/after digits/hyphens/underscores
                 const matchPattern = new RegExp(
-                    `\\b${escapedMatchValue}\\b|\\(${escapedMatchValue}\\)`,
+                    `(^|[^a-zA-Z])${escapedMatchValue}([^a-zA-Z]|$)`,
                     'i'
                 );
                 const isMatch = matchPattern.test(elementText);
                 log(Component.CLOUD_HIGHLIGHTER, `Keyword check: ${matchPattern} -> ${isMatch}`);
                 if (isMatch) return true;
-            }
-        }
-
-        // Check account name with word boundaries
-        const accountName = account.name?.trim();
-        if (accountName) {
-            const escapedAccountName = accountName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const namePattern = new RegExp(`\\b${escapedAccountName}\\b`, 'i');
-            const isMatch = namePattern.test(elementText);
-            log(Component.CLOUD_HIGHLIGHTER, `Account name check: ${accountName} -> ${isMatch}`);
-            if (isMatch) {
-                return true;
             }
         }
 

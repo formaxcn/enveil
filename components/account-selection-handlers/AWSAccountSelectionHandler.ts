@@ -218,10 +218,10 @@ export class AWSAccountSelectionHandler {
         // Check all account patterns
         for (const pattern of patterns) {
             if (!pattern.enable) continue;
-            
+
             const matchValue = pattern.matchValue?.trim();
             if (!matchValue) continue;
-            
+
             // For AWS, check for 12-digit account ID pattern with word boundaries
             if (/^\d{12}$/.test(matchValue)) {
                 const accountIdPattern = new RegExp(`\\b${matchValue}\\b`);
@@ -229,26 +229,17 @@ export class AWSAccountSelectionHandler {
                 log(Component.AWS_ACCOUNT_SELECTION, `isAccountMatch: Checking 12-digit ID "${matchValue}" against "${accountNameText}", result=${isMatch}`);
                 if (isMatch) return true;
             } else {
-                // For non-numeric match values, use word boundary matching
+                // For non-numeric match values, use flexible matching
+                // Allow matching at word boundaries OR before/after digits, hyphens, and underscores
                 const escapedMatchValue = matchValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                // Pattern: match value appears at boundary, or before/after digits/hyphens/underscores
                 const matchPattern = new RegExp(
-                    `\\b${escapedMatchValue}\\b|\\(${escapedMatchValue}\\)`,
+                    `(^|[^a-zA-Z])${escapedMatchValue}([^a-zA-Z]|$)`,
                     'i'
                 );
                 const isMatch = matchPattern.test(accountNameText);
                 log(Component.AWS_ACCOUNT_SELECTION, `isAccountMatch: Checking pattern "${matchPattern}" against "${accountNameText}", result=${isMatch}`);
                 if (isMatch) return true;
-            }
-        }
-
-        // Check account name with word boundaries
-        if (accountName) {
-            const escapedAccountName = accountName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const namePattern = new RegExp(`\\b${escapedAccountName}\\b`, 'i');
-            const isMatch = namePattern.test(accountNameText);
-            log(Component.AWS_ACCOUNT_SELECTION, `isAccountMatch: Checking account name "${accountName}" against "${accountNameText}", result=${isMatch}`);
-            if (isMatch) {
-                return true;
             }
         }
 
